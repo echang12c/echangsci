@@ -144,22 +144,20 @@ h2.section:first-child{margin-top:0}
 canvas{max-width:100%}
 .chartBox{height:260px;position:relative}
 
-/* ---------- Herói (avatar RPG) ---------- */
-.heroLayout{display:grid;grid-template-columns:300px 1fr;gap:14px;align-items:start}
-@media(max-width:720px){.heroLayout{grid-template-columns:1fr}}
-.heroPreviewCard{display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 18px}
-#heroPreview svg{width:200px;height:220px}
-.heroClassName{font-family:var(--display);font-weight:800;font-size:22px;color:var(--primary)}
-.heroHint{font-size:12px;color:var(--muted);text-align:center}
+/* ---------- Herói 3D (VRM) ---------- */
+.heroStageCard{padding:0;overflow:hidden}
+#heroStage{height:420px;display:flex;align-items:center;justify-content:center}
+#heroStage canvas{display:block}
+#heroStatus{color:var(--muted);font-size:14px;text-align:center;padding:16px}
+.heroNota{font-size:12px;color:var(--muted);margin:2px 0 14px}
 .optGroup{margin-bottom:16px}
 .optGroup>label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px}
 .optRow{display:flex;gap:8px;flex-wrap:wrap}
 .optBtn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 13px;font-weight:600;font-size:13px;color:var(--muted)}
 .optBtn.active{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
-.swatch{width:32px;height:32px;border-radius:50%;border:2px solid var(--line);padding:0}
-.swatch.active{border-color:var(--ink);box-shadow:0 0 0 3px var(--primary-soft)}
-.headerAvatar{display:block;width:24px;height:27px}
-.headerAvatar svg{width:100%;height:100%}
+.headerAvatar{display:block;width:24px;height:24px}
+.headerAvatar img{width:24px;height:24px;border-radius:50%;object-fit:cover;display:block;background:var(--primary-soft)}
+.headerAvatarIcone{font-size:16px;line-height:24px}
 </style>
 </head>
 <body>
@@ -244,23 +242,16 @@ canvas{max-width:100%}
       <div style="margin-top:14px"><button class="btnGhost" id="btnAddSub">+ Nova assinatura</button></div>
     </section>
 
-    <!-- ===== Herói (avatar RPG) ===== -->
+    <!-- ===== Herói 3D (VRM) ===== -->
     <section id="tab-hero" class="hidden">
-      <div class="heroLayout">
-        <div class="card heroPreviewCard">
-          <div id="heroPreview"></div>
-          <div class="heroClassName" id="heroClassName"></div>
-          <div class="heroHint">Seu herói evolui junto com suas finanças.</div>
-        </div>
-        <div class="card">
-          <div class="optGroup"><label>Classe</label><div class="optRow" id="optClasse"></div></div>
-          <div class="optGroup"><label>Tom de pele</label><div class="optRow" id="optPele"></div></div>
-          <div class="optGroup"><label>Cabelo</label><div class="optRow" id="optCabelo"></div></div>
-          <div class="optGroup"><label>Cor do cabelo</label><div class="optRow" id="optCorCabelo"></div></div>
-          <div class="optGroup"><label>Olhos</label><div class="optRow" id="optOlhos"></div></div>
-          <div class="optGroup"><label>Roupa</label><div class="optRow" id="optRoupa"></div></div>
-          <button class="btnPrimary" id="btnSalvarAvatar" style="width:100%">Salvar herói</button>
-        </div>
+      <div class="card heroStageCard">
+        <div id="heroStage"><div id="heroStatus">Carregando…</div></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="optGroup"><label>Modelo</label><div class="optRow" id="optModelo"></div></div>
+        <div class="optGroup"><label>Classe</label><div class="optRow" id="optClasse"></div></div>
+        <p class="heroNota">Arraste sobre o personagem para girar. Modelos de amostra do VRoid Studio — serão substituídos pelos heróis definitivos de cada classe.</p>
+        <button class="btnPrimary" id="btnSalvarAvatar" style="width:100%">Salvar herói</button>
       </div>
     </section>
   </main>
@@ -410,6 +401,7 @@ document.querySelectorAll('nav.tabs button').forEach(b=>{
     b.classList.add('active');
     ['dash','tx','budget','subs','hero'].forEach(t=>
       document.getElementById('tab-'+t).classList.toggle('hidden', t!==b.dataset.tab));
+    if(b.dataset.tab==='hero') initHero3D();
   };
 });
 
@@ -628,7 +620,7 @@ function renderSubs(){
   });
 }
 
-/* ---------------- Herói (avatar RPG) ---------------- */
+/* ---------------- Herói 3D (formato VRM) ---------------- */
 const AV = {
   classes:{
     lutador:   {nome:'Lutador',    icone:'⚔️'},
@@ -636,277 +628,141 @@ const AV = {
     arqueiro:  {nome:'Arqueiro',   icone:'🏹'},
     curandeiro:{nome:'Curandeiro', icone:'💚'},
   },
-  cabelos:{curto:'Curto', longo:'Longo', moicano:'Moicano', coque:'Coque', careca:'Careca'},
-  peles:['#F6D7B8','#EAC094','#D29B6E','#A96C4B','#7A4B32','#5C3823'],
-  coresCabelo:['#2B1B10','#5C3A21','#C9A227','#B03A2E','#7D5BA6','#3F6C8C','#C9CFD4'],
-  olhos:['#3B2A1D','#2E6F95','#1E8A5B','#5E5E5E','#7D5BA6'],
-  roupas:['#17573B','#B03A2E','#2E6F95','#7D5BA6','#B8860B','#444B52'],
+  /* Amostras públicas do VRoid — substituir pelos heróis definitivos criados no VRoid Studio */
+  modelos:{
+    AvatarSample_A:'Modelo A',
+    AvatarSample_B:'Modelo B',
+    AvatarSample_C:'Modelo C',
+  },
+  urlModelo:n=>`https://cdn.jsdelivr.net/gh/madjin/vrm-samples@master/vroid/stable/${n}.vrm`,
 };
 
-let avatarCfg = {classe:'lutador', pele:1, cabelo:'curto', corCabelo:0, olhos:0, roupa:0};
+let avatarCfg={modelo:'AvatarSample_B', classe:'lutador', thumb:null};
+const h3={pronto:false, iniciando:false, carregando:false, vrm:null, modeloNaCena:null};
 
-/* Grade 20×22. Letras = papel da cor; "." = vazio; "_" = apaga camada de baixo.
-   S pele · E olho · m boca · H cabelo · C roupa · D roupa escura ·
-   G dourado · W madeira · M corda/metal · B bota */
-const MAPA_CORPO = [
-  "....................",
-  "....................",
-  "......SSSSSSSS......",
-  ".....SSSSSSSSSS.....",
-  ".....SSSSSSSSSS.....",
-  ".....SSSSSSSSSS.....",
-  ".....SSESSSSESS.....",
-  ".....SSSSSSSSSS.....",
-  "......SSSmmSSS......",
-  "........SSSS........",
-  "....SSSSSSSSSSSS....",
-  "....SSSSSSSSSSSS....",
-  "....SSSSSSSSSSSS....",
-  "....SSSSSSSSSSSS....",
-  "....SSSSSSSSSSSS....",
-  "......SSSSSSSS......",
-  "......SSS..SSS......",
-  "......SSS..SSS......",
-  "......SSS..SSS......",
-  "......SSS..SSS......",
-  "......SSS..SSS......",
-  "....................",
-];
+async function initHero3D(){
+  if(h3.pronto || h3.iniciando) return;
+  h3.iniciando=true;
+  const st=document.getElementById('heroStatus');
+  st.textContent='Carregando o mundo 3D…';
+  try{
+    const THREE=await import('https://esm.sh/three@0.170.0');
+    const {GLTFLoader}=await import('https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js');
+    const {VRMLoaderPlugin,VRMUtils}=await import('https://esm.sh/@pixiv/three-vrm@3.4.1?deps=three@0.170.0');
+    h3.VRMUtils=VRMUtils;
 
-const MAPA_ROUPA = {
-  lutador:{
-    10:"......CCCCCCCC......",
-    11:"......CCCCCCCC......",
-    12:"......CCCCCCCC......",
-    13:"....DDCCCCCCCCDD....",
-    14:"....DDCCCCCCCCDD....",
-    15:"......DDDDDDDD......",
-    16:"......CCC..CCC......",
-    17:"......CCC..CCC......",
-    19:"......BBB..BBB......",
-    20:"......BBB..BBB......",
-  },
-  mago:{
-    10:"......CCCCCCCC......",
-    11:"....CCCCCCCCCCCC....",
-    12:"....CCCCCCCCCCCC....",
-    13:"....CCCCCCCCCCCC....",
-    14:"....CCGGGGGGGGCC....",
-    15:".....CCCCCCCCCC.....",
-    16:".....CCCCCCCCCC.....",
-    17:".....CCCCCCCCCC.....",
-    18:".....CCCCCCCCCC.....",
-    19:".....CCCCCCCCCC.....",
-    20:".....DDDDDDDDDD.....",
-  },
-  arqueiro:{
-    10:"......CCCCCCCC......",
-    11:"......CCCCCCCC......",
-    12:"......CCCCCCCC......",
-    13:"......CCCCCCCC......",
-    14:"......DDDDDDDD......",
-    15:"......CCCCCCCC......",
-    16:"......DDD..DDD......",
-    17:"......DDD..DDD......",
-    18:"......DDD..DDD......",
-    19:"......BBB..BBB......",
-    20:"......BBB..BBB......",
-  },
-  curandeiro:{
-    10:"......CCCCCCCC......",
-    11:"....CCCCCGGCCCCC....",
-    12:"....CCCCGGGGCCCC....",
-    13:"....CCCCCGGCCCCC....",
-    14:"....CCCCCCCCCCCC....",
-    15:".....CCCCCCCCCC.....",
-    16:".....CCCCCCCCCC.....",
-    17:".....CCCCCCCCCC.....",
-    18:".....CCCCCCCCCC.....",
-    19:".....CCCCCCCCCC.....",
-    20:".....DDDDDDDDDD.....",
-  },
-};
+    const stage=document.getElementById('heroStage');
+    const W=stage.clientWidth||640, H=stage.clientHeight||420;
+    h3.renderer=new THREE.WebGLRenderer({antialias:true, alpha:true, preserveDrawingBuffer:true});
+    h3.renderer.setSize(W,H);
+    h3.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+    h3.renderer.outputColorSpace=THREE.SRGBColorSpace;
+    h3.renderer.domElement.style.touchAction='none';
 
-const MAPA_CABELO = {
-  careca:{},
-  curto:{
-    2:"......HHHHHHHH......",
-    3:".....HHHHHHHHHH.....",
-    4:".....HH......HH.....",
-  },
-  longo:{
-    2:"......HHHHHHHH......",
-    3:".....HHHHHHHHHH.....",
-    4:".....HH......HH.....",
-    5:".....H........H.....",
-    6:".....H........H.....",
-    7:".....H........H.....",
-    8:".....HH......HH.....",
-    9:"....HHH......HHH....",
-  },
-  moicano:{
-    0:".........HH.........",
-    1:".........HH.........",
-    2:"........HHHH........",
-    3:".........HH.........",
-  },
-  coque:{
-    0:".........HH.........",
-    1:"........HHHH........",
-    2:"......HHHHHHHH......",
-    3:".....HHHHHHHHHH.....",
-    4:".....HH......HH.....",
-  },
-};
+    h3.scene=new THREE.Scene();
+    h3.cam=new THREE.PerspectiveCamera(30,W/H,.1,50);
+    h3.cam.position.set(0,1.25,2.7); h3.cam.lookAt(0,.95,0);
+    const luz=new THREE.DirectionalLight(0xffffff,Math.PI*.9); luz.position.set(1,2,3);
+    h3.scene.add(luz, new THREE.AmbientLight(0xffffff,Math.PI*.35));
 
-/* Equipamento da classe (desenhado por cima do cabelo: chapéu, capuz, arma) */
-const MAPA_EQUIP = {
-  lutador:{
-    4:".....CCCCCCCCCC.....",
-  },
-  mago:{
-    0:".........CC.........",
-    1:"........CCCC........",
-    2:".......CCCCCC.......",
-    3:"....CCCCCCCCCCCC....",
-    5:"..GG................",
-    6:"..WW................",
-    7:"..WW................",
-    8:"..WW................",
-    9:"..WW................",
-    10:"..WW................",
-    11:"..WW................",
-    12:"..WW................",
-    13:"..WW................",
-    14:"..WW................",
-    15:"..WW................",
-    16:"..WW................",
-    17:"..WW................",
-    18:"..WW................",
-    19:"..WW................",
-    20:"..WW................",
-  },
-  arqueiro:{
-    0:"........____........",
-    1:"........____........",
-    2:"......CCCCCCCC......",
-    3:".....CCCCCCCCCC.....",
-    4:".....CC......CC.....",
-    5:".....C........C.....",
-    6:".....C........C.....",
-    7:".....C........C.....",
-    8:"................W...",
-    9:"................MW..",
-    10:"................MW..",
-    11:"................MW..",
-    12:"................MW..",
-    13:"................MW..",
-    14:"................MW..",
-    15:"................MW..",
-    16:"................MW..",
-    17:"................MW..",
-    18:"................W...",
-  },
-  curandeiro:{
-    3:".....GGGGGGGGGG.....",
-    4:".................G..",
-    5:"................GGG.",
-    6:".................G..",
-    7:".................W..",
-    8:".................W..",
-    9:".................W..",
-    10:".................W..",
-    11:".................W..",
-    12:".................W..",
-    13:".................W..",
-    14:".................W..",
-    15:".................W..",
-    16:".................W..",
-    17:".................W..",
-    18:".................W..",
-    19:".................W..",
-    20:".................W..",
-  },
-};
+    h3.loader=new GLTFLoader();
+    h3.loader.register(p=>new VRMLoaderPlugin(p));
 
-function escurecer(hex, f){
-  const n=parseInt(hex.slice(1),16);
-  const d=c=>Math.round(c*(1-f));
-  return `rgb(${d((n>>16)&255)},${d((n>>8)&255)},${d(n&255)})`;
+    let drag=false, lx=0;
+    h3.renderer.domElement.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX;});
+    window.addEventListener('pointermove',e=>{if(drag&&h3.vrm){h3.vrm.scene.rotation.y+=(e.clientX-lx)*.012;lx=e.clientX;}});
+    window.addEventListener('pointerup',()=>{drag=false;});
+
+    const clock=new THREE.Clock();
+    (function loop(){
+      requestAnimationFrame(loop);
+      const dt=clock.getDelta();
+      if(document.getElementById('tab-hero').classList.contains('hidden')) return;
+      if(h3.vrm){ h3.vrm.update(dt); if(!drag) h3.vrm.scene.rotation.y+=.004; }
+      h3.renderer.render(h3.scene,h3.cam);
+    })();
+
+    h3.pronto=true;
+    carregarModeloVRM(avatarCfg.modelo);
+  }catch(e){ st.textContent='Não foi possível iniciar o 3D: '+e.message; }
+  h3.iniciando=false;
 }
 
-function coresAvatar(cfg){
-  const pele=AV.peles[cfg.pele], roupa=AV.roupas[cfg.roupa];
-  return {
-    S:pele, m:escurecer(pele,.3), E:AV.olhos[cfg.olhos], H:AV.coresCabelo[cfg.corCabelo],
-    C:roupa, D:escurecer(roupa,.35), G:'#E5B93C', W:'#8C6A3F', M:'#C9CFD4', B:'#4A3826',
-  };
+async function carregarModeloVRM(nome){
+  if(!h3.pronto || h3.carregando || h3.modeloNaCena===nome) return;
+  h3.carregando=true;
+  const stage=document.getElementById('heroStage'), st=document.getElementById('heroStatus');
+  if(h3.vrm){ h3.scene.remove(h3.vrm.scene); h3.VRMUtils.deepDispose(h3.vrm.scene); h3.vrm=null; h3.modeloNaCena=null; }
+  if(h3.renderer.domElement.parentNode===stage) stage.removeChild(h3.renderer.domElement);
+  stage.appendChild(st); st.style.display='block';
+  st.textContent='Baixando herói… 0%';
+  try{
+    const gltf=await h3.loader.loadAsync(AV.urlModelo(nome),
+      ev=>{ if(ev.total) st.textContent='Baixando herói… '+Math.min(100,Math.round(ev.loaded/ev.total*100))+'%'; });
+    h3.vrm=gltf.userData.vrm;
+    h3.VRMUtils.rotateVRM0(h3.vrm);
+    h3.vrm.scene.rotation.y=Math.PI;
+    const osso=n=>h3.vrm.humanoid && h3.vrm.humanoid.getNormalizedBoneNode(n);
+    if(osso('leftUpperArm')) osso('leftUpperArm').rotation.z=1.15;
+    if(osso('rightUpperArm')) osso('rightUpperArm').rotation.z=-1.15;
+    h3.scene.add(h3.vrm.scene);
+    h3.modeloNaCena=nome;
+    st.style.display='none';
+    stage.appendChild(h3.renderer.domElement);
+    h3.vrm.update(0.016);
+    h3.renderer.render(h3.scene,h3.cam);
+    gerarThumbAvatar();
+  }catch(e){ st.textContent='Erro ao baixar o modelo. Verifique a internet e tente de novo.'; }
+  h3.carregando=false;
 }
 
-function avatarSVG(cfg){
-  const g = MAPA_CORPO.map(r=>r.split(''));
-  const aplicar = camada => Object.entries(camada).forEach(([y,linha])=>{
-    [...linha].forEach((ch,x)=>{
-      if(ch==='.') return;
-      g[y][x] = ch==='_' ? '.' : ch;
-    });
-  });
-  aplicar(MAPA_ROUPA[cfg.classe]);
-  aplicar(MAPA_CABELO[cfg.cabelo]);
-  aplicar(MAPA_EQUIP[cfg.classe]);
+function gerarThumbAvatar(){
+  try{
+    const src=h3.renderer.domElement;
+    const lado=Math.round(src.height*.38), sx=Math.round((src.width-lado)/2), sy=Math.round(src.height*.02);
+    const c=document.createElement('canvas'); c.width=64; c.height=64;
+    c.getContext('2d').drawImage(src,sx,sy,lado,lado,0,0,64,64);
+    avatarCfg.thumb=c.toDataURL('image/png');
+    atualizarHeaderAvatar();
+  }catch(e){ /* thumb é opcional */ }
+}
 
-  const cores=coresAvatar(cfg);
-  let rects='';
-  g.forEach((linha,y)=>{
-    let x=0;
-    while(x<linha.length){
-      const ch=linha[x];
-      if(ch==='.'){x++;continue;}
-      let w=1; while(x+w<linha.length && linha[x+w]===ch) w++;
-      rects+=`<rect x="${x}" y="${y}" width="${w}" height="1" fill="${cores[ch]||'#000'}"/>`;
-      x+=w;
-    }
-  });
-  return `<svg viewBox="0 0 20 22" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">${rects}</svg>`;
+function atualizarHeaderAvatar(){
+  const el=document.getElementById('headerAvatar');
+  el.innerHTML = avatarCfg.thumb
+    ? `<img src="${avatarCfg.thumb}" alt="avatar">`
+    : `<span class="headerAvatarIcone">${AV.classes[avatarCfg.classe].icone}</span>`;
 }
 
 function montarOpcoesAvatar(){
+  document.getElementById('optModelo').innerHTML =
+    Object.entries(AV.modelos).map(([k,v])=>`<button class="optBtn" data-v="${k}">${v}</button>`).join('');
   document.getElementById('optClasse').innerHTML =
     Object.entries(AV.classes).map(([k,v])=>`<button class="optBtn" data-v="${k}">${v.icone} ${v.nome}</button>`).join('');
-  document.getElementById('optCabelo').innerHTML =
-    Object.entries(AV.cabelos).map(([k,v])=>`<button class="optBtn" data-v="${k}">${v}</button>`).join('');
-  const swatches=(id,arr)=>document.getElementById(id).innerHTML =
-    arr.map((c,i)=>`<button class="swatch" data-v="${i}" style="background:${c}" aria-label="cor ${i+1}"></button>`).join('');
-  swatches('optPele',AV.peles);
-  swatches('optCorCabelo',AV.coresCabelo);
-  swatches('optOlhos',AV.olhos);
-  swatches('optRoupa',AV.roupas);
-
-  const ligar=(id,chave,numerico)=>document.getElementById(id).querySelectorAll('button').forEach(b=>
-    b.onclick=()=>{ avatarCfg[chave]= numerico ? Number(b.dataset.v) : b.dataset.v; renderAvatarUI(); });
-  ligar('optClasse','classe'); ligar('optCabelo','cabelo');
-  ligar('optPele','pele',true); ligar('optCorCabelo','corCabelo',true);
-  ligar('optOlhos','olhos',true); ligar('optRoupa','roupa',true);
+  document.getElementById('optModelo').querySelectorAll('button').forEach(b=>
+    b.onclick=()=>{ avatarCfg.modelo=b.dataset.v; marcarOpcoesAvatar(); carregarModeloVRM(b.dataset.v); });
+  document.getElementById('optClasse').querySelectorAll('button').forEach(b=>
+    b.onclick=()=>{ avatarCfg.classe=b.dataset.v; marcarOpcoesAvatar(); atualizarHeaderAvatar(); });
 }
 
-function renderAvatarUI(){
-  const svg=avatarSVG(avatarCfg);
-  document.getElementById('heroPreview').innerHTML=svg;
-  document.getElementById('headerAvatar').innerHTML=svg;
-  document.getElementById('heroClassName').textContent=AV.classes[avatarCfg.classe].nome;
+function marcarOpcoesAvatar(){
   const marcar=(id,val)=>document.getElementById(id).querySelectorAll('button').forEach(b=>
-    b.classList.toggle('active', String(val)===b.dataset.v));
-  marcar('optClasse',avatarCfg.classe); marcar('optCabelo',avatarCfg.cabelo);
-  marcar('optPele',avatarCfg.pele); marcar('optCorCabelo',avatarCfg.corCabelo);
-  marcar('optOlhos',avatarCfg.olhos); marcar('optRoupa',avatarCfg.roupa);
+    b.classList.toggle('active', b.dataset.v===val));
+  marcar('optModelo',avatarCfg.modelo);
+  marcar('optClasse',avatarCfg.classe);
 }
 
 async function carregarAvatar(){
   try{
     const doc=await col('perfil').doc('avatar').get();
-    if(doc.exists) avatarCfg={...avatarCfg, ...doc.data()};
+    if(doc.exists){
+      const d=doc.data();
+      if(d.modelo) avatarCfg={...avatarCfg, ...d};
+      else if(d.classe && AV.classes[d.classe]) avatarCfg.classe=d.classe; /* config antiga (pixel art) */
+    }
   }catch(e){ /* mantém padrão */ }
-  renderAvatarUI();
+  atualizarHeaderAvatar();
+  marcarOpcoesAvatar();
 }
 
 document.getElementById('btnSalvarAvatar').onclick=async ()=>{
@@ -915,7 +771,8 @@ document.getElementById('btnSalvarAvatar').onclick=async ()=>{
 };
 
 montarOpcoesAvatar();
-renderAvatarUI();
+marcarOpcoesAvatar();
+atualizarHeaderAvatar();
 
 /* ---------------- Modais ---------------- */
 let txTipo='despesa';
