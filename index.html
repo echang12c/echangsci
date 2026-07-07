@@ -143,6 +143,23 @@ h2.section:first-child{margin-top:0}
 #toast.show{opacity:1}
 canvas{max-width:100%}
 .chartBox{height:260px;position:relative}
+
+/* ---------- Herói (avatar RPG) ---------- */
+.heroLayout{display:grid;grid-template-columns:300px 1fr;gap:14px;align-items:start}
+@media(max-width:720px){.heroLayout{grid-template-columns:1fr}}
+.heroPreviewCard{display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 18px}
+#heroPreview svg{width:200px;height:220px}
+.heroClassName{font-family:var(--display);font-weight:800;font-size:22px;color:var(--primary)}
+.heroHint{font-size:12px;color:var(--muted);text-align:center}
+.optGroup{margin-bottom:16px}
+.optGroup>label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px}
+.optRow{display:flex;gap:8px;flex-wrap:wrap}
+.optBtn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 13px;font-weight:600;font-size:13px;color:var(--muted)}
+.optBtn.active{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
+.swatch{width:32px;height:32px;border-radius:50%;border:2px solid var(--line);padding:0}
+.swatch.active{border-color:var(--ink);box-shadow:0 0 0 3px var(--primary-soft)}
+.headerAvatar{display:block;width:24px;height:27px}
+.headerAvatar svg{width:100%;height:100%}
 </style>
 </head>
 <body>
@@ -165,7 +182,7 @@ canvas{max-width:100%}
   <header class="app">
     <div class="headerRow">
       <div class="brand">Cofre</div>
-      <div class="userChip"><b id="userName"></b><button id="btnLogout">sair</button></div>
+      <div class="userChip"><span class="headerAvatar" id="headerAvatar"></span><b id="userName"></b><button id="btnLogout">sair</button></div>
     </div>
     <div class="monthBar">
       <button id="prevMonth" aria-label="Mês anterior">‹</button>
@@ -177,6 +194,7 @@ canvas{max-width:100%}
       <button data-tab="tx">Lançamentos</button>
       <button data-tab="budget">Orçamento</button>
       <button data-tab="subs">Assinaturas</button>
+      <button data-tab="hero">Herói</button>
     </nav>
   </header>
 
@@ -224,6 +242,26 @@ canvas{max-width:100%}
       <h2 class="section">Suas assinaturas</h2>
       <div class="card txList" id="subList"><div class="empty">Nenhuma assinatura cadastrada.</div></div>
       <div style="margin-top:14px"><button class="btnGhost" id="btnAddSub">+ Nova assinatura</button></div>
+    </section>
+
+    <!-- ===== Herói (avatar RPG) ===== -->
+    <section id="tab-hero" class="hidden">
+      <div class="heroLayout">
+        <div class="card heroPreviewCard">
+          <div id="heroPreview"></div>
+          <div class="heroClassName" id="heroClassName"></div>
+          <div class="heroHint">Seu herói evolui junto com suas finanças.</div>
+        </div>
+        <div class="card">
+          <div class="optGroup"><label>Classe</label><div class="optRow" id="optClasse"></div></div>
+          <div class="optGroup"><label>Tom de pele</label><div class="optRow" id="optPele"></div></div>
+          <div class="optGroup"><label>Cabelo</label><div class="optRow" id="optCabelo"></div></div>
+          <div class="optGroup"><label>Cor do cabelo</label><div class="optRow" id="optCorCabelo"></div></div>
+          <div class="optGroup"><label>Olhos</label><div class="optRow" id="optOlhos"></div></div>
+          <div class="optGroup"><label>Roupa</label><div class="optRow" id="optRoupa"></div></div>
+          <button class="btnPrimary" id="btnSalvarAvatar" style="width:100%">Salvar herói</button>
+        </div>
+      </div>
     </section>
   </main>
 
@@ -353,6 +391,7 @@ auth.onAuthStateChanged(user=>{
     carregarMes();
     escutarAssinaturas();
     carregarTendencia();
+    carregarAvatar();
   }else{
     state.uid=null;
     if(state.unsubTx)state.unsubTx(); if(state.unsubOrc)state.unsubOrc(); if(state.unsubSubs)state.unsubSubs();
@@ -369,7 +408,7 @@ document.querySelectorAll('nav.tabs button').forEach(b=>{
   b.onclick=()=>{
     document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('active'));
     b.classList.add('active');
-    ['dash','tx','budget','subs'].forEach(t=>
+    ['dash','tx','budget','subs','hero'].forEach(t=>
       document.getElementById('tab-'+t).classList.toggle('hidden', t!==b.dataset.tab));
   };
 });
@@ -588,6 +627,295 @@ function renderSubs(){
     };
   });
 }
+
+/* ---------------- Herói (avatar RPG) ---------------- */
+const AV = {
+  classes:{
+    lutador:   {nome:'Lutador',    icone:'⚔️'},
+    mago:      {nome:'Mago',       icone:'🔮'},
+    arqueiro:  {nome:'Arqueiro',   icone:'🏹'},
+    curandeiro:{nome:'Curandeiro', icone:'💚'},
+  },
+  cabelos:{curto:'Curto', longo:'Longo', moicano:'Moicano', coque:'Coque', careca:'Careca'},
+  peles:['#F6D7B8','#EAC094','#D29B6E','#A96C4B','#7A4B32','#5C3823'],
+  coresCabelo:['#2B1B10','#5C3A21','#C9A227','#B03A2E','#7D5BA6','#3F6C8C','#C9CFD4'],
+  olhos:['#3B2A1D','#2E6F95','#1E8A5B','#5E5E5E','#7D5BA6'],
+  roupas:['#17573B','#B03A2E','#2E6F95','#7D5BA6','#B8860B','#444B52'],
+};
+
+let avatarCfg = {classe:'lutador', pele:1, cabelo:'curto', corCabelo:0, olhos:0, roupa:0};
+
+/* Grade 20×22. Letras = papel da cor; "." = vazio; "_" = apaga camada de baixo.
+   S pele · E olho · m boca · H cabelo · C roupa · D roupa escura ·
+   G dourado · W madeira · M corda/metal · B bota */
+const MAPA_CORPO = [
+  "....................",
+  "....................",
+  "......SSSSSSSS......",
+  ".....SSSSSSSSSS.....",
+  ".....SSSSSSSSSS.....",
+  ".....SSSSSSSSSS.....",
+  ".....SSESSSSESS.....",
+  ".....SSSSSSSSSS.....",
+  "......SSSmmSSS......",
+  "........SSSS........",
+  "....SSSSSSSSSSSS....",
+  "....SSSSSSSSSSSS....",
+  "....SSSSSSSSSSSS....",
+  "....SSSSSSSSSSSS....",
+  "....SSSSSSSSSSSS....",
+  "......SSSSSSSS......",
+  "......SSS..SSS......",
+  "......SSS..SSS......",
+  "......SSS..SSS......",
+  "......SSS..SSS......",
+  "......SSS..SSS......",
+  "....................",
+];
+
+const MAPA_ROUPA = {
+  lutador:{
+    10:"......CCCCCCCC......",
+    11:"......CCCCCCCC......",
+    12:"......CCCCCCCC......",
+    13:"....DDCCCCCCCCDD....",
+    14:"....DDCCCCCCCCDD....",
+    15:"......DDDDDDDD......",
+    16:"......CCC..CCC......",
+    17:"......CCC..CCC......",
+    19:"......BBB..BBB......",
+    20:"......BBB..BBB......",
+  },
+  mago:{
+    10:"......CCCCCCCC......",
+    11:"....CCCCCCCCCCCC....",
+    12:"....CCCCCCCCCCCC....",
+    13:"....CCCCCCCCCCCC....",
+    14:"....CCGGGGGGGGCC....",
+    15:".....CCCCCCCCCC.....",
+    16:".....CCCCCCCCCC.....",
+    17:".....CCCCCCCCCC.....",
+    18:".....CCCCCCCCCC.....",
+    19:".....CCCCCCCCCC.....",
+    20:".....DDDDDDDDDD.....",
+  },
+  arqueiro:{
+    10:"......CCCCCCCC......",
+    11:"......CCCCCCCC......",
+    12:"......CCCCCCCC......",
+    13:"......CCCCCCCC......",
+    14:"......DDDDDDDD......",
+    15:"......CCCCCCCC......",
+    16:"......DDD..DDD......",
+    17:"......DDD..DDD......",
+    18:"......DDD..DDD......",
+    19:"......BBB..BBB......",
+    20:"......BBB..BBB......",
+  },
+  curandeiro:{
+    10:"......CCCCCCCC......",
+    11:"....CCCCCGGCCCCC....",
+    12:"....CCCCGGGGCCCC....",
+    13:"....CCCCCGGCCCCC....",
+    14:"....CCCCCCCCCCCC....",
+    15:".....CCCCCCCCCC.....",
+    16:".....CCCCCCCCCC.....",
+    17:".....CCCCCCCCCC.....",
+    18:".....CCCCCCCCCC.....",
+    19:".....CCCCCCCCCC.....",
+    20:".....DDDDDDDDDD.....",
+  },
+};
+
+const MAPA_CABELO = {
+  careca:{},
+  curto:{
+    2:"......HHHHHHHH......",
+    3:".....HHHHHHHHHH.....",
+    4:".....HH......HH.....",
+  },
+  longo:{
+    2:"......HHHHHHHH......",
+    3:".....HHHHHHHHHH.....",
+    4:".....HH......HH.....",
+    5:".....H........H.....",
+    6:".....H........H.....",
+    7:".....H........H.....",
+    8:".....HH......HH.....",
+    9:"....HHH......HHH....",
+  },
+  moicano:{
+    0:".........HH.........",
+    1:".........HH.........",
+    2:"........HHHH........",
+    3:".........HH.........",
+  },
+  coque:{
+    0:".........HH.........",
+    1:"........HHHH........",
+    2:"......HHHHHHHH......",
+    3:".....HHHHHHHHHH.....",
+    4:".....HH......HH.....",
+  },
+};
+
+/* Equipamento da classe (desenhado por cima do cabelo: chapéu, capuz, arma) */
+const MAPA_EQUIP = {
+  lutador:{
+    4:".....CCCCCCCCCC.....",
+  },
+  mago:{
+    0:".........CC.........",
+    1:"........CCCC........",
+    2:".......CCCCCC.......",
+    3:"....CCCCCCCCCCCC....",
+    5:"..GG................",
+    6:"..WW................",
+    7:"..WW................",
+    8:"..WW................",
+    9:"..WW................",
+    10:"..WW................",
+    11:"..WW................",
+    12:"..WW................",
+    13:"..WW................",
+    14:"..WW................",
+    15:"..WW................",
+    16:"..WW................",
+    17:"..WW................",
+    18:"..WW................",
+    19:"..WW................",
+    20:"..WW................",
+  },
+  arqueiro:{
+    0:"........____........",
+    1:"........____........",
+    2:"......CCCCCCCC......",
+    3:".....CCCCCCCCCC.....",
+    4:".....CC......CC.....",
+    5:".....C........C.....",
+    6:".....C........C.....",
+    7:".....C........C.....",
+    8:"................W...",
+    9:"................MW..",
+    10:"................MW..",
+    11:"................MW..",
+    12:"................MW..",
+    13:"................MW..",
+    14:"................MW..",
+    15:"................MW..",
+    16:"................MW..",
+    17:"................MW..",
+    18:"................W...",
+  },
+  curandeiro:{
+    3:".....GGGGGGGGGG.....",
+    4:".................G..",
+    5:"................GGG.",
+    6:".................G..",
+    7:".................W..",
+    8:".................W..",
+    9:".................W..",
+    10:".................W..",
+    11:".................W..",
+    12:".................W..",
+    13:".................W..",
+    14:".................W..",
+    15:".................W..",
+    16:".................W..",
+    17:".................W..",
+    18:".................W..",
+    19:".................W..",
+    20:".................W..",
+  },
+};
+
+function escurecer(hex, f){
+  const n=parseInt(hex.slice(1),16);
+  const d=c=>Math.round(c*(1-f));
+  return `rgb(${d((n>>16)&255)},${d((n>>8)&255)},${d(n&255)})`;
+}
+
+function coresAvatar(cfg){
+  const pele=AV.peles[cfg.pele], roupa=AV.roupas[cfg.roupa];
+  return {
+    S:pele, m:escurecer(pele,.3), E:AV.olhos[cfg.olhos], H:AV.coresCabelo[cfg.corCabelo],
+    C:roupa, D:escurecer(roupa,.35), G:'#E5B93C', W:'#8C6A3F', M:'#C9CFD4', B:'#4A3826',
+  };
+}
+
+function avatarSVG(cfg){
+  const g = MAPA_CORPO.map(r=>r.split(''));
+  const aplicar = camada => Object.entries(camada).forEach(([y,linha])=>{
+    [...linha].forEach((ch,x)=>{
+      if(ch==='.') return;
+      g[y][x] = ch==='_' ? '.' : ch;
+    });
+  });
+  aplicar(MAPA_ROUPA[cfg.classe]);
+  aplicar(MAPA_CABELO[cfg.cabelo]);
+  aplicar(MAPA_EQUIP[cfg.classe]);
+
+  const cores=coresAvatar(cfg);
+  let rects='';
+  g.forEach((linha,y)=>{
+    let x=0;
+    while(x<linha.length){
+      const ch=linha[x];
+      if(ch==='.'){x++;continue;}
+      let w=1; while(x+w<linha.length && linha[x+w]===ch) w++;
+      rects+=`<rect x="${x}" y="${y}" width="${w}" height="1" fill="${cores[ch]||'#000'}"/>`;
+      x+=w;
+    }
+  });
+  return `<svg viewBox="0 0 20 22" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">${rects}</svg>`;
+}
+
+function montarOpcoesAvatar(){
+  document.getElementById('optClasse').innerHTML =
+    Object.entries(AV.classes).map(([k,v])=>`<button class="optBtn" data-v="${k}">${v.icone} ${v.nome}</button>`).join('');
+  document.getElementById('optCabelo').innerHTML =
+    Object.entries(AV.cabelos).map(([k,v])=>`<button class="optBtn" data-v="${k}">${v}</button>`).join('');
+  const swatches=(id,arr)=>document.getElementById(id).innerHTML =
+    arr.map((c,i)=>`<button class="swatch" data-v="${i}" style="background:${c}" aria-label="cor ${i+1}"></button>`).join('');
+  swatches('optPele',AV.peles);
+  swatches('optCorCabelo',AV.coresCabelo);
+  swatches('optOlhos',AV.olhos);
+  swatches('optRoupa',AV.roupas);
+
+  const ligar=(id,chave,numerico)=>document.getElementById(id).querySelectorAll('button').forEach(b=>
+    b.onclick=()=>{ avatarCfg[chave]= numerico ? Number(b.dataset.v) : b.dataset.v; renderAvatarUI(); });
+  ligar('optClasse','classe'); ligar('optCabelo','cabelo');
+  ligar('optPele','pele',true); ligar('optCorCabelo','corCabelo',true);
+  ligar('optOlhos','olhos',true); ligar('optRoupa','roupa',true);
+}
+
+function renderAvatarUI(){
+  const svg=avatarSVG(avatarCfg);
+  document.getElementById('heroPreview').innerHTML=svg;
+  document.getElementById('headerAvatar').innerHTML=svg;
+  document.getElementById('heroClassName').textContent=AV.classes[avatarCfg.classe].nome;
+  const marcar=(id,val)=>document.getElementById(id).querySelectorAll('button').forEach(b=>
+    b.classList.toggle('active', String(val)===b.dataset.v));
+  marcar('optClasse',avatarCfg.classe); marcar('optCabelo',avatarCfg.cabelo);
+  marcar('optPele',avatarCfg.pele); marcar('optCorCabelo',avatarCfg.corCabelo);
+  marcar('optOlhos',avatarCfg.olhos); marcar('optRoupa',avatarCfg.roupa);
+}
+
+async function carregarAvatar(){
+  try{
+    const doc=await col('perfil').doc('avatar').get();
+    if(doc.exists) avatarCfg={...avatarCfg, ...doc.data()};
+  }catch(e){ /* mantém padrão */ }
+  renderAvatarUI();
+}
+
+document.getElementById('btnSalvarAvatar').onclick=async ()=>{
+  await col('perfil').doc('avatar').set(avatarCfg);
+  toast('Herói salvo! ⚔️');
+};
+
+montarOpcoesAvatar();
+renderAvatarUI();
 
 /* ---------------- Modais ---------------- */
 let txTipo='despesa';
