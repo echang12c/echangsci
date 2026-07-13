@@ -11,6 +11,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
 <style>
 :root{
   --bg:#FDF3E3; --surface:#FFFFFF; --ink:#27203F; --muted:#837A99;
@@ -162,6 +163,37 @@ h2.section:first-child{margin-top:0}
 .metaTxt{flex:1;font-weight:600;min-width:0;overflow-wrap:break-word}
 .metaItem.done .metaTxt{text-decoration:line-through;color:var(--muted)}
 
+/* ---------- Baú / Coleção de pets ---------- */
+.bauCard{margin-top:14px;background:linear-gradient(135deg,#F59E0B 0%,#FF8A3C 60%,#FF5C4D 100%);color:#fff;border:none;box-shadow:0 8px 24px rgba(245,158,11,.4);display:flex;align-items:center;gap:16px}
+.bauCard .emoji{font-size:44px;line-height:1;animation:bauFloat 2s ease-in-out infinite}
+@keyframes bauFloat{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-6px) rotate(4deg)}}
+.bauCard .info{flex:1}
+.bauCard .t{font-family:var(--display);font-weight:800;font-size:19px}
+.bauCard .s{font-size:13px;color:rgba(255,255,255,.9);margin-top:2px}
+.bauCard button{background:#fff;color:#C2410C;border:none;border-radius:12px;padding:12px 18px;font-weight:800;font-size:15px;box-shadow:0 4px 12px rgba(0,0,0,.15);white-space:nowrap}
+.bauHint{margin-top:14px;text-align:center;font-size:13px;color:var(--muted);background:var(--warn-soft);border-radius:12px;padding:10px 14px}
+.petGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.petCard{background:var(--surface);border:2px solid var(--line);border-radius:var(--radius);padding:14px 10px;text-align:center;cursor:pointer;box-shadow:0 3px 0 var(--line);transition:transform .12s}
+.petCard:hover{transform:translateY(-3px)}
+.petCard .pic{font-size:40px;line-height:1.2}
+.petCard .nm{font-weight:700;font-size:14px;margin-top:6px}
+.petCard .qtd{font-size:11px;color:var(--muted);margin-top:2px}
+.petCard.locked{opacity:.55;cursor:default;filter:grayscale(1)}
+.petCard.locked:hover{transform:none}
+.rarPill{display:inline-block;font-size:11px;font-weight:800;border-radius:999px;padding:3px 10px;margin-top:6px;color:#fff}
+.r-comum{background:#94A3B8}.r-raro{background:#2D9CDB}.r-epico{background:#8B5CF6}.r-lendario{background:linear-gradient(90deg,#F59E0B,#FF8A3C)}
+.petCard.b-comum{border-color:#94A3B8}.petCard.b-raro{border-color:#2D9CDB}.petCard.b-epico{border-color:#8B5CF6}
+.petCard.b-lendario{border-color:#F59E0B;box-shadow:0 3px 0 #F59E0B,0 0 18px rgba(245,158,11,.35)}
+.probNote{color:var(--muted);font-size:12px;text-align:center;margin-top:14px}
+model-viewer{width:100%;height:280px;background:transparent;--poster-color:transparent}
+.bauReveal{text-align:center}
+.bauReveal .fase1{font-size:90px;animation:bauShake .5s ease-in-out infinite}
+@keyframes bauShake{0%,100%{transform:rotate(-8deg) scale(1)}50%{transform:rotate(8deg) scale(1.1)}}
+.bauReveal h3{margin:10px 0 4px}
+.bauReveal .glow-lendario model-viewer{background:radial-gradient(circle,rgba(245,158,11,.25),transparent 70%)}
+.bauReveal .glow-epico model-viewer{background:radial-gradient(circle,rgba(139,92,246,.22),transparent 70%)}
+.bauReveal .glow-raro model-viewer{background:radial-gradient(circle,rgba(45,156,219,.2),transparent 70%)}
+
 /* ---------- Modal / toast / fab ---------- */
 .fab{position:fixed;right:22px;bottom:22px;z-index:40;background:linear-gradient(135deg,#FF8A3C,#FF5C4D);color:#fff;border:none;border-radius:999px;width:58px;height:58px;font-size:28px;box-shadow:0 8px 24px rgba(255,92,77,.45);transition:transform .15s}
 .fab:hover{transform:scale(1.08) rotate(90deg)}
@@ -212,6 +244,7 @@ canvas{max-width:100%}
       <button data-tab="budget">🎯 Orçamento</button>
       <button data-tab="subs">🔁 Assinaturas</button>
       <button data-tab="metas">✅ Metas do dia</button>
+      <button data-tab="pets">🐾 Coleção</button>
     </nav>
   </header>
 
@@ -277,6 +310,7 @@ canvas{max-width:100%}
           <div class="bar"><span id="metaBar" style="width:0%"></span></div>
         </div>
       </div>
+      <div id="bauBox"></div>
       <h2 class="section">Suas metas</h2>
       <div class="card" id="metaList"><div class="empty">Nenhuma meta programada para este dia. Crie uma abaixo! ✨</div></div>
       <h2 class="section">Programar nova meta</h2>
@@ -299,6 +333,21 @@ canvas{max-width:100%}
           <button type="submit" class="btnAddMeta">+ Programar</button>
         </div>
       </form>
+    </section>
+
+    <!-- ===== Coleção de pets ===== -->
+    <section id="tab-pets" class="hidden">
+      <div class="card metaHero">
+        <div class="emoji">🐾</div>
+        <div class="info">
+          <div class="count" id="petCount">0 de 39 descobertos</div>
+          <div class="msg">Complete todas as metas do dia para ganhar um baú com um pet surpresa!</div>
+          <div class="bar"><span id="petBar" style="width:0%"></span></div>
+        </div>
+      </div>
+      <h2 class="section">Seus pets</h2>
+      <div class="petGrid" id="petGrid"></div>
+      <p class="probNote">🎁 Probabilidades do baú: Comum 60% · Raro 25% · Épico 12% · Lendário 3%. Baús são conquistados apenas completando metas — nunca vendidos.</p>
     </section>
   </main>
 
@@ -343,6 +392,16 @@ canvas{max-width:100%}
   </div>
 </div>
 
+<!-- ===== Modal abrir baú ===== -->
+<div class="modalWrap hidden" id="bauModal">
+  <div class="modal bauReveal" id="bauModalBody"></div>
+</div>
+
+<!-- ===== Modal ver pet ===== -->
+<div class="modalWrap hidden" id="petModal">
+  <div class="modal bauReveal" id="petModalBody"></div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -378,9 +437,11 @@ const state = {
   assinaturas: [],
   rotinas: [],                  // metas programadas (recorrentes por dia da semana)
   metasFeitas: {},              // {rotinaId:true} — status do dia selecionado
+  bauDia: null,                 // recompensa já aberta no dia selecionado
+  inventario: [],               // pets ganhos
   trend: {},                    // {"YYYY-MM": {rec, desp}}
   filtroCat: null,
-  unsubTx:null, unsubOrc:null, unsubSubs:null, unsubRotinas:null, unsubMetaStatus:null,
+  unsubTx:null, unsubOrc:null, unsubSubs:null, unsubRotinas:null, unsubMetaStatus:null, unsubInv:null,
   charts:{cat:null, trend:null},
 };
 
@@ -439,11 +500,12 @@ auth.onAuthStateChanged(user=>{
     escutarAssinaturas();
     escutarRotinas();
     escutarDiaMetas();
+    escutarInventario();
     carregarTendencia();
   }else{
     state.uid=null;
     if(state.unsubTx)state.unsubTx(); if(state.unsubOrc)state.unsubOrc(); if(state.unsubSubs)state.unsubSubs();
-    if(state.unsubRotinas)state.unsubRotinas(); if(state.unsubMetaStatus)state.unsubMetaStatus();
+    if(state.unsubRotinas)state.unsubRotinas(); if(state.unsubMetaStatus)state.unsubMetaStatus(); if(state.unsubInv)state.unsubInv();
     document.getElementById('appView').classList.add('hidden');
     document.getElementById('loginView').classList.remove('hidden');
   }
@@ -457,7 +519,7 @@ document.querySelectorAll('nav.tabs button').forEach(b=>{
   b.onclick=()=>{
     document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('active'));
     b.classList.add('active');
-    ['dash','tx','budget','subs','metas'].forEach(t=>
+    ['dash','tx','budget','subs','metas','pets'].forEach(t=>
       document.getElementById('tab-'+t).classList.toggle('hidden', t!==b.dataset.tab));
   };
 });
@@ -701,6 +763,7 @@ function escutarDiaMetas(){
   document.getElementById('diaLabel').textContent=diaLabelTxt(state.dia);
   state.unsubMetaStatus = col('metasStatus').doc(state.dia).onSnapshot(doc=>{
     state.metasFeitas = doc.exists ? (doc.data().feitas||{}) : {};
+    state.bauDia = doc.exists ? (doc.data().bau||null) : null;
     renderMetas();
   });
 }
@@ -751,6 +814,7 @@ function renderMetas(){
       }
     };
   });
+  renderBau(total, feitas);
 }
 function renderDiaChips(){
   document.querySelectorAll('.diaChip[data-d]').forEach(ch=>
@@ -787,6 +851,126 @@ document.getElementById('metaForm').addEventListener('submit', async e=>{
 document.getElementById('prevDia').onclick=()=>{ state.dia=shiftDia(state.dia,-1); escutarDiaMetas(); };
 document.getElementById('nextDia').onclick=()=>{ state.dia=shiftDia(state.dia, 1); escutarDiaMetas(); };
 document.getElementById('btnHojeDia').onclick=()=>{ state.dia=hojeISO(); escutarDiaMetas(); };
+
+/* ---------------- Baú de recompensas / Coleção de pets ---------------- */
+const RAR={
+  comum:   {label:'Comum',    p:60, emoji:'🐣'},
+  raro:    {label:'Raro',     p:25, emoji:'⭐'},
+  epico:   {label:'Épico',    p:12, emoji:'💜'},
+  lendario:{label:'Lendário', p:3,  emoji:'👑'},
+};
+const PETS=[
+  // comuns (12)
+  ['pink-blob','Bolha Rosa','comum'],['green-blob','Bolha Verde','comum'],['green-spiky-blob','Bolha Espinhosa','comum'],
+  ['pigeon','Pombo','comum'],['chicken','Galinha','comum'],['cat','Gato','comum'],['fish','Peixe','comum'],
+  ['frog','Sapo','comum'],['bunny','Coelho','comum'],['birb','Passarinho','comum'],['mushnub','Mushnub','comum'],['glub','Glub','comum'],
+  // raros (14)
+  ['alpaking','Alpaking','raro'],['armabee','Armabee','raro'],['cactoro','Cactoro','raro'],['goleling','Goleling','raro'],
+  ['orc','Orc','raro'],['ninja','Ninja','raro'],['wizard','Mago','raro'],['ghost','Fantasma','raro'],['squidle','Lulinha','raro'],
+  ['hywirl','Hywirl','raro'],['monkroose','Monkroose','raro'],['tribal','Guerreiro Tribal','raro'],['dino','Dino','raro'],['alien','Alien','raro'],
+  // épicos (10)
+  ['alpaking-evolved','Alpaking Evoluído','epico'],['armabee-evolved','Armabee Evoluída','epico'],['glub-evolved','Glub Evoluído','epico'],
+  ['goleling-evolved','Goleling Evoluído','epico'],['mushnub-evolved','Mushnub Evoluído','epico'],['yeti','Yeti','epico'],
+  ['demon','Demônio','epico'],['blue-demon','Demônio Azul','epico'],['ghost-skull','Caveira Fantasma','epico'],['orc-enemy','Orc Guerreiro','epico'],
+  // lendários (3)
+  ['dragon','Dragão','lendario'],['dragon-evolved','Dragão Ancestral','lendario'],['mushroom-king','Rei Cogumelo','lendario'],
+].map(([id,nome,r])=>({id,nome,r}));
+const petById=id=>PETS.find(p=>p.id===id);
+
+function sortearPet(){
+  const x=Math.random()*100;
+  const r = x<RAR.lendario.p ? 'lendario'
+        : x<RAR.lendario.p+RAR.epico.p ? 'epico'
+        : x<RAR.lendario.p+RAR.epico.p+RAR.raro.p ? 'raro' : 'comum';
+  const opcoes=PETS.filter(p=>p.r===r);
+  return opcoes[Math.floor(Math.random()*opcoes.length)];
+}
+
+function escutarInventario(){
+  if(state.unsubInv)state.unsubInv();
+  state.unsubInv = col('inventario').onSnapshot(snap=>{
+    state.inventario = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderPets();
+  });
+}
+
+function renderBau(total, feitas){
+  const box=document.getElementById('bauBox');
+  if(!total){ box.innerHTML=''; return; }
+  if(state.bauDia){
+    const pet=petById(state.bauDia.pet);
+    box.innerHTML=`<div class="bauHint">🎁 Baú do dia aberto: <b>${pet?esc(pet.nome):'?'}</b> ${RAR[state.bauDia.r].emoji} — veja na aba Coleção!</div>`;
+    return;
+  }
+  if(feitas===total){
+    box.innerHTML=`<div class="card bauCard">
+      <div class="emoji">🎁</div>
+      <div class="info"><div class="t">Você ganhou um baú!</div>
+      <div class="s">Todas as metas do dia concluídas. Dentro dele vem um pet surpresa…</div></div>
+      <button id="btnAbrirBau">Abrir baú</button>
+    </div>`;
+    document.getElementById('btnAbrirBau').onclick=abrirBau;
+  }else{
+    box.innerHTML=`<div class="bauHint">🎁 Complete todas as metas do dia para ganhar um baú com um pet surpresa! (${feitas}/${total})</div>`;
+  }
+}
+
+async function abrirBau(){
+  if(state.bauDia) return;
+  const pet=sortearPet();
+  const dia=state.dia;
+  await col('metasStatus').doc(dia).set({bau:{pet:pet.id, r:pet.r,
+    abertoEm:firebase.firestore.FieldValue.serverTimestamp()}},{merge:true});
+  await col('inventario').add({pet:pet.id, r:pet.r, data:dia,
+    criadoEm:firebase.firestore.FieldValue.serverTimestamp()});
+  // animação: baú tremendo → revelação
+  const body=document.getElementById('bauModalBody');
+  body.innerHTML=`<div class="fase1">🎁</div><h3>Abrindo…</h3>`;
+  document.getElementById('bauModal').classList.remove('hidden');
+  setTimeout(()=>{
+    body.innerHTML=`<div class="glow-${pet.r}">
+      <model-viewer src="pets/${pet.id}.glb" loading="eager" autoplay auto-rotate camera-controls disable-zoom shadow-intensity="1"></model-viewer></div>
+      <h3>${esc(pet.nome)}</h3>
+      <span class="rarPill r-${pet.r}">${RAR[pet.r].emoji} ${RAR[pet.r].label}</span>
+      <div class="modalActions" style="margin-top:16px"><button class="btnPrimary" data-close>Que fofo!</button></div>`;
+    body.querySelector('[data-close]').onclick=()=>document.getElementById('bauModal').classList.add('hidden');
+  },1600);
+}
+
+function renderPets(){
+  const donos={};
+  state.inventario.forEach(i=>{ donos[i.pet]=(donos[i.pet]||0)+1; });
+  const descobertos=Object.keys(donos).length;
+  document.getElementById('petCount').textContent=`${descobertos} de ${PETS.length} descobertos`;
+  document.getElementById('petBar').style.width=Math.round(descobertos/PETS.length*100)+'%';
+
+  const ordem={lendario:0,epico:1,raro:2,comum:3};
+  const pets=[...PETS].sort((a,b)=> (donos[b.id]?1:0)-(donos[a.id]?1:0) || ordem[a.r]-ordem[b.r] || a.nome.localeCompare(b.nome));
+  document.getElementById('petGrid').innerHTML=pets.map(p=>{
+    const tem=donos[p.id];
+    return tem
+      ? `<div class="petCard b-${p.r}" data-pet="${p.id}">
+          <div class="pic">${RAR[p.r].emoji}</div><div class="nm">${esc(p.nome)}</div>
+          <div class="qtd">${tem>1?'×'+tem:'&nbsp;'}</div>
+          <span class="rarPill r-${p.r}">${RAR[p.r].label}</span></div>`
+      : `<div class="petCard locked"><div class="pic">❔</div><div class="nm">???</div>
+          <div class="qtd">&nbsp;</div><span class="rarPill r-${p.r}">${RAR[p.r].label}</span></div>`;
+  }).join('');
+
+  document.querySelectorAll('.petCard[data-pet]').forEach(card=>{
+    card.onclick=()=>{
+      const p=petById(card.dataset.pet);
+      const body=document.getElementById('petModalBody');
+      body.innerHTML=`<div class="glow-${p.r}">
+        <model-viewer src="pets/${p.id}.glb" loading="eager" autoplay auto-rotate camera-controls shadow-intensity="1"></model-viewer></div>
+        <h3>${esc(p.nome)}</h3>
+        <span class="rarPill r-${p.r}">${RAR[p.r].emoji} ${RAR[p.r].label}</span>
+        <div class="modalActions" style="margin-top:16px"><button class="btnGhost" data-close style="flex:1">Fechar</button></div>`;
+      body.querySelector('[data-close]').onclick=()=>document.getElementById('petModal').classList.add('hidden');
+      document.getElementById('petModal').classList.remove('hidden');
+    };
+  });
+}
 
 /* ---------------- Modais ---------------- */
 let txTipo='despesa';
