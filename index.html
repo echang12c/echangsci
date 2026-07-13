@@ -13,13 +13,15 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
 :root{
-  --bg:#F2F5F1; --surface:#FFFFFF; --ink:#152019; --muted:#66756C;
-  --line:#E1E8E1; --primary:#17573B; --primary-soft:#E4F0E9;
-  --expense:#C7522F; --expense-soft:#FBEAE4;
-  --income:#1E8A5B; --income-soft:#E3F3EB;
-  --warn:#B8860B; --warn-soft:#FBF3DC;
-  --danger:#B3261E;
-  --radius:14px;
+  --bg:#FDF3E3; --surface:#FFFFFF; --ink:#27203F; --muted:#837A99;
+  --line:#F0E1C8; --primary:#00A86B; --primary-soft:#D9F7E8;
+  --expense:#FF5C4D; --expense-soft:#FFE7E3;
+  --income:#00B573; --income-soft:#DDF8EC;
+  --warn:#F59E0B; --warn-soft:#FFF2D3;
+  --danger:#E5484D;
+  --accent:#8B5CF6; --accent-soft:#EFE8FF;
+  --sun:#FFC53D;
+  --radius:16px;
   --mono:'IBM Plex Mono',ui-monospace,monospace;
   --display:'Bricolage Grotesque',sans-serif;
   --body:'Schibsted Grotesk',system-ui,sans-serif;
@@ -35,20 +37,20 @@ input,select{font-family:inherit;font-size:15px}
 /* ---------- Login ---------- */
 #loginView{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px}
 .loginCard{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:36px 32px;width:100%;max-width:380px;box-shadow:0 10px 40px rgba(21,32,25,.08)}
-.brand{font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:-.02em;color:var(--primary)}
+.brand{font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:-.02em;background:linear-gradient(90deg,#00A86B,#0E7DC2 70%,#8B5CF6);-webkit-background-clip:text;background-clip:text;color:transparent}
 .brand small{display:block;font-family:var(--body);font-weight:500;font-size:13px;color:var(--muted);letter-spacing:.04em;margin-top:2px}
 .loginCard form{margin-top:26px;display:grid;gap:12px}
 .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
 .field input,.field select{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:#FAFCFA;outline:none}
 .field input:focus,.field select:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
-.btnPrimary{background:var(--primary);color:#fff;border:none;border-radius:10px;padding:12px;font-weight:700;font-size:15px}
+.btnPrimary{background:linear-gradient(135deg,#00C87B,#009E62);color:#fff;border:none;border-radius:12px;padding:12px;font-weight:700;font-size:15px;box-shadow:0 4px 12px rgba(0,168,107,.3)}
 .btnPrimary:hover{filter:brightness(1.08)}
 .btnGhost{background:transparent;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-weight:600;color:var(--ink)}
 .btnGhost:hover{background:#fff}
 .loginErr{color:var(--danger);font-size:13px;min-height:18px}
 
 /* ---------- Shell ---------- */
-header.app{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:1px solid var(--line)}
+header.app{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:3px solid transparent;border-image:linear-gradient(90deg,#00C87B,#FFC53D,#FF5C4D,#8B5CF6,#0E7DC2) 1}
 .headerRow{max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 18px 8px}
 .headerRow .brand{font-size:22px}
 .userChip{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
@@ -59,11 +61,11 @@ header.app{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:1
 .monthLabel{font-family:var(--display);font-weight:700;font-size:18px;min-width:190px;text-align:center;text-transform:capitalize}
 nav.tabs{max-width:980px;margin:0 auto;display:flex;gap:6px;padding:0 18px 12px;overflow-x:auto}
 nav.tabs button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 16px;font-weight:600;font-size:14px;color:var(--muted);white-space:nowrap}
-nav.tabs button.active{background:var(--ink);border-color:var(--ink);color:#fff}
+nav.tabs button.active{background:linear-gradient(135deg,#00C87B,#009E62);border-color:#009E62;color:#fff;box-shadow:0 3px 10px rgba(0,168,107,.3)}
 main{max-width:980px;margin:0 auto;padding:20px 18px 90px}
 
 /* ---------- Cards / geral ---------- */
-.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:0 3px 0 var(--line)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 @media(max-width:720px){.grid2,.grid3{grid-template-columns:1fr}}
@@ -73,7 +75,7 @@ h2.section:first-child{margin-top:0}
 .kpi .val{font-family:var(--mono);font-weight:600;font-size:24px;margin-top:6px}
 .kpi .val small{font-size:15px;opacity:.65}
 .pos{color:var(--income)}.neg{color:var(--expense)}
-.saldoHero{background:linear-gradient(135deg,var(--primary) 0%,#0E3B27 100%);color:#fff;border:none}
+.saldoHero{background:linear-gradient(135deg,#00C87B 0%,#00A88F 55%,#0E7DC2 100%);color:#fff;border:none;box-shadow:0 8px 24px rgba(0,168,140,.35)}
 .saldoHero .lbl{color:rgba(255,255,255,.72)}
 .saldoHero .val{font-family:var(--display);font-weight:800;font-size:40px;letter-spacing:-.02em}
 .saldoHero .sub{margin-top:8px;font-size:13px;color:rgba(255,255,255,.75)}
@@ -108,8 +110,8 @@ h2.section:first-child{margin-top:0}
 .budgetTop .name{font-weight:700}
 .budgetTop .nums{font-family:var(--mono);font-size:13px;color:var(--muted)}
 .budgetTop .nums b{color:var(--ink)}
-.bar{height:10px;border-radius:999px;background:#EDF2ED;overflow:hidden;position:relative}
-.bar>span{display:block;height:100%;border-radius:999px;background:var(--primary);transition:width .4s ease}
+.bar{height:10px;border-radius:999px;background:#F5EBD8;overflow:hidden;position:relative}
+.bar>span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#00C87B,#00A86B);transition:width .4s ease}
 .bar.over>span{background:var(--expense)}
 .bar.warn>span{background:var(--warn)}
 .budgetEdit{display:flex;align-items:center;gap:6px}
@@ -129,8 +131,33 @@ h2.section:first-child{margin-top:0}
 .subBtn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600}
 .subBtn:hover{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
 
+/* ---------- Metas do dia ---------- */
+.diaBar{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:14px}
+.diaBar button.nav{border:1px solid var(--line);background:var(--surface);border-radius:50%;width:34px;height:34px;font-size:16px;line-height:1}
+.diaLabel{font-family:var(--display);font-weight:700;font-size:16px;min-width:200px;text-align:center;text-transform:capitalize}
+.btnHoje{border:1px solid var(--primary);background:var(--primary-soft);color:var(--primary);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:700}
+.metaHero{background:linear-gradient(135deg,#8B5CF6 0%,#C061CB 60%,#FF5C9D 100%);color:#fff;border:none;box-shadow:0 8px 24px rgba(139,92,246,.35);display:flex;align-items:center;gap:16px}
+.metaHero .emoji{font-size:42px;line-height:1}
+.metaHero .info{flex:1}
+.metaHero .count{font-family:var(--display);font-weight:800;font-size:22px}
+.metaHero .msg{font-size:13px;color:rgba(255,255,255,.85);margin-top:2px}
+.metaHero .bar{background:rgba(255,255,255,.25);margin-top:10px}
+.metaHero .bar>span{background:linear-gradient(90deg,#FFC53D,#FFE29A)}
+.metaForm{display:flex;gap:10px;margin-top:14px}
+.metaForm input{flex:1;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--surface);outline:none;font-size:15px}
+.metaForm input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.metaForm button{background:linear-gradient(135deg,#8B5CF6,#7C3AED);color:#fff;border:none;border-radius:12px;padding:0 20px;font-weight:700;font-size:15px;box-shadow:0 4px 12px rgba(139,92,246,.3)}
+.metaItem{display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px dashed var(--line)}
+.metaItem:last-child{border-bottom:none}
+.metaCheck{width:28px;height:28px;border-radius:10px;border:2px solid var(--line);background:var(--surface);font-size:15px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;flex:none;transition:all .15s}
+.metaCheck:hover{border-color:var(--income)}
+.metaItem.done .metaCheck{background:linear-gradient(135deg,#00C87B,#00A86B);border-color:#00A86B}
+.metaTxt{flex:1;font-weight:600;min-width:0;overflow-wrap:break-word}
+.metaItem.done .metaTxt{text-decoration:line-through;color:var(--muted)}
+
 /* ---------- Modal / toast / fab ---------- */
-.fab{position:fixed;right:22px;bottom:22px;z-index:40;background:var(--primary);color:#fff;border:none;border-radius:999px;width:58px;height:58px;font-size:28px;box-shadow:0 8px 24px rgba(23,87,59,.35)}
+.fab{position:fixed;right:22px;bottom:22px;z-index:40;background:linear-gradient(135deg,#FF8A3C,#FF5C4D);color:#fff;border:none;border-radius:999px;width:58px;height:58px;font-size:28px;box-shadow:0 8px 24px rgba(255,92,77,.45);transition:transform .15s}
+.fab:hover{transform:scale(1.08) rotate(90deg)}
 .modalWrap{position:fixed;inset:0;background:rgba(21,32,25,.45);display:flex;align-items:flex-end;justify-content:center;z-index:50}
 @media(min-width:640px){.modalWrap{align-items:center}}
 .modal{background:var(--surface);border-radius:20px 20px 0 0;padding:22px;width:100%;max-width:460px;max-height:88dvh;overflow:auto}
@@ -173,10 +200,11 @@ canvas{max-width:100%}
       <button id="nextMonth" aria-label="Próximo mês">›</button>
     </div>
     <nav class="tabs">
-      <button data-tab="dash" class="active">Dashboard</button>
-      <button data-tab="tx">Lançamentos</button>
-      <button data-tab="budget">Orçamento</button>
-      <button data-tab="subs">Assinaturas</button>
+      <button data-tab="dash" class="active">📊 Dashboard</button>
+      <button data-tab="tx">💸 Lançamentos</button>
+      <button data-tab="budget">🎯 Orçamento</button>
+      <button data-tab="subs">🔁 Assinaturas</button>
+      <button data-tab="metas">✅ Metas do dia</button>
     </nav>
   </header>
 
@@ -224,6 +252,30 @@ canvas{max-width:100%}
       <h2 class="section">Suas assinaturas</h2>
       <div class="card txList" id="subList"><div class="empty">Nenhuma assinatura cadastrada.</div></div>
       <div style="margin-top:14px"><button class="btnGhost" id="btnAddSub">+ Nova assinatura</button></div>
+    </section>
+
+    <!-- ===== Metas do dia ===== -->
+    <section id="tab-metas" class="hidden">
+      <div class="diaBar">
+        <button class="nav" id="prevDia" aria-label="Dia anterior">‹</button>
+        <div class="diaLabel" id="diaLabel"></div>
+        <button class="nav" id="nextDia" aria-label="Próximo dia">›</button>
+        <button class="btnHoje" id="btnHojeDia">Hoje</button>
+      </div>
+      <div class="card metaHero">
+        <div class="emoji" id="metaEmoji">📝</div>
+        <div class="info">
+          <div class="count" id="metaCount">Nenhuma meta ainda</div>
+          <div class="msg" id="metaMsg">Adicione o que você precisa fazer hoje!</div>
+          <div class="bar"><span id="metaBar" style="width:0%"></span></div>
+        </div>
+      </div>
+      <form class="metaForm" id="metaForm">
+        <input id="metaInput" placeholder="O que você precisa fazer hoje?" maxlength="120" autocomplete="off">
+        <button type="submit">+ Adicionar</button>
+      </form>
+      <h2 class="section">Suas metas</h2>
+      <div class="card" id="metaList"><div class="empty">Nenhuma meta para este dia. Adicione a primeira! ✨</div></div>
     </section>
   </main>
 
@@ -287,7 +339,7 @@ const firebaseConfig = {
 /* Categorias padrão (edite à vontade) */
 const CATS_DESPESA = ["Moradia","Mercado","Restaurantes","Transporte","Saúde","Esportes","Pets","Lazer","Assinaturas","Educação","Viagem","Outros"];
 const CATS_RECEITA = ["Salário","Extra","Investimentos","Outros"];
-const CAT_COLORS = ["#17573B","#C7522F","#B8860B","#2E6F95","#7D5BA6","#1E8A5B","#A4553B","#4E6E58","#8C6A3F","#3F6C8C","#946B8C","#5E5E5E"];
+const CAT_COLORS = ["#00A86B","#FF5C4D","#FFAA00","#2D9CDB","#8B5CF6","#00C4B4","#FF7A00","#EC4899","#84CC16","#0EA5E9","#F43F5E","#6366F1"];
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
@@ -297,17 +349,26 @@ const db = firebase.firestore();
 const state = {
   uid:null, nome:"",
   mes: mesAtual(),              // "YYYY-MM"
+  dia: hojeISO(),               // "YYYY-MM-DD" (aba Metas)
   txs: [],                      // lançamentos do mês
   orcamento: {},                // {categoria: centavos}
   assinaturas: [],
+  metas: [],                    // metas do dia selecionado
   trend: {},                    // {"YYYY-MM": {rec, desp}}
   filtroCat: null,
-  unsubTx:null, unsubOrc:null, unsubSubs:null,
+  unsubTx:null, unsubOrc:null, unsubSubs:null, unsubMetas:null,
   charts:{cat:null, trend:null},
 };
 
 /* ---------------- Utilidades ---------------- */
 function mesAtual(){ const d=new Date(); return d.toISOString().slice(0,7); }
+function isoLocal(dt){ return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`; }
+function hojeISO(){ return isoLocal(new Date()); }
+function shiftDia(d, delta){
+  const dt=new Date(d+'T12:00');
+  dt.setDate(dt.getDate()+delta);
+  return isoLocal(dt);
+}
 function fmt(cents){ return (cents/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
 function parseValor(str){
   const n = parseFloat(String(str).replace(/\./g,'').replace(',','.'));
@@ -352,10 +413,11 @@ auth.onAuthStateChanged(user=>{
     document.getElementById('appView').classList.remove('hidden');
     carregarMes();
     escutarAssinaturas();
+    escutarMetas();
     carregarTendencia();
   }else{
     state.uid=null;
-    if(state.unsubTx)state.unsubTx(); if(state.unsubOrc)state.unsubOrc(); if(state.unsubSubs)state.unsubSubs();
+    if(state.unsubTx)state.unsubTx(); if(state.unsubOrc)state.unsubOrc(); if(state.unsubSubs)state.unsubSubs(); if(state.unsubMetas)state.unsubMetas();
     document.getElementById('appView').classList.add('hidden');
     document.getElementById('loginView').classList.remove('hidden');
   }
@@ -369,7 +431,7 @@ document.querySelectorAll('nav.tabs button').forEach(b=>{
   b.onclick=()=>{
     document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('active'));
     b.classList.add('active');
-    ['dash','tx','budget','subs'].forEach(t=>
+    ['dash','tx','budget','subs','metas'].forEach(t=>
       document.getElementById('tab-'+t).classList.toggle('hidden', t!==b.dataset.tab));
   };
 });
@@ -472,8 +534,8 @@ function renderTrendChart(){
   state.charts.trend=new Chart(document.getElementById('chartTrend'),{
     type:'bar',
     data:{labels:lbl,datasets:[
-      {label:'Receitas',data:meses.map(m=>state.trend[m].rec/100),backgroundColor:'#1E8A5B',borderRadius:6},
-      {label:'Despesas',data:meses.map(m=>state.trend[m].desp/100),backgroundColor:'#C7522F',borderRadius:6},
+      {label:'Receitas',data:meses.map(m=>state.trend[m].rec/100),backgroundColor:'#00C87B',borderRadius:6},
+      {label:'Despesas',data:meses.map(m=>state.trend[m].desp/100),backgroundColor:'#FF5C4D',borderRadius:6},
     ]},
     options:{maintainAspectRatio:false,
       plugins:{legend:{labels:{boxWidth:12,font:{family:'Schibsted Grotesk'}}},
@@ -588,6 +650,66 @@ function renderSubs(){
     };
   });
 }
+
+/* ---------------- Metas do dia ---------------- */
+function diaLabelTxt(d){
+  const txt=new Date(d+'T12:00').toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  return d===hojeISO() ? 'Hoje · '+txt : txt;
+}
+function escutarMetas(){
+  if(state.unsubMetas)state.unsubMetas();
+  document.getElementById('diaLabel').textContent=diaLabelTxt(state.dia);
+  state.unsubMetas = col('metas').where('data','==',state.dia)
+    .onSnapshot(snap=>{
+      state.metas = snap.docs.map(d=>({id:d.id,...d.data()}))
+        .sort((a,b)=>((a.criadoEm&&a.criadoEm.seconds)||0)-((b.criadoEm&&b.criadoEm.seconds)||0));
+      renderMetas();
+    });
+}
+function renderMetas(){
+  const total=state.metas.length;
+  const feitas=state.metas.filter(m=>m.feita).length;
+  const pct = total ? Math.round(feitas/total*100) : 0;
+  document.getElementById('metaCount').textContent = total ? `${feitas} de ${total} concluídas` : 'Nenhuma meta ainda';
+  document.getElementById('metaBar').style.width = pct+'%';
+  document.getElementById('metaEmoji').textContent = !total ? '📝' : feitas===total ? '🎉' : pct>=50 ? '💪' : '🚀';
+  document.getElementById('metaMsg').textContent =
+    !total ? 'Adicione o que você precisa fazer hoje!' :
+    feitas===total ? 'Todas concluídas! Você mandou muito bem!' :
+    pct>=50 ? 'Metade do caminho! Continue assim!' : 'Bora! Uma meta de cada vez.';
+
+  const box=document.getElementById('metaList');
+  box.innerHTML = total ? state.metas.map(m=>`
+    <div class="metaItem ${m.feita?'done':''}" data-id="${m.id}">
+      <button class="metaCheck" title="${m.feita?'Desmarcar':'Concluir'}">${m.feita?'✓':''}</button>
+      <div class="metaTxt">${esc(m.texto)}</div>
+      <button class="txDel" title="Excluir">✕</button>
+    </div>`).join('') : '<div class="empty">Nenhuma meta para este dia. Adicione a primeira! ✨</div>';
+
+  box.querySelectorAll('.metaItem').forEach(el=>{
+    const id=el.dataset.id;
+    const m=state.metas.find(x=>x.id===id);
+    el.querySelector('.metaCheck').onclick=async ()=>{
+      await col('metas').doc(id).update({feita:!m.feita});
+      if(!m.feita) toast('Meta concluída! 🎉');
+    };
+    el.querySelector('.txDel').onclick=async ()=>{
+      if(confirm('Excluir esta meta?')){ await col('metas').doc(id).delete(); toast('Meta excluída'); }
+    };
+  });
+}
+document.getElementById('metaForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const inp=document.getElementById('metaInput');
+  const texto=inp.value.trim();
+  if(!texto) return;
+  await col('metas').add({texto, data:state.dia, feita:false,
+    criadoEm:firebase.firestore.FieldValue.serverTimestamp()});
+  inp.value=''; inp.focus();
+});
+document.getElementById('prevDia').onclick=()=>{ state.dia=shiftDia(state.dia,-1); escutarMetas(); };
+document.getElementById('nextDia').onclick=()=>{ state.dia=shiftDia(state.dia, 1); escutarMetas(); };
+document.getElementById('btnHojeDia').onclick=()=>{ state.dia=hojeISO(); escutarMetas(); };
 
 /* ---------------- Modais ---------------- */
 let txTipo='despesa';
