@@ -41,7 +41,7 @@ try{
   const {VRMLoaderPlugin,VRMUtils}=await import('https://esm.sh/@pixiv/three-vrm@3.4.1?deps=three@0.170.0');
 
   const W=Math.min(stage.clientWidth,760), H=478;
-  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
   renderer.setSize(W,H); renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
   renderer.outputColorSpace=THREE.SRGBColorSpace;
   renderer.domElement.style.touchAction='none';
@@ -67,7 +67,7 @@ try{
     status.textContent='Baixando modelo… 0%';
     try{
       const gltf=await loader.loadAsync(
-        'https://cdn.jsdelivr.net/gh/madjin/vrm-samples@master/vroid/stable/'+nome+'.vrm',
+        'https://cdn.jsdelivr.net/gh/madjin/vrm-samples@master/vroid/'+(new URLSearchParams(location.search).get('d')||'stable')+'/'+nome+'.vrm',
         ev=>{ if(ev.total) status.textContent='Baixando modelo… '+Math.round(ev.loaded/ev.total*100)+'%'; }
       );
       vrm=gltf.userData.vrm;
@@ -97,7 +97,18 @@ try{
     renderer.render(scene,cam);
   })();
 
-  carregar('AvatarSample_B');
+  window.__carregar=carregar;
+  window.__snap=(ry,largura)=>{
+    if(!vrm) return null;
+    vrm.scene.rotation.y=(ry===undefined?Math.PI:ry);
+    vrm.update(0.016);
+    renderer.render(scene,cam);
+    const src=renderer.domElement, w=largura||150;
+    const c=document.createElement('canvas'); c.width=w; c.height=Math.round(src.height/src.width*w);
+    c.getContext('2d').drawImage(src,0,0,c.width,c.height);
+    return c.toDataURL('image/jpeg',0.7).split(',')[1];
+  };
+  carregar(new URLSearchParams(location.search).get('m')||'AvatarSample_B');
 }catch(e){ status.textContent='Não foi possível iniciar o 3D: '+e.message; }
 </script>
 </body>
