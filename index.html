@@ -143,10 +143,17 @@ h2.section:first-child{margin-top:0}
 .metaHero .msg{font-size:13px;color:rgba(255,255,255,.85);margin-top:2px}
 .metaHero .bar{background:rgba(255,255,255,.25);margin-top:10px}
 .metaHero .bar>span{background:linear-gradient(90deg,#FFC53D,#FFE29A)}
-.metaForm{display:flex;gap:10px;margin-top:14px}
-.metaForm input{flex:1;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--surface);outline:none;font-size:15px}
+.metaForm{display:grid;gap:12px;margin-top:14px}
+.metaForm input{border:1px solid var(--line);border-radius:12px;padding:11px 14px;background:#FFFDF8;outline:none;font-size:15px;width:100%}
 .metaForm input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
-.metaForm button{background:linear-gradient(135deg,#8B5CF6,#7C3AED);color:#fff;border:none;border-radius:12px;padding:0 20px;font-weight:700;font-size:15px;box-shadow:0 4px 12px rgba(139,92,246,.3)}
+.metaFormRow{display:flex;gap:10px;align-items:flex-end}
+.metaFormRow .field{flex:1}
+.btnAddMeta{background:linear-gradient(135deg,#8B5CF6,#7C3AED);color:#fff;border:none;border-radius:12px;padding:12px 20px;font-weight:700;font-size:15px;box-shadow:0 4px 12px rgba(139,92,246,.3);white-space:nowrap}
+.diasRow{display:flex;gap:6px;flex-wrap:wrap}
+.diaChip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:700;color:var(--muted);transition:all .12s}
+.diaChip.on{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 3px 10px rgba(139,92,246,.3)}
+.horaBadge{font-family:var(--mono);font-size:12px;font-weight:600;background:var(--warn-soft);color:#B45309;border-radius:999px;padding:4px 10px;white-space:nowrap}
+.metaDias{font-size:12px;color:var(--muted);font-weight:500;margin-top:1px}
 .metaItem{display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px dashed var(--line)}
 .metaItem:last-child{border-bottom:none}
 .metaCheck{width:28px;height:28px;border-radius:10px;border:2px solid var(--line);background:var(--surface);font-size:15px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;flex:none;transition:all .15s}
@@ -270,12 +277,28 @@ canvas{max-width:100%}
           <div class="bar"><span id="metaBar" style="width:0%"></span></div>
         </div>
       </div>
-      <form class="metaForm" id="metaForm">
-        <input id="metaInput" placeholder="O que você precisa fazer hoje?" maxlength="120" autocomplete="off">
-        <button type="submit">+ Adicionar</button>
-      </form>
       <h2 class="section">Suas metas</h2>
-      <div class="card" id="metaList"><div class="empty">Nenhuma meta para este dia. Adicione a primeira! ✨</div></div>
+      <div class="card" id="metaList"><div class="empty">Nenhuma meta programada para este dia. Crie uma abaixo! ✨</div></div>
+      <h2 class="section">Programar nova meta</h2>
+      <form class="card metaForm" id="metaForm">
+        <input id="metaInput" placeholder="Ex.: passear com o cachorro, ler 20 páginas…" maxlength="120" autocomplete="off">
+        <div class="field"><label>Repetir em quais dias?</label>
+          <div class="diasRow" id="diasRow">
+            <button type="button" class="diaChip" id="chipTodos">✨ Todos os dias</button>
+            <button type="button" class="diaChip" data-d="1">Seg</button>
+            <button type="button" class="diaChip" data-d="2">Ter</button>
+            <button type="button" class="diaChip" data-d="3">Qua</button>
+            <button type="button" class="diaChip" data-d="4">Qui</button>
+            <button type="button" class="diaChip" data-d="5">Sex</button>
+            <button type="button" class="diaChip" data-d="6">Sáb</button>
+            <button type="button" class="diaChip" data-d="0">Dom</button>
+          </div>
+        </div>
+        <div class="metaFormRow">
+          <div class="field"><label>Horário (opcional)</label><input type="time" id="metaHora"></div>
+          <button type="submit" class="btnAddMeta">+ Programar</button>
+        </div>
+      </form>
     </section>
   </main>
 
@@ -353,10 +376,11 @@ const state = {
   txs: [],                      // lançamentos do mês
   orcamento: {},                // {categoria: centavos}
   assinaturas: [],
-  metas: [],                    // metas do dia selecionado
+  rotinas: [],                  // metas programadas (recorrentes por dia da semana)
+  metasFeitas: {},              // {rotinaId:true} — status do dia selecionado
   trend: {},                    // {"YYYY-MM": {rec, desp}}
   filtroCat: null,
-  unsubTx:null, unsubOrc:null, unsubSubs:null, unsubMetas:null,
+  unsubTx:null, unsubOrc:null, unsubSubs:null, unsubRotinas:null, unsubMetaStatus:null,
   charts:{cat:null, trend:null},
 };
 
@@ -413,11 +437,13 @@ auth.onAuthStateChanged(user=>{
     document.getElementById('appView').classList.remove('hidden');
     carregarMes();
     escutarAssinaturas();
-    escutarMetas();
+    escutarRotinas();
+    escutarDiaMetas();
     carregarTendencia();
   }else{
     state.uid=null;
-    if(state.unsubTx)state.unsubTx(); if(state.unsubOrc)state.unsubOrc(); if(state.unsubSubs)state.unsubSubs(); if(state.unsubMetas)state.unsubMetas();
+    if(state.unsubTx)state.unsubTx(); if(state.unsubOrc)state.unsubOrc(); if(state.unsubSubs)state.unsubSubs();
+    if(state.unsubRotinas)state.unsubRotinas(); if(state.unsubMetaStatus)state.unsubMetaStatus();
     document.getElementById('appView').classList.add('hidden');
     document.getElementById('loginView').classList.remove('hidden');
   }
@@ -651,65 +677,116 @@ function renderSubs(){
   });
 }
 
-/* ---------------- Metas do dia ---------------- */
+/* ---------------- Metas do dia (rotinas programáveis) ---------------- */
+const DIAS_SEMANA=['dom','seg','ter','qua','qui','sex','sáb'];
+let novaDias=new Set();
+
 function diaLabelTxt(d){
   const txt=new Date(d+'T12:00').toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
   return d===hojeISO() ? 'Hoje · '+txt : txt;
 }
-function escutarMetas(){
-  if(state.unsubMetas)state.unsubMetas();
+function diasResumo(dias){
+  if(dias.length===7) return 'todos os dias';
+  return [1,2,3,4,5,6,0].filter(d=>dias.includes(d)).map(d=>DIAS_SEMANA[d]).join(' · ');
+}
+function escutarRotinas(){
+  if(state.unsubRotinas)state.unsubRotinas();
+  state.unsubRotinas = col('rotinas').onSnapshot(snap=>{
+    state.rotinas = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderMetas();
+  });
+}
+function escutarDiaMetas(){
+  if(state.unsubMetaStatus)state.unsubMetaStatus();
   document.getElementById('diaLabel').textContent=diaLabelTxt(state.dia);
-  state.unsubMetas = col('metas').where('data','==',state.dia)
-    .onSnapshot(snap=>{
-      state.metas = snap.docs.map(d=>({id:d.id,...d.data()}))
-        .sort((a,b)=>((a.criadoEm&&a.criadoEm.seconds)||0)-((b.criadoEm&&b.criadoEm.seconds)||0));
-      renderMetas();
+  state.unsubMetaStatus = col('metasStatus').doc(state.dia).onSnapshot(doc=>{
+    state.metasFeitas = doc.exists ? (doc.data().feitas||{}) : {};
+    renderMetas();
+  });
+}
+function rotinasDoDia(){
+  const dw=new Date(state.dia+'T12:00').getDay();
+  return state.rotinas.filter(r=>Array.isArray(r.dias)&&r.dias.includes(dw))
+    .sort((a,b)=>{
+      if(a.hora&&b.hora) return a.hora.localeCompare(b.hora);
+      if(a.hora) return -1;
+      if(b.hora) return 1;
+      return ((a.criadoEm&&a.criadoEm.seconds)||0)-((b.criadoEm&&b.criadoEm.seconds)||0);
     });
 }
 function renderMetas(){
-  const total=state.metas.length;
-  const feitas=state.metas.filter(m=>m.feita).length;
+  const rotinas=rotinasDoDia();
+  const total=rotinas.length;
+  const feitas=rotinas.filter(r=>state.metasFeitas[r.id]).length;
   const pct = total ? Math.round(feitas/total*100) : 0;
-  document.getElementById('metaCount').textContent = total ? `${feitas} de ${total} concluídas` : 'Nenhuma meta ainda';
+  document.getElementById('metaCount').textContent = total ? `${feitas} de ${total} concluídas` : 'Nenhuma meta neste dia';
   document.getElementById('metaBar').style.width = pct+'%';
   document.getElementById('metaEmoji').textContent = !total ? '📝' : feitas===total ? '🎉' : pct>=50 ? '💪' : '🚀';
   document.getElementById('metaMsg').textContent =
-    !total ? 'Adicione o que você precisa fazer hoje!' :
+    !total ? 'Programe suas metas escolhendo os dias da semana!' :
     feitas===total ? 'Todas concluídas! Você mandou muito bem!' :
     pct>=50 ? 'Metade do caminho! Continue assim!' : 'Bora! Uma meta de cada vez.';
 
   const box=document.getElementById('metaList');
-  box.innerHTML = total ? state.metas.map(m=>`
-    <div class="metaItem ${m.feita?'done':''}" data-id="${m.id}">
-      <button class="metaCheck" title="${m.feita?'Desmarcar':'Concluir'}">${m.feita?'✓':''}</button>
-      <div class="metaTxt">${esc(m.texto)}</div>
+  box.innerHTML = total ? rotinas.map(r=>{
+    const done=!!state.metasFeitas[r.id];
+    return `<div class="metaItem ${done?'done':''}" data-id="${r.id}">
+      <button class="metaCheck" title="${done?'Desmarcar':'Concluir'}">${done?'✓':''}</button>
+      <div class="metaTxt">${esc(r.texto)}<div class="metaDias">${diasResumo(r.dias||[])}</div></div>
+      ${r.hora?`<span class="horaBadge">🕐 ${esc(r.hora)}</span>`:''}
       <button class="txDel" title="Excluir">✕</button>
-    </div>`).join('') : '<div class="empty">Nenhuma meta para este dia. Adicione a primeira! ✨</div>';
+    </div>`;
+  }).join('') : '<div class="empty">Nenhuma meta programada para este dia. Crie uma abaixo! ✨</div>';
 
   box.querySelectorAll('.metaItem').forEach(el=>{
     const id=el.dataset.id;
-    const m=state.metas.find(x=>x.id===id);
     el.querySelector('.metaCheck').onclick=async ()=>{
-      await col('metas').doc(id).update({feita:!m.feita});
-      if(!m.feita) toast('Meta concluída! 🎉');
+      const novo=!state.metasFeitas[id];
+      await col('metasStatus').doc(state.dia).set({feitas:{[id]:novo}},{merge:true});
+      if(novo) toast('Meta concluída! 🎉');
     };
     el.querySelector('.txDel').onclick=async ()=>{
-      if(confirm('Excluir esta meta?')){ await col('metas').doc(id).delete(); toast('Meta excluída'); }
+      if(confirm('Excluir esta meta? Ela sai de todos os dias da semana.')){
+        await col('rotinas').doc(id).delete(); toast('Meta excluída');
+      }
     };
   });
 }
+function renderDiaChips(){
+  document.querySelectorAll('.diaChip[data-d]').forEach(ch=>
+    ch.classList.toggle('on', novaDias.has(Number(ch.dataset.d))));
+  document.getElementById('chipTodos').classList.toggle('on', novaDias.size===7);
+}
+document.querySelectorAll('.diaChip[data-d]').forEach(ch=>{
+  ch.onclick=()=>{
+    const d=Number(ch.dataset.d);
+    novaDias.has(d) ? novaDias.delete(d) : novaDias.add(d);
+    renderDiaChips();
+  };
+});
+document.getElementById('chipTodos').onclick=()=>{
+  novaDias = novaDias.size===7 ? new Set() : new Set([0,1,2,3,4,5,6]);
+  renderDiaChips();
+};
 document.getElementById('metaForm').addEventListener('submit', async e=>{
   e.preventDefault();
   const inp=document.getElementById('metaInput');
   const texto=inp.value.trim();
-  if(!texto) return;
-  await col('metas').add({texto, data:state.dia, feita:false,
-    criadoEm:firebase.firestore.FieldValue.serverTimestamp()});
-  inp.value=''; inp.focus();
+  if(!texto){ toast('Escreva a meta primeiro'); return; }
+  if(!novaDias.size){ toast('Escolha pelo menos um dia da semana'); return; }
+  await col('rotinas').add({
+    texto, dias:[...novaDias].sort((a,b)=>a-b),
+    hora: document.getElementById('metaHora').value || null,
+    criadoEm:firebase.firestore.FieldValue.serverTimestamp()
+  });
+  inp.value=''; document.getElementById('metaHora').value='';
+  novaDias=new Set(); renderDiaChips();
+  toast('Meta programada! 📅');
+  inp.focus();
 });
-document.getElementById('prevDia').onclick=()=>{ state.dia=shiftDia(state.dia,-1); escutarMetas(); };
-document.getElementById('nextDia').onclick=()=>{ state.dia=shiftDia(state.dia, 1); escutarMetas(); };
-document.getElementById('btnHojeDia').onclick=()=>{ state.dia=hojeISO(); escutarMetas(); };
+document.getElementById('prevDia').onclick=()=>{ state.dia=shiftDia(state.dia,-1); escutarDiaMetas(); };
+document.getElementById('nextDia').onclick=()=>{ state.dia=shiftDia(state.dia, 1); escutarDiaMetas(); };
+document.getElementById('btnHojeDia').onclick=()=>{ state.dia=hojeISO(); escutarDiaMetas(); };
 
 /* ---------------- Modais ---------------- */
 let txTipo='despesa';
