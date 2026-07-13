@@ -143,23 +143,6 @@ h2.section:first-child{margin-top:0}
 #toast.show{opacity:1}
 canvas{max-width:100%}
 .chartBox{height:260px;position:relative}
-
-/* ---------- Herói 3D (VRM) ---------- */
-.heroStageCard{padding:0;overflow:hidden}
-#heroStage{height:420px;display:flex;align-items:center;justify-content:center}
-#heroStage canvas{display:block}
-#heroStatus{color:var(--muted);font-size:14px;text-align:center;padding:16px}
-.heroNota{font-size:12px;color:var(--muted);margin:2px 0 14px}
-.optGroup{margin-bottom:16px}
-.optGroup>label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px}
-.optRow{display:flex;gap:8px;flex-wrap:wrap}
-.optBtn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 13px;font-weight:600;font-size:13px;color:var(--muted)}
-.optBtn.active{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
-.swatch{width:32px;height:32px;border-radius:50%;border:2px solid var(--line);padding:0}
-.swatch.active{border-color:var(--ink);box-shadow:0 0 0 3px var(--primary-soft)}
-.headerAvatar{display:block;width:24px;height:24px}
-.headerAvatar img{width:24px;height:24px;border-radius:50%;object-fit:cover;display:block;background:var(--primary-soft)}
-.headerAvatarIcone{font-size:16px;line-height:24px}
 </style>
 </head>
 <body>
@@ -182,7 +165,7 @@ canvas{max-width:100%}
   <header class="app">
     <div class="headerRow">
       <div class="brand">Cofre</div>
-      <div class="userChip"><span class="headerAvatar" id="headerAvatar"></span><b id="userName"></b><button id="btnLogout">sair</button></div>
+      <div class="userChip"><b id="userName"></b><button id="btnLogout">sair</button></div>
     </div>
     <div class="monthBar">
       <button id="prevMonth" aria-label="Mês anterior">‹</button>
@@ -194,7 +177,6 @@ canvas{max-width:100%}
       <button data-tab="tx">Lançamentos</button>
       <button data-tab="budget">Orçamento</button>
       <button data-tab="subs">Assinaturas</button>
-      <button data-tab="hero">Herói</button>
     </nav>
   </header>
 
@@ -242,22 +224,6 @@ canvas{max-width:100%}
       <h2 class="section">Suas assinaturas</h2>
       <div class="card txList" id="subList"><div class="empty">Nenhuma assinatura cadastrada.</div></div>
       <div style="margin-top:14px"><button class="btnGhost" id="btnAddSub">+ Nova assinatura</button></div>
-    </section>
-
-    <!-- ===== Herói 3D (VRM) ===== -->
-    <section id="tab-hero" class="hidden">
-      <div class="card heroStageCard">
-        <div id="heroStage"><div id="heroStatus">Carregando…</div></div>
-      </div>
-      <div class="card" style="margin-top:14px">
-        <div class="optGroup"><label>Classe</label><div class="optRow" id="optClasse"></div></div>
-        <div class="optGroup"><label>Cor do cabelo</label><div class="optRow" id="optCabelo"></div></div>
-        <div class="optGroup"><label>Cor da roupa</label><div class="optRow" id="optRoupa"></div></div>
-        <div class="optGroup"><label>Cor dos olhos</label><div class="optRow" id="optOlhos"></div></div>
-        <div class="optGroup"><label>Tom de pele</label><div class="optRow" id="optPele"></div></div>
-        <p class="heroNota">Arraste sobre o personagem para girar. Cada classe tem corpo e visual próprios; as cores pintam o modelo na hora.</p>
-        <button class="btnPrimary" id="btnSalvarAvatar" style="width:100%">Salvar herói</button>
-      </div>
     </section>
   </main>
 
@@ -387,7 +353,6 @@ auth.onAuthStateChanged(user=>{
     carregarMes();
     escutarAssinaturas();
     carregarTendencia();
-    carregarAvatar();
   }else{
     state.uid=null;
     if(state.unsubTx)state.unsubTx(); if(state.unsubOrc)state.unsubOrc(); if(state.unsubSubs)state.unsubSubs();
@@ -404,9 +369,8 @@ document.querySelectorAll('nav.tabs button').forEach(b=>{
   b.onclick=()=>{
     document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('active'));
     b.classList.add('active');
-    ['dash','tx','budget','subs','hero'].forEach(t=>
+    ['dash','tx','budget','subs'].forEach(t=>
       document.getElementById('tab-'+t).classList.toggle('hidden', t!==b.dataset.tab));
-    if(b.dataset.tab==='hero') initHero3D();
   };
 });
 
@@ -624,212 +588,6 @@ function renderSubs(){
     };
   });
 }
-
-/* ---------------- Herói 3D (formato VRM) ---------------- */
-const AV = {
-  /* Cada classe usa um modelo base (amostras públicas do VRoid, até os definitivos
-     do VRoid Studio) e uma paleta padrão que pinta os materiais do modelo. */
-  classes:{
-    lutador:   {nome:'Lutador',    icone:'⚔️', modelo:'AvatarSample_A',
-                cores:{cabelo:'#2b2b33', roupa:'#7a2e2e', olhos:'#3b2a1d', pele:'#ffffff'}},
-    mago:      {nome:'Mago',       icone:'🔮', modelo:'AvatarSample_B',
-                cores:{cabelo:'#7d5ba6', roupa:'#6b4d9e', olhos:'#7d5ba6', pele:'#ffffff'}},
-    arqueiro:  {nome:'Arqueiro',   icone:'🏹', modelo:'AvatarSample_C',
-                cores:{cabelo:'#7a4a2a', roupa:'#17573b', olhos:'#1e8a5b', pele:'#ffffff'}},
-    curandeiro:{nome:'Curandeiro', icone:'💚', modelo:'AvatarSample_B',
-                cores:{cabelo:'#c9a24b', roupa:'#ffffff', olhos:'#2e6f95', pele:'#ffffff'}},
-  },
-  /* As cores multiplicam a textura original ("#ffffff" = cor original do modelo) */
-  paletas:{
-    cabelo:['#ffffff','#2b2b33','#7a4a2a','#c9a24b','#b8442c','#7d5ba6','#4a7fb5','#3aa07a'],
-    roupa: ['#ffffff','#7a2e2e','#17573b','#2e5f8a','#6b4d9e','#b8860b','#444b52'],
-    olhos: ['#ffffff','#3b2a1d','#2e6f95','#1e8a5b','#7d5ba6','#a32d2d'],
-    pele:  ['#ffffff','#f0d6bd','#dbb08b','#b98a66','#8a5f42'],
-  },
-  urlModelo:n=>`https://cdn.jsdelivr.net/gh/madjin/vrm-samples@master/vroid/stable/${n}.vrm`,
-};
-
-let avatarCfg={classe:'lutador', cores:{...AV.classes.lutador.cores}, thumb:null};
-const h3={pronto:false, iniciando:false, carregando:false, vrm:null, modeloNaCena:null};
-
-async function initHero3D(){
-  if(h3.pronto || h3.iniciando) return;
-  h3.iniciando=true;
-  const st=document.getElementById('heroStatus');
-  st.textContent='Carregando o mundo 3D…';
-  try{
-    const THREE=await import('https://esm.sh/three@0.170.0');
-    const {GLTFLoader}=await import('https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js');
-    const {VRMLoaderPlugin,VRMUtils}=await import('https://esm.sh/@pixiv/three-vrm@3.4.1?deps=three@0.170.0');
-    h3.VRMUtils=VRMUtils; h3.THREE=THREE;
-
-    const stage=document.getElementById('heroStage');
-    const W=stage.clientWidth||640, H=stage.clientHeight||420;
-    h3.renderer=new THREE.WebGLRenderer({antialias:true, alpha:true, preserveDrawingBuffer:true});
-    h3.renderer.setSize(W,H);
-    h3.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
-    h3.renderer.outputColorSpace=THREE.SRGBColorSpace;
-    h3.renderer.domElement.style.touchAction='none';
-
-    h3.scene=new THREE.Scene();
-    h3.cam=new THREE.PerspectiveCamera(30,W/H,.1,50);
-    h3.cam.position.set(0,1.25,2.7); h3.cam.lookAt(0,.95,0);
-    const luz=new THREE.DirectionalLight(0xffffff,Math.PI*.9); luz.position.set(1,2,3);
-    h3.scene.add(luz, new THREE.AmbientLight(0xffffff,Math.PI*.35));
-
-    h3.loader=new GLTFLoader();
-    h3.loader.register(p=>new VRMLoaderPlugin(p));
-
-    let drag=false, lx=0;
-    h3.renderer.domElement.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX;});
-    window.addEventListener('pointermove',e=>{if(drag&&h3.vrm){h3.vrm.scene.rotation.y+=(e.clientX-lx)*.012;lx=e.clientX;}});
-    window.addEventListener('pointerup',()=>{drag=false;});
-
-    const clock=new THREE.Clock();
-    (function loop(){
-      requestAnimationFrame(loop);
-      const dt=clock.getDelta();
-      if(document.getElementById('tab-hero').classList.contains('hidden')) return;
-      if(h3.vrm){ h3.vrm.update(dt); if(!drag) h3.vrm.scene.rotation.y+=.004; }
-      h3.renderer.render(h3.scene,h3.cam);
-    })();
-
-    h3.pronto=true;
-    carregarModeloVRM(AV.classes[avatarCfg.classe].modelo);
-  }catch(e){ st.textContent='Não foi possível iniciar o 3D: '+e.message; }
-  h3.iniciando=false;
-}
-
-async function carregarModeloVRM(nome){
-  if(!h3.pronto || h3.carregando || h3.modeloNaCena===nome) return;
-  h3.carregando=true;
-  const stage=document.getElementById('heroStage'), st=document.getElementById('heroStatus');
-  if(h3.vrm){ h3.scene.remove(h3.vrm.scene); h3.VRMUtils.deepDispose(h3.vrm.scene); h3.vrm=null; h3.modeloNaCena=null; }
-  if(h3.renderer.domElement.parentNode===stage) stage.removeChild(h3.renderer.domElement);
-  stage.appendChild(st); st.style.display='block';
-  st.textContent='Baixando herói… 0%';
-  try{
-    const gltf=await h3.loader.loadAsync(AV.urlModelo(nome),
-      ev=>{ if(ev.total) st.textContent='Baixando herói… '+Math.min(100,Math.round(ev.loaded/ev.total*100))+'%'; });
-    h3.vrm=gltf.userData.vrm;
-    h3.VRMUtils.rotateVRM0(h3.vrm);
-    h3.vrm.scene.rotation.y=Math.PI;
-    const osso=n=>h3.vrm.humanoid && h3.vrm.humanoid.getNormalizedBoneNode(n);
-    if(osso('leftUpperArm')) osso('leftUpperArm').rotation.z=1.15;
-    if(osso('rightUpperArm')) osso('rightUpperArm').rotation.z=-1.15;
-    h3.scene.add(h3.vrm.scene);
-    h3.modeloNaCena=nome;
-    st.style.display='none';
-    stage.appendChild(h3.renderer.domElement);
-    aplicarCores();
-    h3.vrm.update(0.016);
-    gerarThumbAvatar();
-  }catch(e){ st.textContent='Erro ao baixar o modelo. Verifique a internet e tente de novo.'; }
-  h3.carregando=false;
-}
-
-/* Identifica o papel de cada material do VRoid pelo nome (convenção _HAIR, _CLOTH, _SKIN…) */
-function papelDoMaterial(nome){
-  const n=(nome||'').toUpperCase();
-  if(n.includes('IRIS')) return 'olhos';
-  if(n.includes('HAIR')) return 'cabelo';
-  if(n.includes('CLOTH')||n.includes('TOPS')||n.includes('BOTTOMS')||n.includes('SHOES')||n.includes('ACCESSORY')) return 'roupa';
-  if(n.includes('SKIN')||n.includes('FACE')) return 'pele';
-  return null;
-}
-
-function aplicarCores(){
-  if(!h3.vrm || !h3.THREE) return;
-  h3.vrm.scene.traverse(o=>{
-    if(!o.isMesh) return;
-    (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{
-      if(!m || !m.color) return;
-      const papel=papelDoMaterial(m.name);
-      if(!papel) return;
-      if(!m.userData.corBase) m.userData.corBase=m.color.clone();
-      m.color.copy(m.userData.corBase).multiply(new h3.THREE.Color(avatarCfg.cores[papel]||'#ffffff'));
-    });
-  });
-}
-
-function gerarThumbAvatar(){
-  try{
-    h3.renderer.render(h3.scene,h3.cam);
-    const src=h3.renderer.domElement;
-    const lado=Math.round(src.height*.38), sx=Math.round((src.width-lado)/2), sy=Math.round(src.height*.02);
-    const c=document.createElement('canvas'); c.width=64; c.height=64;
-    c.getContext('2d').drawImage(src,sx,sy,lado,lado,0,0,64,64);
-    avatarCfg.thumb=c.toDataURL('image/png');
-    atualizarHeaderAvatar();
-  }catch(e){ /* thumb é opcional */ }
-}
-
-function atualizarHeaderAvatar(){
-  const el=document.getElementById('headerAvatar');
-  el.innerHTML = avatarCfg.thumb
-    ? `<img src="${avatarCfg.thumb}" alt="avatar">`
-    : `<span class="headerAvatarIcone">${AV.classes[avatarCfg.classe].icone}</span>`;
-}
-
-function montarOpcoesAvatar(){
-  document.getElementById('optClasse').innerHTML =
-    Object.entries(AV.classes).map(([k,v])=>`<button class="optBtn" data-v="${k}">${v.icone} ${v.nome}</button>`).join('');
-  document.getElementById('optClasse').querySelectorAll('button').forEach(b=>
-    b.onclick=()=>{
-      const cls=AV.classes[b.dataset.v];
-      avatarCfg.classe=b.dataset.v;
-      avatarCfg.cores={...cls.cores};
-      marcarOpcoesAvatar(); atualizarHeaderAvatar();
-      if(h3.modeloNaCena===cls.modelo){ aplicarCores(); gerarThumbAvatar(); }
-      else carregarModeloVRM(cls.modelo);
-    });
-
-  const grupos={optCabelo:'cabelo', optRoupa:'roupa', optOlhos:'olhos', optPele:'pele'};
-  Object.entries(grupos).forEach(([id,chave])=>{
-    const el=document.getElementById(id);
-    el.innerHTML=AV.paletas[chave].map(c=>
-      `<button class="swatch" data-c="${c}" style="background:${c}" aria-label="cor ${c}"></button>`).join('');
-    el.querySelectorAll('button').forEach(b=>
-      b.onclick=()=>{
-        avatarCfg.cores[chave]=b.dataset.c;
-        marcarOpcoesAvatar();
-        aplicarCores();
-        gerarThumbAvatar();
-      });
-  });
-}
-
-function marcarOpcoesAvatar(){
-  document.getElementById('optClasse').querySelectorAll('button').forEach(b=>
-    b.classList.toggle('active', b.dataset.v===avatarCfg.classe));
-  const grupos={optCabelo:'cabelo', optRoupa:'roupa', optOlhos:'olhos', optPele:'pele'};
-  Object.entries(grupos).forEach(([id,chave])=>
-    document.getElementById(id).querySelectorAll('button').forEach(b=>
-      b.classList.toggle('active', b.dataset.c===avatarCfg.cores[chave])));
-}
-
-async function carregarAvatar(){
-  try{
-    const doc=await col('perfil').doc('avatar').get();
-    if(doc.exists){
-      const d=doc.data();
-      if(d.classe && AV.classes[d.classe]) avatarCfg.classe=d.classe;
-      avatarCfg.cores={...AV.classes[avatarCfg.classe].cores, ...(d.cores||{})};
-      if(d.thumb) avatarCfg.thumb=d.thumb;
-    }
-  }catch(e){ /* mantém padrão */ }
-  atualizarHeaderAvatar();
-  marcarOpcoesAvatar();
-}
-
-document.getElementById('btnSalvarAvatar').onclick=async ()=>{
-  await col('perfil').doc('avatar').set(avatarCfg);
-  toast('Herói salvo! ⚔️');
-};
-
-montarOpcoesAvatar();
-marcarOpcoesAvatar();
-atualizarHeaderAvatar();
 
 /* ---------------- Modais ---------------- */
 let txTipo='despesa';
