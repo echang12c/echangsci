@@ -194,6 +194,31 @@ model-viewer{width:100%;height:280px;background:transparent;--poster-color:trans
 .bauReveal .glow-epico model-viewer{background:radial-gradient(circle,rgba(139,92,246,.22),transparent 70%)}
 .bauReveal .glow-raro model-viewer{background:radial-gradient(circle,rgba(45,156,219,.2),transparent 70%)}
 
+/* ---------- Importação CSV / edição / campos custom ---------- */
+.toolRow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.txItem{cursor:pointer}
+.txItem:hover{background:#FFFDF6}
+.payTag{font-size:11px;font-weight:700;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.txInfo .c{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.modal.wide{max-width:680px}
+.impHint{font-size:13px;color:var(--muted);margin-bottom:12px}
+.impMap{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px}
+@media(max-width:640px){.impMap{grid-template-columns:1fr}}
+.impMap.two{grid-template-columns:1fr 1fr}
+@media(max-width:640px){.impMap.two{grid-template-columns:1fr}}
+.chkLine{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;padding:11px 0;cursor:pointer}
+.impBulk{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 12px;padding:12px;background:#FAF6EC;border-radius:12px}
+@media(max-width:640px){.impBulk{grid-template-columns:1fr}}
+.impList{max-height:42dvh;overflow:auto;border:1px solid var(--line);border-radius:12px;margin-bottom:12px}
+.impRow{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;padding:10px 12px;border-bottom:1px solid var(--line);align-items:center}
+.impRow:last-child{border-bottom:none}
+.impRow.off{opacity:.4}
+.impRow .selRow{grid-column:2;display:flex;gap:6px;flex-wrap:wrap}
+.impRow select{border:1px solid var(--line);border-radius:8px;padding:4px 6px;font-size:12px;background:#FAFCFA}
+.campoItem{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line)}
+.campoItem:last-child{border-bottom:none}
+#camposList{margin-bottom:16px}
+
 /* ---------- Modal / toast / fab ---------- */
 .fab{position:fixed;right:22px;bottom:22px;z-index:40;background:linear-gradient(135deg,#FF8A3C,#FF5C4D);color:#fff;border:none;border-radius:999px;width:58px;height:58px;font-size:28px;box-shadow:0 8px 24px rgba(255,92,77,.45);transition:transform .15s}
 .fab:hover{transform:scale(1.08) rotate(90deg)}
@@ -270,6 +295,10 @@ canvas{max-width:100%}
 
     <!-- ===== Lançamentos ===== -->
     <section id="tab-tx" class="hidden">
+      <div class="toolRow">
+        <button class="btnGhost" id="btnImportCSV">📥 Importar CSV</button>
+        <button class="btnGhost" id="btnCampos">⚙️ Campos personalizados</button>
+      </div>
       <div class="chipRow" id="txFilter"></div>
       <div class="card txList" id="txList"><div class="empty">Nenhum lançamento neste mês. Toque em + para adicionar.</div></div>
     </section>
@@ -367,6 +396,13 @@ canvas{max-width:100%}
       <div class="field"><label>Descrição</label><input id="txDesc" placeholder="Ex.: mercado da semana" required></div>
       <div class="field"><label>Categoria</label><select id="txCat"></select></div>
       <div class="field"><label>Data</label><input type="date" id="txData" required></div>
+      <div class="field"><label>Forma de pagamento</label><select id="txPag">
+        <option value="">—</option>
+        <option value="credito">Cartão de crédito</option>
+        <option value="debito">Cartão de débito</option>
+        <option value="pix">PIX</option>
+      </select></div>
+      <div id="txCustomFields" style="display:contents"></div>
       <div class="modalActions">
         <button type="button" class="btnGhost" data-close>Cancelar</button>
         <button type="submit" class="btnPrimary">Salvar</button>
@@ -400,6 +436,72 @@ canvas{max-width:100%}
 <!-- ===== Modal ver pet ===== -->
 <div class="modalWrap hidden" id="petModal">
   <div class="modal bauReveal" id="petModalBody"></div>
+</div>
+
+<!-- ===== Modal importar CSV ===== -->
+<div class="modalWrap hidden" id="impModal">
+  <div class="modal wide">
+    <h3>Importar gastos (CSV)</h3>
+    <div id="impStep1">
+      <p class="impHint">Exporte o extrato ou a fatura em CSV no app do banco e escolha o arquivo aqui. Antes de importar você revisa cada linha e define o tipo, a categoria e a forma de pagamento.</p>
+      <input type="file" id="impFile" accept=".csv,text/csv,text/plain">
+      <div class="modalActions"><button type="button" class="btnGhost" data-close style="flex:1">Cancelar</button></div>
+    </div>
+    <div id="impStep2" class="hidden">
+      <div class="impMap">
+        <div class="field"><label>Coluna da data</label><select id="impColData"></select></div>
+        <div class="field"><label>Coluna da descrição</label><select id="impColDesc"></select></div>
+        <div class="field"><label>Coluna do valor</label><select id="impColValor"></select></div>
+      </div>
+      <div class="impMap two">
+        <label class="chkLine"><input type="checkbox" id="impHeader"> Primeira linha é cabeçalho</label>
+        <div class="field"><label>Despesa × receita</label><select id="impSinal">
+          <option value="neg">Valor negativo = despesa (extrato)</option>
+          <option value="pos">Valor positivo = despesa (fatura)</option>
+          <option value="todos">Importar tudo como despesa</option>
+        </select></div>
+      </div>
+      <div class="impBulk">
+        <div class="field"><label>Categoria p/ todas as linhas</label><select id="impBulkCat"></select></div>
+        <div class="field"><label>Pagamento p/ todas as linhas</label><select id="impBulkPag">
+          <option value="">— aplicar a todas —</option>
+          <option value="credito">Cartão de crédito</option>
+          <option value="debito">Cartão de débito</option>
+          <option value="pix">PIX</option>
+        </select></div>
+      </div>
+      <div class="impHint" id="impCount"></div>
+      <div class="impList" id="impList"></div>
+      <div class="modalActions">
+        <button type="button" class="btnGhost" data-close>Cancelar</button>
+        <button type="button" class="btnPrimary" id="btnImpConfirm">Importar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal campos personalizados ===== -->
+<div class="modalWrap hidden" id="camposModal">
+  <div class="modal">
+    <h3>Campos personalizados</h3>
+    <p class="impHint">Crie campos extras que aparecem em todo lançamento. Ex.: "Parcelas", "Quem gastou", "Vencimento"…</p>
+    <div id="camposList"></div>
+    <form id="campoForm">
+      <div class="field"><label>Nome do campo</label><input id="campoNome" maxlength="40" placeholder="Ex.: Quem gastou" required></div>
+      <div class="field"><label>Tipo de resposta</label><select id="campoTipo">
+        <option value="texto">Texto simples</option>
+        <option value="monetario">Monetário (R$)</option>
+        <option value="numero">Numérico</option>
+        <option value="data">Data</option>
+        <option value="opcoes">Opções pré-cadastradas</option>
+      </select></div>
+      <div class="field hidden" id="campoOpcoesBox"><label>Opções (separadas por vírgula)</label><input id="campoOpcoes" placeholder="Ex.: Eric, Ana, Casa"></div>
+      <div class="modalActions">
+        <button type="button" class="btnGhost" data-close>Fechar</button>
+        <button type="submit" class="btnPrimary">+ Criar campo</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <div id="toast"></div>
@@ -441,7 +543,8 @@ const state = {
   inventario: [],               // pets ganhos
   trend: {},                    // {"YYYY-MM": {rec, desp}}
   filtroCat: null,
-  unsubTx:null, unsubOrc:null, unsubSubs:null, unsubRotinas:null, unsubMetaStatus:null, unsubInv:null,
+  camposCustom: [],             // definições de campos personalizados
+  unsubTx:null, unsubOrc:null, unsubSubs:null, unsubRotinas:null, unsubMetaStatus:null, unsubInv:null, unsubCampos:null,
   charts:{cat:null, trend:null},
 };
 
@@ -501,11 +604,13 @@ auth.onAuthStateChanged(user=>{
     escutarRotinas();
     escutarDiaMetas();
     escutarInventario();
+    escutarCampos();
     carregarTendencia();
   }else{
     state.uid=null;
     if(state.unsubTx)state.unsubTx(); if(state.unsubOrc)state.unsubOrc(); if(state.unsubSubs)state.unsubSubs();
     if(state.unsubRotinas)state.unsubRotinas(); if(state.unsubMetaStatus)state.unsubMetaStatus(); if(state.unsubInv)state.unsubInv();
+    if(state.unsubCampos)state.unsubCampos();
     document.getElementById('appView').classList.add('hidden');
     document.getElementById('loginView').classList.remove('hidden');
   }
@@ -600,7 +705,7 @@ function renderDash(){
   const top=[...state.txs].filter(t=>t.tipo==='despesa').sort((a,b)=>b.valor-a.valor).slice(0,5);
   const box=document.getElementById('topGastos');
   box.innerHTML = top.length ? top.map(txHTML).join('') : '<div class="empty">Sem lançamentos ainda.</div>';
-  ligarDelete(box);
+  ligarAcoes(box);
 
   // gráfico categorias
   const labels=Object.keys(porCat).sort((a,b)=>porCat[b]-porCat[a]);
@@ -632,13 +737,29 @@ function renderTrendChart(){
   });
 }
 
+const PAG_LABEL={credito:'💳 Crédito', debito:'💳 Débito', pix:'⚡ PIX'};
+
+function customResumo(t){
+  if(!t.custom) return '';
+  return state.camposCustom
+    .filter(c=>t.custom[c.id]!==undefined && t.custom[c.id]!==null && t.custom[c.id]!=='')
+    .map(c=>{
+      const v=t.custom[c.id];
+      if(c.tipo==='monetario') return `${esc(c.nome)}: ${fmt(v)}`;
+      if(c.tipo==='data'){ const[,m,d]=String(v).split('-'); return `${esc(c.nome)}: ${d}/${m}`; }
+      return `${esc(c.nome)}: ${esc(v)}`;
+    }).join(' · ');
+}
+
 function txHTML(t){
   const [y,m,d]=t.data.split('-');
   const sinal=t.tipo==='receita'?'+':'−';
   const cls=t.tipo==='receita'?'pos':'neg';
-  return `<div class="txItem" data-id="${t.id}">
+  const cust=customResumo(t);
+  return `<div class="txItem" data-id="${t.id}" title="Toque para editar">
     <div class="txDate"><b>${d}</b>${new Date(y,m-1,d).toLocaleDateString('pt-BR',{month:'short'}).replace('.','')}</div>
-    <div class="txInfo"><div class="d">${esc(t.desc)}</div><div class="c">${esc(t.cat)}</div></div>
+    <div class="txInfo"><div class="d">${esc(t.desc)}</div>
+      <div class="c">${esc(t.cat)}${t.pagamento?` <span class="payTag">${PAG_LABEL[t.pagamento]||esc(t.pagamento)}</span>`:''}${cust?' · '+cust:''}</div></div>
     <div class="txVal ${cls}">${sinal} ${fmt(t.valor)}</div>
     <button class="txDel" title="Excluir">✕</button>
   </div>`;
@@ -656,13 +777,19 @@ function renderTx(){
   const list=document.getElementById('txList');
   const txs=state.filtroCat? state.txs.filter(t=>t.cat===state.filtroCat) : state.txs;
   list.innerHTML = txs.length ? txs.map(txHTML).join('') : '<div class="empty">Nenhum lançamento neste mês. Toque em + para adicionar.</div>';
-  ligarDelete(list);
+  ligarAcoes(list);
 }
 
-function ligarDelete(container){
-  container.querySelectorAll('.txDel').forEach(b=>{
-    b.onclick=async ()=>{
-      const id=b.closest('.txItem').dataset.id;
+function ligarAcoes(container){
+  container.querySelectorAll('.txItem').forEach(el=>{
+    const id=el.dataset.id;
+    el.onclick=e=>{
+      if(e.target.closest('.txDel')) return;
+      const t=state.txs.find(x=>x.id===id);
+      if(t) abrirTxModal(t);
+    };
+    el.querySelector('.txDel').onclick=async e=>{
+      e.stopPropagation();
       if(confirm('Excluir este lançamento?')){ await col('tx').doc(id).delete(); toast('Lançamento excluído'); }
     };
   });
@@ -972,18 +1099,125 @@ function renderPets(){
   });
 }
 
+/* ---------------- Campos personalizados ---------------- */
+const TIPO_CAMPO_LABEL={texto:'Texto simples',monetario:'Monetário (R$)',numero:'Numérico',data:'Data',opcoes:'Opções'};
+
+function escutarCampos(){
+  if(state.unsubCampos)state.unsubCampos();
+  state.unsubCampos = col('camposCustom').onSnapshot(snap=>{
+    state.camposCustom = snap.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>((a.criadoEm&&a.criadoEm.seconds)||0)-((b.criadoEm&&b.criadoEm.seconds)||0));
+    renderCamposModal();
+    renderTudo();
+  });
+}
+
+function renderCamposModal(){
+  const box=document.getElementById('camposList');
+  box.innerHTML = state.camposCustom.length ? state.camposCustom.map(c=>`
+    <div class="campoItem" data-id="${c.id}">
+      <div class="txInfo"><div class="d">${esc(c.nome)}</div>
+        <div class="c">${TIPO_CAMPO_LABEL[c.tipo]||esc(c.tipo)}${c.tipo==='opcoes'?': '+(c.opcoes||[]).map(esc).join(', '):''}</div></div>
+      <button class="txDel" title="Excluir">✕</button>
+    </div>`).join('') : '<div class="empty">Nenhum campo personalizado ainda.</div>';
+  box.querySelectorAll('.txDel').forEach(b=>{
+    b.onclick=async ()=>{
+      if(confirm('Excluir este campo? Os valores já preenchidos deixam de aparecer nos lançamentos.')){
+        await col('camposCustom').doc(b.closest('.campoItem').dataset.id).delete();
+        toast('Campo excluído');
+      }
+    };
+  });
+}
+
+document.getElementById('btnCampos').onclick=()=>document.getElementById('camposModal').classList.remove('hidden');
+document.getElementById('campoTipo').onchange=e=>
+  document.getElementById('campoOpcoesBox').classList.toggle('hidden', e.target.value!=='opcoes');
+document.getElementById('campoForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const nome=document.getElementById('campoNome').value.trim();
+  const tipo=document.getElementById('campoTipo').value;
+  if(!nome){ toast('Dê um nome ao campo'); return; }
+  let opcoes=null;
+  if(tipo==='opcoes'){
+    opcoes=document.getElementById('campoOpcoes').value.split(',').map(s=>s.trim()).filter(Boolean);
+    if(!opcoes.length){ toast('Cadastre pelo menos uma opção'); return; }
+  }
+  await col('camposCustom').add({nome, tipo, ...(opcoes?{opcoes}:{}),
+    criadoEm:firebase.firestore.FieldValue.serverTimestamp()});
+  document.getElementById('campoNome').value='';
+  document.getElementById('campoOpcoes').value='';
+  toast('Campo criado! Ele aparece em todo lançamento.');
+});
+
+function renderTxCustomFields(tx){
+  const box=document.getElementById('txCustomFields');
+  box.innerHTML = state.camposCustom.map(c=>{
+    const v = tx&&tx.custom ? tx.custom[c.id] : undefined;
+    const attrs=`data-campo="${c.id}" data-ctipo="${c.tipo}" data-cnome="${esc(c.nome)}"`;
+    let input;
+    if(c.tipo==='opcoes')
+      input=`<select ${attrs}><option value="">—</option>${(c.opcoes||[]).map(o=>`<option${v===o?' selected':''}>${esc(o)}</option>`).join('')}</select>`;
+    else if(c.tipo==='data')
+      input=`<input type="date" ${attrs} value="${v||''}">`;
+    else if(c.tipo==='numero')
+      input=`<input inputmode="decimal" ${attrs} value="${v!==undefined&&v!==null?v:''}">`;
+    else if(c.tipo==='monetario')
+      input=`<input inputmode="decimal" placeholder="0,00" ${attrs} value="${v!==undefined&&v!==null?(v/100).toFixed(2).replace('.',','):''}">`;
+    else
+      input=`<input maxlength="120" ${attrs} value="${v?esc(v):''}">`;
+    return `<div class="field"><label>${esc(c.nome)}</label>${input}</div>`;
+  }).join('');
+}
+
+function lerCustom(){
+  const custom={}; let erro=null;
+  document.querySelectorAll('#txCustomFields [data-campo]').forEach(el=>{
+    const id=el.dataset.campo, tipo=el.dataset.ctipo;
+    const raw=String(el.value||'').trim();
+    if(!raw) return;
+    if(tipo==='monetario'){
+      const c=parseValor(raw);
+      if(c===null){ erro=`Valor inválido no campo "${el.dataset.cnome}"`; return; }
+      custom[id]=c;
+    }else if(tipo==='numero'){
+      const n=parseFloat(raw.replace(',','.'));
+      if(isNaN(n)){ erro=`Número inválido no campo "${el.dataset.cnome}"`; return; }
+      custom[id]=n;
+    }else custom[id]=raw;
+  });
+  if(erro){ toast(erro); return undefined; }
+  return custom;
+}
+
 /* ---------------- Modais ---------------- */
 let txTipo='despesa';
+let editandoTx=null;
 function preencherCats(sel, tipo){
   const cats = tipo==='receita'? CATS_RECEITA : CATS_DESPESA;
   sel.innerHTML=cats.map(c=>`<option>${c}</option>`).join('');
 }
-function abrirTxModal(){
-  txTipo='despesa'; atualizarSeg();
-  preencherCats(document.getElementById('txCat'),'despesa');
-  const hoje=new Date().toISOString().slice(0,10);
-  document.getElementById('txData').value = hoje.slice(0,7)===state.mes ? hoje : state.mes+'-01';
-  document.getElementById('txValor').value=''; document.getElementById('txDesc').value='';
+function abrirTxModal(tx){
+  editandoTx = tx||null;
+  txTipo = tx? tx.tipo : 'despesa';
+  atualizarSeg();
+  const selCat=document.getElementById('txCat');
+  preencherCats(selCat, txTipo);
+  document.getElementById('txModalTitle').textContent = tx? 'Editar lançamento' : 'Novo lançamento';
+  if(tx){
+    if(![...selCat.options].some(o=>o.value===tx.cat)) selCat.add(new Option(tx.cat,tx.cat));
+    document.getElementById('txValor').value=(tx.valor/100).toFixed(2).replace('.',',');
+    document.getElementById('txDesc').value=tx.desc;
+    selCat.value=tx.cat;
+    document.getElementById('txData').value=tx.data;
+    document.getElementById('txPag').value=tx.pagamento||'';
+  }else{
+    const hoje=new Date().toISOString().slice(0,10);
+    document.getElementById('txData').value = hoje.slice(0,7)===state.mes ? hoje : state.mes+'-01';
+    document.getElementById('txValor').value=''; document.getElementById('txDesc').value='';
+    document.getElementById('txPag').value='';
+  }
+  renderTxCustomFields(tx);
   document.getElementById('txModal').classList.remove('hidden');
   document.getElementById('txValor').focus();
 }
@@ -995,23 +1229,34 @@ function atualizarSeg(){
 document.querySelectorAll('#txTypeSeg button').forEach(b=>{
   b.onclick=()=>{ txTipo=b.dataset.t; atualizarSeg(); preencherCats(document.getElementById('txCat'),txTipo); };
 });
-document.getElementById('fabAdd').onclick=abrirTxModal;
+document.getElementById('fabAdd').onclick=()=>abrirTxModal();
 
 document.getElementById('txForm').addEventListener('submit', async e=>{
   e.preventDefault();
   const valor=parseValor(document.getElementById('txValor').value);
   if(valor===null){ toast('Valor inválido'); return; }
+  const custom=lerCustom();
+  if(custom===undefined) return;
   const data=document.getElementById('txData').value;
-  await col('tx').add({
+  const docTx={
     tipo:txTipo, valor,
     desc:document.getElementById('txDesc').value.trim(),
     cat:document.getElementById('txCat').value,
     data, mes:data.slice(0,7),
-    criadoEm:firebase.firestore.FieldValue.serverTimestamp()
-  });
+    pagamento:document.getElementById('txPag').value||null,
+    custom
+  };
+  if(editandoTx){
+    await col('tx').doc(editandoTx.id).update(docTx);
+    toast('Lançamento atualizado');
+  }else{
+    docTx.criadoEm=firebase.firestore.FieldValue.serverTimestamp();
+    await col('tx').add(docTx);
+    toast('Lançamento salvo');
+    if(data.slice(0,7)!==state.mes){ state.mes=data.slice(0,7); carregarMes(); }
+  }
+  editandoTx=null;
   document.getElementById('txModal').classList.add('hidden');
-  toast('Lançamento salvo');
-  if(data.slice(0,7)!==state.mes){ state.mes=data.slice(0,7); carregarMes(); }
 });
 
 document.getElementById('btnAddSub').onclick=()=>{
@@ -1032,6 +1277,240 @@ document.getElementById('subForm').addEventListener('submit', async e=>{
   document.getElementById('subForm').reset();
   toast('Assinatura salva');
 });
+
+/* ---------------- Importação de CSV ---------------- */
+const imp={rows:[], items:[], header:true, cols:{data:0,desc:1,valor:2}, sinal:'neg'};
+
+function parseCSV(text){
+  text=text.replace(/^\uFEFF/,'');
+  const firstLine=text.split(/\r?\n/).find(l=>l.trim())||'';
+  const counts={';':(firstLine.match(/;/g)||[]).length, ',':(firstLine.match(/,/g)||[]).length, '\t':(firstLine.match(/\t/g)||[]).length};
+  const delim=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
+  const rows=[]; let row=[], cell='', inQ=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(inQ){
+      if(ch==='"'){ if(text[i+1]==='"'){cell+='"';i++;} else inQ=false; }
+      else cell+=ch;
+    }else{
+      if(ch==='"') inQ=true;
+      else if(ch===delim){ row.push(cell); cell=''; }
+      else if(ch==='\n'||ch==='\r'){
+        if(ch==='\r'&&text[i+1]==='\n')i++;
+        row.push(cell);
+        if(row.some(c=>c.trim()!=='')) rows.push(row);
+        row=[]; cell='';
+      }
+      else cell+=ch;
+    }
+  }
+  row.push(cell);
+  if(row.some(c=>c.trim()!=='')) rows.push(row);
+  return rows;
+}
+
+function parseDataCSV(s){
+  s=String(s||'').trim();
+  let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
+  if(m){
+    let d=+m[1], mo=+m[2];
+    if(mo>12&&d<=12){ const t=d; d=mo; mo=t; } // formato MM/DD invertido
+    if(d>=1&&d<=31&&mo>=1&&mo<=12) return `${m[3]}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    return null;
+  }
+  m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2})$/);
+  if(m){
+    const d=+m[1], mo=+m[2];
+    if(d>=1&&d<=31&&mo>=1&&mo<=12) return `20${m[3]}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  }
+  return null;
+}
+
+function parseValorCSV(s){
+  s=String(s||'').trim().replace(/R\$\s?/i,'');
+  if(!s) return null;
+  let neg=false;
+  if(/^\(.*\)$/.test(s)){ neg=true; s=s.slice(1,-1).trim(); }
+  if(s.startsWith('-')){ neg=true; s=s.slice(1).trim(); }
+  else if(s.startsWith('+')) s=s.slice(1).trim();
+  if(!/^[\d.,]+$/.test(s)) return null;
+  const lastC=s.lastIndexOf(','), lastD=s.lastIndexOf('.');
+  let n;
+  if(lastC>lastD) n=parseFloat(s.replace(/\./g,'').replace(',','.'));
+  else if(lastD>lastC) n=parseFloat(s.replace(/,/g,''));
+  else n=parseFloat(s);
+  if(isNaN(n)) return null;
+  const cents=Math.round(n*100);
+  if(cents===0) return null;
+  return neg? -cents : cents;
+}
+
+function detectarColunas(){
+  const rows=imp.rows;
+  const nCols=Math.max(...rows.map(r=>r.length));
+  const r0=rows[0]||[];
+  imp.header = !r0.some(c=>parseDataCSV(c)) && !r0.some(c=>parseValorCSV(c)!==null);
+  const dataRows=rows.slice(imp.header?1:0, (imp.header?1:0)+50);
+  const scores=[...Array(nCols)].map((_,i)=>({
+    data: dataRows.filter(r=>parseDataCSV(r[i])).length,
+    valor: dataRows.filter(r=>parseValorCSV(r[i])!==null).length,
+    texto: dataRows.reduce((a,r)=>a+String(r[i]||'').replace(/[\d.,\/\-]/g,'').length,0)
+  }));
+  const hdr=imp.header? r0.map(c=>String(c).toLowerCase()) : [];
+  const byName=names=>hdr.findIndex(h=>names.some(n=>h.includes(n)));
+  const best=(key,excl)=>{
+    let bi=0,bv=-1;
+    scores.forEach((s,i)=>{ if(excl.includes(i))return; if(s[key]>bv){bv=s[key];bi=i;} });
+    return bi;
+  };
+  let cData=byName(['data','date']); if(cData<0) cData=best('data',[]);
+  let cValor=byName(['valor','amount','montante','value']); if(cValor<0||cValor===cData) cValor=best('valor',[cData]);
+  let cDesc=byName(['desc','título','titulo','title','hist','lançamento','lancamento','memo','estabelecimento','identificador não','detalhe']);
+  if(cDesc<0||cDesc===cData||cDesc===cValor) cDesc=best('texto',[cData,cValor]);
+  imp.cols={data:cData, desc:cDesc, valor:cValor};
+  // se não há valores negativos, provavelmente é fatura de cartão (tudo despesa)
+  const temNeg=dataRows.some(r=>{ const v=parseValorCSV(r[cValor]); return v!==null&&v<0; });
+  imp.sinal = temNeg? 'neg' : 'todos';
+}
+
+function montarMapa(){
+  const nCols=Math.max(...imp.rows.map(r=>r.length));
+  const sample=imp.rows[imp.header?1:0]||[];
+  const opts=sel=>[...Array(nCols)].map((_,c)=>{
+    const nome=imp.header&&imp.rows[0][c] ? String(imp.rows[0][c]).slice(0,22) : `Coluna ${c+1}`;
+    const ex=String(sample[c]||'').slice(0,18);
+    return `<option value="${c}"${c===sel?' selected':''}>${esc(nome)}${ex?' — '+esc(ex):''}</option>`;
+  }).join('');
+  document.getElementById('impColData').innerHTML=opts(imp.cols.data);
+  document.getElementById('impColDesc').innerHTML=opts(imp.cols.desc);
+  document.getElementById('impColValor').innerHTML=opts(imp.cols.valor);
+  document.getElementById('impHeader').checked=imp.header;
+  document.getElementById('impSinal').value=imp.sinal;
+  const todasCats=[...new Set([...CATS_DESPESA,...CATS_RECEITA])];
+  document.getElementById('impBulkCat').innerHTML=
+    '<option value="">— aplicar a todas —</option>'+todasCats.map(c=>`<option>${c}</option>`).join('');
+}
+
+function rebuildItems(){
+  const start=imp.header?1:0;
+  imp.items=[];
+  imp.rows.slice(start).forEach(r=>{
+    const data=parseDataCSV(r[imp.cols.data]);
+    const v=parseValorCSV(r[imp.cols.valor]);
+    if(!data||v===null) return;
+    const desc=String(r[imp.cols.desc]||'').trim()||'(sem descrição)';
+    let tipo='despesa';
+    if(imp.sinal==='neg') tipo = v<0?'despesa':'receita';
+    else if(imp.sinal==='pos') tipo = v>0?'despesa':'receita';
+    imp.items.push({data, desc, valor:Math.abs(v), tipo, cat:'Outros', pagamento:'', incluir:true});
+  });
+  renderImpPreview();
+}
+
+function impCountTxt(){
+  document.getElementById('impCount').textContent = imp.items.length
+    ? `${imp.items.filter(i=>i.incluir).length} de ${imp.items.length} linhas serão importadas. Ajuste tipo, categoria e pagamento em cada linha.`
+    : 'Nenhuma linha válida encontrada — confira as colunas de data e valor.';
+}
+
+function renderImpPreview(){
+  impCountTxt();
+  const catOpts=(tipo,sel)=>(tipo==='receita'?CATS_RECEITA:CATS_DESPESA)
+    .map(c=>`<option${c===sel?' selected':''}>${c}</option>`).join('');
+  const pagOpts=sel=>['','credito','debito','pix'].map(p=>
+    `<option value="${p}"${p===sel?' selected':''}>${p===''?'—':p==='credito'?'Crédito':p==='debito'?'Débito':'PIX'}</option>`).join('');
+  document.getElementById('impList').innerHTML=imp.items.map((it,i)=>`
+    <div class="impRow ${it.incluir?'':'off'}" data-i="${i}">
+      <input type="checkbox" data-k="incluir" ${it.incluir?'checked':''}>
+      <div class="txInfo"><div class="d">${esc(it.desc)}</div>
+        <div class="c mono">${it.data.split('-').reverse().join('/')} · <span class="${it.tipo==='receita'?'pos':'neg'}">${fmt(it.valor)}</span></div></div>
+      <div class="selRow">
+        <select data-k="tipo">
+          <option value="despesa"${it.tipo==='despesa'?' selected':''}>Despesa</option>
+          <option value="receita"${it.tipo==='receita'?' selected':''}>Receita</option>
+        </select>
+        <select data-k="cat">${catOpts(it.tipo,it.cat)}</select>
+        <select data-k="pagamento">${pagOpts(it.pagamento)}</select>
+      </div>
+    </div>`).join('');
+}
+
+document.getElementById('btnImportCSV').onclick=()=>{
+  document.getElementById('impFile').value='';
+  document.getElementById('impStep2').classList.add('hidden');
+  document.getElementById('impStep1').classList.remove('hidden');
+  document.getElementById('impModal').classList.remove('hidden');
+};
+
+document.getElementById('impFile').addEventListener('change', async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const rows=parseCSV(await f.text());
+  if(!rows.length){ toast('Não consegui ler o arquivo'); return; }
+  imp.rows=rows;
+  detectarColunas();
+  montarMapa();
+  rebuildItems();
+  document.getElementById('impStep1').classList.add('hidden');
+  document.getElementById('impStep2').classList.remove('hidden');
+});
+
+document.getElementById('impColData').onchange=e=>{ imp.cols.data=+e.target.value; rebuildItems(); };
+document.getElementById('impColDesc').onchange=e=>{ imp.cols.desc=+e.target.value; rebuildItems(); };
+document.getElementById('impColValor').onchange=e=>{ imp.cols.valor=+e.target.value; rebuildItems(); };
+document.getElementById('impHeader').onchange=e=>{ imp.header=e.target.checked; montarMapa(); rebuildItems(); };
+document.getElementById('impSinal').onchange=e=>{ imp.sinal=e.target.value; rebuildItems(); };
+document.getElementById('impBulkCat').onchange=e=>{
+  const v=e.target.value; if(!v) return;
+  imp.items.forEach(it=>{
+    const cats=it.tipo==='receita'?CATS_RECEITA:CATS_DESPESA;
+    if(cats.includes(v)) it.cat=v;
+  });
+  renderImpPreview(); e.target.value='';
+};
+document.getElementById('impBulkPag').onchange=e=>{
+  const v=e.target.value; if(!v) return;
+  imp.items.forEach(it=>it.pagamento=v);
+  renderImpPreview(); e.target.value='';
+};
+document.getElementById('impList').addEventListener('change', e=>{
+  const row=e.target.closest('.impRow'); if(!row) return;
+  const it=imp.items[+row.dataset.i]; const k=e.target.dataset.k;
+  if(k==='incluir'){ it.incluir=e.target.checked; row.classList.toggle('off',!it.incluir); impCountTxt(); return; }
+  it[k]=e.target.value;
+  if(k==='tipo'){
+    const cats=it.tipo==='receita'?CATS_RECEITA:CATS_DESPESA;
+    if(!cats.includes(it.cat)) it.cat='Outros';
+    renderImpPreview();
+  }
+});
+
+document.getElementById('btnImpConfirm').onclick=async ()=>{
+  const items=imp.items.filter(i=>i.incluir);
+  if(!items.length){ toast('Nenhuma linha selecionada'); return; }
+  const btn=document.getElementById('btnImpConfirm');
+  btn.disabled=true; btn.textContent='Importando…';
+  try{
+    for(let i=0;i<items.length;i+=400){
+      const batch=db.batch();
+      items.slice(i,i+400).forEach(it=>{
+        batch.set(col('tx').doc(),{
+          tipo:it.tipo, valor:it.valor, desc:it.desc, cat:it.cat,
+          pagamento:it.pagamento||null, data:it.data, mes:it.data.slice(0,7),
+          origem:'csv', criadoEm:firebase.firestore.FieldValue.serverTimestamp()
+        });
+      });
+      await batch.commit();
+    }
+    toast(`${items.length} lançamento${items.length>1?'s':''} importado${items.length>1?'s':''} 🎉`);
+    document.getElementById('impModal').classList.add('hidden');
+    const mesRecente=items.map(i=>i.data.slice(0,7)).sort().pop();
+    if(mesRecente!==state.mes){ state.mes=mesRecente; carregarMes(); }
+    else carregarTendencia();
+  }catch(ex){ toast('Erro ao importar: '+ex.message); }
+  btn.disabled=false; btn.textContent='Importar';
+};
 
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('.modalWrap').classList.add('hidden'));
 document.querySelectorAll('.modalWrap').forEach(w=>w.addEventListener('click',e=>{ if(e.target===w) w.classList.add('hidden'); }));
