@@ -184,7 +184,7 @@ h2.section:first-child{margin-top:0}
 .r-comum{background:#94A3B8}.r-raro{background:#2D9CDB}.r-epico{background:#8B5CF6}.r-lendario{background:linear-gradient(90deg,#F59E0B,#FF8A3C)}
 .petCard.b-comum{border-color:#94A3B8}.petCard.b-raro{border-color:#2D9CDB}.petCard.b-epico{border-color:#8B5CF6}
 .petCard.b-lendario{border-color:#F59E0B;box-shadow:0 3px 0 #F59E0B,0 0 18px rgba(245,158,11,.35)}
-.probNote{color:var(--muted);font-size:12px;text-align:center;margin-top:14px}
+.petCard .pic img{height:52px;width:auto;max-width:100%;display:inline-block}
 model-viewer{width:100%;height:280px;background:transparent;--poster-color:transparent}
 .bauReveal{text-align:center}
 .bauReveal .fase1{font-size:90px;animation:bauShake .5s ease-in-out infinite}
@@ -376,7 +376,6 @@ canvas{max-width:100%}
       </div>
       <h2 class="section">Seus pets</h2>
       <div class="petGrid" id="petGrid"></div>
-      <p class="probNote">🎁 Probabilidades do baú: Comum 60% · Raro 25% · Épico 12% · Lendário 3%. Baús são conquistados apenas completando metas — nunca vendidos.</p>
     </section>
   </main>
 
@@ -1042,6 +1041,17 @@ function renderBau(total, feitas){
   }
 }
 
+// toca a animação do pet uma única vez e deixa parado (rotação manual continua livre)
+function playOnce(mv){
+  if(!mv) return;
+  mv.addEventListener('load',()=>{
+    if(!mv.availableAnimations.length) return;
+    try{ mv.play({repetitions:1}); }catch(e){ mv.play(); }
+    const dur=((mv.duration||2)*1000)+120;
+    setTimeout(()=>{ try{ mv.pause(); }catch(e){} }, dur);
+  },{once:true});
+}
+
 async function abrirBau(){
   if(state.bauDia) return;
   const pet=sortearPet();
@@ -1056,10 +1066,11 @@ async function abrirBau(){
   document.getElementById('bauModal').classList.remove('hidden');
   setTimeout(()=>{
     body.innerHTML=`<div class="glow-${pet.r}">
-      <model-viewer src="pets/${pet.id}.glb" loading="eager" autoplay auto-rotate camera-controls disable-zoom shadow-intensity="1"></model-viewer></div>
+      <model-viewer src="pets/${pet.id}.glb" loading="eager" camera-controls disable-zoom shadow-intensity="1"></model-viewer></div>
       <h3>${esc(pet.nome)}</h3>
       <span class="rarPill r-${pet.r}">${RAR[pet.r].emoji} ${RAR[pet.r].label}</span>
       <div class="modalActions" style="margin-top:16px"><button class="btnPrimary" data-close>Que fofo!</button></div>`;
+    playOnce(body.querySelector('model-viewer'));
     body.querySelector('[data-close]').onclick=()=>document.getElementById('bauModal').classList.add('hidden');
   },1600);
 }
@@ -1078,10 +1089,11 @@ function renderPets(){
     return tem
       ? `<div class="petCard b-${p.r}" data-pet="${p.id}">
           <div class="pic">${RAR[p.r].emoji}</div><div class="nm">${esc(p.nome)}</div>
-          <div class="qtd">${tem>1?'×'+tem:'&nbsp;'}</div>
-          <span class="rarPill r-${p.r}">${RAR[p.r].label}</span></div>`
-      : `<div class="petCard locked"><div class="pic">❔</div><div class="nm">???</div>
-          <div class="qtd">&nbsp;</div><span class="rarPill r-${p.r}">${RAR[p.r].label}</span></div>`;
+          <div class="qtd">${tem>1?'×'+tem:'&nbsp;'}</div></div>`
+      : `<div class="petCard locked">
+          <div class="pic"><img src="pets/silhouettes/${p.id}.png" alt="???" onerror="this.replaceWith('❔')"></div>
+          <div class="nm">???</div>
+          <div class="qtd">&nbsp;</div></div>`;
   }).join('');
 
   document.querySelectorAll('.petCard[data-pet]').forEach(card=>{
@@ -1089,10 +1101,11 @@ function renderPets(){
       const p=petById(card.dataset.pet);
       const body=document.getElementById('petModalBody');
       body.innerHTML=`<div class="glow-${p.r}">
-        <model-viewer src="pets/${p.id}.glb" loading="eager" autoplay auto-rotate camera-controls shadow-intensity="1"></model-viewer></div>
+        <model-viewer src="pets/${p.id}.glb" loading="eager" camera-controls shadow-intensity="1"></model-viewer></div>
         <h3>${esc(p.nome)}</h3>
         <span class="rarPill r-${p.r}">${RAR[p.r].emoji} ${RAR[p.r].label}</span>
         <div class="modalActions" style="margin-top:16px"><button class="btnGhost" data-close style="flex:1">Fechar</button></div>`;
+      playOnce(body.querySelector('model-viewer'));
       body.querySelector('[data-close]').onclick=()=>document.getElementById('petModal').classList.add('hidden');
       document.getElementById('petModal').classList.remove('hidden');
     };
