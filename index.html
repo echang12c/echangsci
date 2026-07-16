@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Cofre — Organizador Financeiro</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#00A86B">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Cofre">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -1527,6 +1535,13 @@ document.getElementById('btnImpConfirm').onclick=async ()=>{
 
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('.modalWrap').classList.add('hidden'));
 document.querySelectorAll('.modalWrap').forEach(w=>w.addEventListener('click',e=>{ if(e.target===w) w.classList.add('hidden'); }));
+
+/* ---------------- PWA: service worker ---------------- */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{/* offline-first é opcional */});
+  });
+}
 </script>
 </body>
 </html>
