@@ -1,4 +1,4 @@
-/* Service worker do Cofre — cache do app shell + estáticos */
+/* Service worker do SeuCofrin — cache do app shell + estáticos */
 const CACHE = 'cofre-v2';
 const PRECACHE = [
   './',
@@ -29,7 +29,7 @@ self.addEventListener('push', e => {
   let data = {};
   try { data = e.data ? e.data.json() : {}; }
   catch (_) { data = { body: e.data ? e.data.text() : '' }; }
-  e.waitUntil(self.registration.showNotification(data.title || '🔔 Cofre', {
+  e.waitUntil(self.registration.showNotification(data.title || '🔔 SeuCofrin', {
     body: data.body || '',
     tag: data.tag || undefined,
     icon: 'icons/icon-192.png',

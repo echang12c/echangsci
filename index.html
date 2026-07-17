@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Cofre — Organizador Financeiro</title>
+<title>SeuCofrin — Organizador Financeiro</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#00A86B">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Cofre">
+<meta name="apple-mobile-web-app-title" content="SeuCofrin">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -113,9 +113,10 @@ h2.section:first-child{margin-top:0}
 .kpi .val small{font-size:15px;opacity:.65}
 .pos{color:var(--income)}.neg{color:var(--expense)}
 .saldoHero{background:linear-gradient(135deg,#00C87B 0%,#00A88F 55%,#0E7DC2 100%);color:#fff;border:none;box-shadow:0 8px 24px rgba(0,168,140,.35)}
-.saldoHero .lbl{color:rgba(255,255,255,.72)}
+.saldoHero.negativo{background:linear-gradient(135deg,#FF7A59 0%,#F04438 55%,#B42334 100%);box-shadow:0 8px 24px rgba(240,68,56,.35)}
+.saldoHero .lbl{color:#fff;font-weight:800;font-size:13px;text-shadow:0 1px 3px rgba(0,0,0,.25)}
 .saldoHero .val{font-family:var(--display);font-weight:800;font-size:40px;letter-spacing:-.02em}
-.saldoHero .sub{margin-top:8px;font-size:13px;color:rgba(255,255,255,.75)}
+.saldoHero .sub{margin-top:8px;font-size:14px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.25)}
 .empty{color:var(--muted);font-size:14px;text-align:center;padding:26px 10px}
 
 /* ---------- Lançamentos ---------- */
@@ -278,7 +279,7 @@ canvas{max-width:100%}
 <!-- ================= LOGIN ================= -->
 <div id="loginView">
   <div class="loginCard">
-    <div class="brand">Cofre<small>organizador financeiro da casa</small></div>
+    <div class="brand">SeuCofrin<small>organizador financeiro da casa</small></div>
     <form id="loginForm">
       <div class="field"><label>E-mail</label><input type="email" id="loginEmail" autocomplete="email" required></div>
       <div class="field"><label>Senha</label><input type="password" id="loginPass" autocomplete="current-password" required></div>
@@ -301,7 +302,7 @@ canvas{max-width:100%}
 <div id="appView" class="hidden">
   <header class="app">
     <div class="headerRow">
-      <div class="brand">Cofre</div>
+      <div class="brand">SeuCofrin</div>
       <div class="userChip">
         <button type="button" class="perfilBtn" id="btnPerfil" title="Meu perfil"><span class="avatar" id="userAvatar">👤</span><b id="userName"></b></button>
         <button id="btnLogout">sair</button>
@@ -330,7 +331,7 @@ canvas{max-width:100%}
   <main>
     <!-- ===== Dashboard ===== -->
     <section id="tab-dash">
-      <div class="card kpi saldoHero">
+      <div class="card kpi saldoHero" id="cardSaldo">
         <div class="lbl">Saldo do mês</div>
         <div class="val" id="kSaldo">R$ 0,00</div>
         <div class="sub" id="kSaldoSub"></div>
@@ -720,7 +721,7 @@ document.getElementById('cadForm').addEventListener('submit', async e=>{
     await cred.user.updateProfile({displayName:nome});
     await db.collection('users').doc(cred.user.uid).collection('perfil').doc('dados').set({nome},{merge:true});
     state.nome=nome; renderPerfilChip();
-    toast('Conta criada! Bem-vindo(a) ao Cofre 🎉');
+    toast('Conta criada! Bem-vindo(a) ao SeuCofrin 🎉');
   }catch(ex){ err.textContent=erroAuthPT(ex); }
 });
 
@@ -847,6 +848,7 @@ function renderDash(){
   const {rec,desp,porCat}=totais();
   const saldo=rec-desp;
   document.getElementById('kSaldo').textContent=fmt(saldo);
+  document.getElementById('cardSaldo').classList.toggle('negativo', saldo<0);
   document.getElementById('kSaldoSub').textContent=
     saldo>=0 ? 'Dentro do verde este mês 🟢' : 'Gastando mais do que entra 🔴';
   document.getElementById('kReceitas').textContent=fmt(rec);

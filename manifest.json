@@ -1,6 +1,6 @@
 {
-  "name": "Cofre — Organizador Financeiro",
-  "short_name": "Cofre",
+  "name": "SeuCofrin — Organizador Financeiro",
+  "short_name": "SeuCofrin",
   "description": "Organizador financeiro da casa: lançamentos, orçamento, assinaturas, metas do dia e coleção de pets.",
   "lang": "pt-BR",
   "start_url": "./",

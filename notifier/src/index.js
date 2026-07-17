@@ -1,4 +1,4 @@
-/* Cofre — notificador de metas.
+/* SeuCofrin — notificador de metas.
    A cada minuto o cron confere, para cada usuário, quais metas têm horário
    igual ao minuto atual (no fuso do usuário) e envia Web Push para os
    aparelhos inscritos. O app sincroniza metas e inscrições via POST /sync. */
@@ -243,7 +243,7 @@ export default {
       const results = [];
       for (const sub of subs) {
         results.push(await sendPush(env, sub, {
-          title: '🔔 Teste do Cofre',
+          title: '🔔 Teste do SeuCofrin',
           body: 'As notificações estão funcionando! 🎉',
           url: './',
         }).catch(() => 0));
