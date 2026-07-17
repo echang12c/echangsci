@@ -2,10 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "cofre",
+      "name": "seucofrin",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["-y", "http-server", "-p", "8123", "-c-1"],
-      "port": 8123
+      "runtimeArgs": ["--yes", "http-server", "-p", "8090", "-c-1"],
+      "port": 8090
     }
   ]
 }

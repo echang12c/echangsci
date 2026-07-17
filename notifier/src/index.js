@@ -109,8 +109,10 @@ async function vapidAuthHeader(env, endpoint) {
     aud, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: env.VAPID_SUBJECT,
   })));
   const unsigned = head + '.' + body;
+  // o segredo pode vir com BOM (U+FEFF) quando gravado por PowerShell no Windows
+  const jwk = JSON.parse(env.VAPID_PRIVATE_JWK.replace(/^\uFEFF/, '').trim());
   const key = await crypto.subtle.importKey(
-    'jwk', JSON.parse(env.VAPID_PRIVATE_JWK), { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']
+    'jwk', jwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']
   );
   const sig = new Uint8Array(await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, te.encode(unsigned)));
   return `vapid t=${unsigned + '.' + bytesToB64u(sig)}, k=${env.VAPID_PUBLIC_KEY}`;
@@ -167,10 +169,13 @@ function localNow(date, tz) {
 
 async function processUser(env, key, now) {
   const doc = await env.PUSH.get(key, 'json');
-  if (!doc) return;
+  if (!doc) { console.log(key + ': sem doc no KV'); return; }
   const subs = doc.subs || {};
   const rotinas = doc.rotinas || [];
-  if (!Object.keys(subs).length || !rotinas.length) return;
+  if (!Object.keys(subs).length || !rotinas.length) {
+    console.log(`${key}: ${rotinas.length} metas com hora, ${Object.keys(subs).length} aparelhos — nada a fazer`);
+    return;
+  }
 
   const { hhmm, dw } = localNow(now, doc.tz || 'America/Sao_Paulo');
   const due = rotinas.filter((r) => r.hora === hhmm && (r.dias || []).includes(dw));
@@ -186,6 +191,7 @@ async function processUser(env, key, now) {
           tag: 'meta-' + r.id,
           url: './',
         });
+        console.log(`push "${r.texto.slice(0, 30)}" ${hhmm} → HTTP ${st}`);
         if (st === 404 || st === 410) { delete subs[id]; mudou = true; } // inscrição expirada
       } catch (e) {
         console.log('push falhou', e && e.message);
@@ -195,15 +201,36 @@ async function processUser(env, key, now) {
   if (mudou) await env.PUSH.put(key, JSON.stringify({ ...doc, subs }));
 }
 
+/* Índice de usuários ("idx"): evita usar PUSH.list() no cron — o plano
+   gratuito do KV permite só 1.000 lists/dia e o cron roda 1.440×/dia.
+   Leituras (get) têm cota de 100.000/dia, folgada. */
+const IDX_KEY = 'idx';
+async function rebuildIdx(env) {
+  const keys = [];
+  let cursor;
+  do {
+    const page = await env.PUSH.list({ prefix: 'u:', cursor });
+    cursor = page.list_complete ? null : page.cursor;
+    for (const k of page.keys) keys.push(k.name);
+  } while (cursor);
+  await env.PUSH.put(IDX_KEY, JSON.stringify(keys));
+  console.log('idx reconstruído com', keys.length, 'usuário(s)');
+  return keys;
+}
+async function idxGarantir(env, key) {
+  const idx = (await env.PUSH.get(IDX_KEY, 'json')) || [];
+  if (!idx.includes(key)) {
+    idx.push(key);
+    await env.PUSH.put(IDX_KEY, JSON.stringify(idx));
+  }
+}
+
 export default {
   async scheduled(event, env, ctx) {
     const now = new Date(event.scheduledTime);
-    let cursor;
-    do {
-      const page = await env.PUSH.list({ prefix: 'u:', cursor });
-      cursor = page.list_complete ? null : page.cursor;
-      for (const k of page.keys) await processUser(env, k.name, now);
-    } while (cursor);
+    let idx = await env.PUSH.get(IDX_KEY, 'json');
+    if (!Array.isArray(idx)) idx = await rebuildIdx(env);
+    for (const k of idx) await processUser(env, k, now);
   },
 
   async fetch(req, env) {
@@ -233,6 +260,7 @@ export default {
       }
       if (body.removeEndpoint) delete doc.subs[await endpointId(String(body.removeEndpoint))];
       await env.PUSH.put(key, JSON.stringify(doc));
+      await idxGarantir(env, key);
       return json({ ok: true, aparelhos: Object.keys(doc.subs).length });
     }
 
