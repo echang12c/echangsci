@@ -57,6 +57,18 @@ input,select{font-family:inherit;font-size:15px}
 .btnGhost{background:transparent;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-weight:600;color:var(--ink)}
 .btnGhost:hover{background:#fff}
 .loginErr{color:var(--danger);font-size:13px;min-height:18px}
+.loginSwap{border:none;background:none;color:var(--muted);font-size:13px;margin-top:16px;width:100%;text-align:center}
+.loginSwap b{color:var(--primary)}
+
+/* ---------- Perfil ---------- */
+.perfilBtn{display:flex;align-items:center;gap:8px;border:none;background:none;padding:0}
+.perfilBtn b{color:var(--ink);font-size:13px}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--primary-soft);border:2px solid var(--primary);display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden;flex:none}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.avatar.big{width:84px;height:84px;font-size:38px}
+.perfilFotoBox{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.perfilFotoBox .btns{display:flex;flex-direction:column;gap:8px}
+.perfilSub{font-family:var(--display);font-size:15px;margin:20px 0 10px;padding-top:16px;border-top:1px dashed var(--line)}
 
 /* ---------- Shell ---------- */
 header.app{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:3px solid transparent;border-image:linear-gradient(90deg,#00C87B,#FFC53D,#FF5C4D,#8B5CF6,#0E7DC2) 1}
@@ -64,7 +76,7 @@ header.app{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:3
 .headerRow .brand{font-size:22px}
 .userChip{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
 .userChip b{color:var(--ink)}
-.userChip button{border:none;background:none;color:var(--muted);text-decoration:underline;font-size:12px}
+.userChip #btnLogout{border:none;background:none;color:var(--muted);text-decoration:underline;font-size:12px}
 .monthBar{max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:14px;padding:4px 18px 10px}
 .monthBar button{border:1px solid var(--line);background:var(--surface);border-radius:50%;width:32px;height:32px;font-size:16px;line-height:1}
 .monthLabel{font-family:var(--display);font-weight:700;font-size:18px;min-width:190px;text-align:center;text-transform:capitalize}
@@ -194,6 +206,7 @@ h2.section:first-child{margin-top:0}
 .petCard.b-lendario{border-color:#F59E0B;box-shadow:0 3px 0 #F59E0B,0 0 18px rgba(245,158,11,.35)}
 .petCard .pic img{height:52px;width:auto;max-width:100%;display:inline-block}
 model-viewer{width:100%;height:280px;background:transparent;--poster-color:transparent}
+.petCard .pic model-viewer{height:110px;pointer-events:none;--progress-bar-color:transparent}
 .bauReveal{text-align:center}
 .bauReveal .fase1{font-size:90px;animation:bauShake .5s ease-in-out infinite}
 @keyframes bauShake{0%,100%{transform:rotate(-8deg) scale(1)}50%{transform:rotate(8deg) scale(1.1)}}
@@ -256,6 +269,15 @@ canvas{max-width:100%}
       <button class="btnPrimary" type="submit">Entrar</button>
       <div class="loginErr" id="loginErr"></div>
     </form>
+    <form id="cadForm" class="hidden">
+      <div class="field"><label>Seu nome</label><input id="cadNome" maxlength="40" autocomplete="name" required></div>
+      <div class="field"><label>E-mail</label><input type="email" id="cadEmail" autocomplete="email" required></div>
+      <div class="field"><label>Senha (mín. 6 caracteres)</label><input type="password" id="cadPass" minlength="6" autocomplete="new-password" required></div>
+      <div class="field"><label>Repita a senha</label><input type="password" id="cadPass2" minlength="6" autocomplete="new-password" required></div>
+      <button class="btnPrimary" type="submit">Criar conta</button>
+      <div class="loginErr" id="cadErr"></div>
+    </form>
+    <button type="button" class="loginSwap" id="loginSwap">Não tem conta? <b>Criar cadastro</b></button>
   </div>
 </div>
 
@@ -264,7 +286,10 @@ canvas{max-width:100%}
   <header class="app">
     <div class="headerRow">
       <div class="brand">Cofre</div>
-      <div class="userChip"><b id="userName"></b><button id="btnLogout">sair</button></div>
+      <div class="userChip">
+        <button type="button" class="perfilBtn" id="btnPerfil" title="Meu perfil"><span class="avatar" id="userAvatar">👤</span><b id="userName"></b></button>
+        <button id="btnLogout">sair</button>
+      </div>
     </div>
     <div class="monthBar">
       <button id="prevMonth" aria-label="Mês anterior">‹</button>
@@ -304,7 +329,7 @@ canvas{max-width:100%}
     <!-- ===== Lançamentos ===== -->
     <section id="tab-tx" class="hidden">
       <div class="toolRow">
-        <button class="btnGhost" id="btnImportCSV">📥 Importar CSV</button>
+        <button class="btnGhost" id="btnImportCSV">📥 Importar CSV/PDF</button>
         <button class="btnGhost" id="btnCampos">⚙️ Campos personalizados</button>
       </div>
       <div class="chipRow" id="txFilter"></div>
@@ -448,10 +473,10 @@ canvas{max-width:100%}
 <!-- ===== Modal importar CSV ===== -->
 <div class="modalWrap hidden" id="impModal">
   <div class="modal wide">
-    <h3>Importar gastos (CSV)</h3>
+    <h3>Importar gastos (CSV ou PDF)</h3>
     <div id="impStep1">
-      <p class="impHint">Exporte o extrato ou a fatura em CSV no app do banco e escolha o arquivo aqui. Antes de importar você revisa cada linha e define o tipo, a categoria e a forma de pagamento.</p>
-      <input type="file" id="impFile" accept=".csv,text/csv,text/plain">
+      <p class="impHint">Exporte o extrato ou a fatura em CSV ou PDF no app do banco e escolha o arquivo aqui. Antes de importar você revisa cada linha e define o tipo, a categoria e a forma de pagamento.</p>
+      <input type="file" id="impFile" accept=".csv,.pdf,text/csv,text/plain,application/pdf">
       <div class="modalActions"><button type="button" class="btnGhost" data-close style="flex:1">Cancelar</button></div>
     </div>
     <div id="impStep2" class="hidden">
@@ -511,6 +536,39 @@ canvas{max-width:100%}
   </div>
 </div>
 
+<!-- ===== Modal perfil ===== -->
+<div class="modalWrap hidden" id="perfilModal">
+  <div class="modal">
+    <h3>Meu perfil</h3>
+    <div class="perfilFotoBox">
+      <div class="avatar big" id="perfilAvatar">👤</div>
+      <div class="btns">
+        <button type="button" class="btnGhost" id="btnTrocarFoto">📷 Alterar foto</button>
+        <button type="button" class="btnGhost hidden" id="btnRemoverFoto">Remover foto</button>
+        <input type="file" id="fotoInput" accept="image/*" class="hidden">
+      </div>
+    </div>
+    <form id="perfilForm">
+      <div class="field"><label>Nome</label><input id="perfilNome" maxlength="40" required></div>
+      <button class="btnPrimary" type="submit">Salvar nome e foto</button>
+    </form>
+    <h4 class="perfilSub">Alterar e-mail de login</h4>
+    <form id="emailForm">
+      <div class="field"><label>E-mail atual</label><input id="emailAtual" disabled></div>
+      <div class="field"><label>Novo e-mail</label><input type="email" id="novoEmail" autocomplete="email" required></div>
+      <div class="field"><label>Senha atual (para confirmar)</label><input type="password" id="emailSenha" autocomplete="current-password" required></div>
+      <button class="btnGhost" type="submit">Atualizar e-mail</button>
+    </form>
+    <h4 class="perfilSub">Alterar senha</h4>
+    <form id="senhaForm">
+      <div class="field"><label>Senha atual</label><input type="password" id="senhaAtual" autocomplete="current-password" required></div>
+      <div class="field"><label>Nova senha (mín. 6 caracteres)</label><input type="password" id="senhaNova" minlength="6" autocomplete="new-password" required></div>
+      <button class="btnGhost" type="submit">Atualizar senha</button>
+    </form>
+    <div class="modalActions"><button type="button" class="btnGhost" data-close style="flex:1">Fechar</button></div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -551,7 +609,8 @@ const state = {
   trend: {},                    // {"YYYY-MM": {rec, desp}}
   filtroCat: null,
   camposCustom: [],             // definições de campos personalizados
-  unsubTx:null, unsubOrc:null, unsubSubs:null, unsubRotinas:null, unsubMetaStatus:null, unsubInv:null, unsubCampos:null,
+  perfil: {},                   // {nome, foto} salvos no Firestore
+  unsubTx:null, unsubOrc:null, unsubSubs:null, unsubRotinas:null, unsubMetaStatus:null, unsubInv:null, unsubCampos:null, unsubPerfil:null,
   charts:{cat:null, trend:null},
 };
 
@@ -587,6 +646,18 @@ function toast(msg){
 function col(path){ return db.collection('users').doc(state.uid).collection(path); }
 
 /* ---------------- Auth ---------------- */
+function erroAuthPT(ex){
+  const c=(ex&&ex.code)||'';
+  if(c.includes('email-already-in-use')) return 'Este e-mail já tem cadastro. Toque em "Entrar".';
+  if(c.includes('invalid-email')) return 'E-mail inválido.';
+  if(c.includes('weak-password')) return 'Senha muito fraca — use pelo menos 6 caracteres.';
+  if(c.includes('wrong-password')||c.includes('invalid-credential')||c.includes('invalid-login')||c.includes('user-not-found')) return 'E-mail ou senha incorretos.';
+  if(c.includes('too-many-requests')) return 'Muitas tentativas — aguarde alguns minutos.';
+  if(c.includes('requires-recent-login')) return 'Por segurança, saia e entre de novo antes desta ação.';
+  if(c.includes('network-request-failed')) return 'Sem conexão — confira a internet.';
+  return 'Erro: '+(ex&&ex.message||ex);
+}
+
 document.getElementById('loginForm').addEventListener('submit', async e=>{
   e.preventDefault();
   const err=document.getElementById('loginErr'); err.textContent='';
@@ -595,15 +666,41 @@ document.getElementById('loginForm').addEventListener('submit', async e=>{
       document.getElementById('loginEmail').value.trim(),
       document.getElementById('loginPass').value
     );
-  }catch(ex){ err.textContent='E-mail ou senha inválidos.'; }
+  }catch(ex){ err.textContent=erroAuthPT(ex); }
 });
+
+let modoCadastro=false;
+document.getElementById('loginSwap').onclick=()=>{
+  modoCadastro=!modoCadastro;
+  document.getElementById('loginForm').classList.toggle('hidden', modoCadastro);
+  document.getElementById('cadForm').classList.toggle('hidden', !modoCadastro);
+  document.getElementById('loginSwap').innerHTML =
+    modoCadastro ? 'Já tem conta? <b>Entrar</b>' : 'Não tem conta? <b>Criar cadastro</b>';
+};
+
+document.getElementById('cadForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const err=document.getElementById('cadErr'); err.textContent='';
+  const nome=document.getElementById('cadNome').value.trim();
+  const p1=document.getElementById('cadPass').value;
+  const p2=document.getElementById('cadPass2').value;
+  if(p1!==p2){ err.textContent='As senhas não conferem.'; return; }
+  try{
+    const cred=await auth.createUserWithEmailAndPassword(document.getElementById('cadEmail').value.trim(), p1);
+    await cred.user.updateProfile({displayName:nome});
+    await db.collection('users').doc(cred.user.uid).collection('perfil').doc('dados').set({nome},{merge:true});
+    state.nome=nome; renderPerfilChip();
+    toast('Conta criada! Bem-vindo(a) ao Cofre 🎉');
+  }catch(ex){ err.textContent=erroAuthPT(ex); }
+});
+
 document.getElementById('btnLogout').addEventListener('click',()=>auth.signOut());
 
 auth.onAuthStateChanged(user=>{
   if(user){
     state.uid=user.uid;
-    state.nome=(user.email||'').split('@')[0];
-    document.getElementById('userName').textContent=state.nome;
+    state.nome=user.displayName||(user.email||'').split('@')[0];
+    renderPerfilChip();
     document.getElementById('loginView').classList.add('hidden');
     document.getElementById('appView').classList.remove('hidden');
     carregarMes();
@@ -612,12 +709,13 @@ auth.onAuthStateChanged(user=>{
     escutarDiaMetas();
     escutarInventario();
     escutarCampos();
+    escutarPerfil();
     carregarTendencia();
   }else{
-    state.uid=null;
+    state.uid=null; state.perfil={};
     if(state.unsubTx)state.unsubTx(); if(state.unsubOrc)state.unsubOrc(); if(state.unsubSubs)state.unsubSubs();
     if(state.unsubRotinas)state.unsubRotinas(); if(state.unsubMetaStatus)state.unsubMetaStatus(); if(state.unsubInv)state.unsubInv();
-    if(state.unsubCampos)state.unsubCampos();
+    if(state.unsubCampos)state.unsubCampos(); if(state.unsubPerfil)state.unsubPerfil();
     document.getElementById('appView').classList.add('hidden');
     document.getElementById('loginView').classList.remove('hidden');
   }
@@ -1096,7 +1194,8 @@ function renderPets(){
     const tem=donos[p.id];
     return tem
       ? `<div class="petCard b-${p.r}" data-pet="${p.id}">
-          <div class="pic">${RAR[p.r].emoji}</div><div class="nm">${esc(p.nome)}</div>
+          <div class="pic"><model-viewer src="pets/${p.id}.glb" loading="lazy" interaction-prompt="none" disable-zoom disable-tap disable-pan></model-viewer></div>
+          <div class="nm">${esc(p.nome)}</div>
           <div class="qtd">${tem>1?'×'+tem:'&nbsp;'}</div></div>`
       : `<div class="petCard locked">
           <div class="pic"><img src="pets/silhouettes/${p.id}.png" alt="???" onerror="this.replaceWith('❔')"></div>
@@ -1210,6 +1309,112 @@ function lerCustom(){
   if(erro){ toast(erro); return undefined; }
   return custom;
 }
+
+/* ---------------- Perfil do usuário ---------------- */
+let fotoPendente; // undefined = sem mudança, null = remover, string = nova foto (data URL)
+
+function escutarPerfil(){
+  if(state.unsubPerfil)state.unsubPerfil();
+  state.unsubPerfil = col('perfil').doc('dados').onSnapshot(doc=>{
+    state.perfil = doc.exists ? doc.data() : {};
+    if(state.perfil.nome) state.nome=state.perfil.nome;
+    renderPerfilChip();
+  });
+}
+function renderPerfilChip(){
+  document.getElementById('userName').textContent=state.nome;
+  document.getElementById('userAvatar').innerHTML =
+    state.perfil.foto ? `<img src="${state.perfil.foto}" alt="">` : '👤';
+}
+function renderPerfilAvatar(){
+  const foto = fotoPendente!==undefined ? fotoPendente : state.perfil.foto;
+  document.getElementById('perfilAvatar').innerHTML = foto ? `<img src="${foto}" alt="">` : '👤';
+  document.getElementById('btnRemoverFoto').classList.toggle('hidden', !foto);
+}
+
+function redimensionarFoto(file){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.onload=()=>{
+      const S=256, c=document.createElement('canvas');
+      c.width=S; c.height=S;
+      const m=Math.min(img.width,img.height);
+      c.getContext('2d').drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,S,S);
+      URL.revokeObjectURL(img.src);
+      res(c.toDataURL('image/jpeg',.85));
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(img.src); rej(new Error('Imagem inválida')); };
+    img.src=URL.createObjectURL(file);
+  });
+}
+
+async function reautenticar(senhaAtual){
+  const user=auth.currentUser;
+  const cred=firebase.auth.EmailAuthProvider.credential(user.email, senhaAtual);
+  await user.reauthenticateWithCredential(cred);
+}
+
+document.getElementById('btnPerfil').onclick=()=>{
+  fotoPendente=undefined;
+  document.getElementById('perfilNome').value=state.nome;
+  document.getElementById('emailAtual').value=(auth.currentUser&&auth.currentUser.email)||'';
+  document.getElementById('emailForm').reset();
+  document.getElementById('senhaForm').reset();
+  renderPerfilAvatar();
+  document.getElementById('perfilModal').classList.remove('hidden');
+};
+document.getElementById('btnTrocarFoto').onclick=()=>document.getElementById('fotoInput').click();
+document.getElementById('btnRemoverFoto').onclick=()=>{ fotoPendente=null; renderPerfilAvatar(); };
+document.getElementById('fotoInput').onchange=async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  try{ fotoPendente=await redimensionarFoto(f); renderPerfilAvatar(); }
+  catch(ex){ toast('Não consegui ler esta imagem'); }
+  e.target.value='';
+};
+
+document.getElementById('perfilForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const nome=document.getElementById('perfilNome').value.trim();
+  if(!nome){ toast('Escreva seu nome'); return; }
+  try{
+    await auth.currentUser.updateProfile({displayName:nome});
+    const upd={nome};
+    if(fotoPendente!==undefined)
+      upd.foto = fotoPendente===null ? firebase.firestore.FieldValue.delete() : fotoPendente;
+    await col('perfil').doc('dados').set(upd,{merge:true});
+    fotoPendente=undefined;
+    toast('Perfil atualizado! ✨');
+  }catch(ex){ toast(erroAuthPT(ex)); }
+});
+
+document.getElementById('emailForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const novo=document.getElementById('novoEmail').value.trim();
+  try{
+    await reautenticar(document.getElementById('emailSenha').value);
+    try{
+      await auth.currentUser.updateEmail(novo);
+      toast('E-mail atualizado! Use o novo no próximo login.');
+    }catch(ex){
+      if(ex.code==='auth/operation-not-allowed'){
+        await auth.currentUser.verifyBeforeUpdateEmail(novo);
+        toast('Enviamos um link de confirmação para o novo e-mail. A troca conclui após confirmar.');
+      }else throw ex;
+    }
+    e.target.reset();
+    document.getElementById('emailAtual').value=(auth.currentUser&&auth.currentUser.email)||'';
+  }catch(ex){ toast(erroAuthPT(ex)); }
+});
+
+document.getElementById('senhaForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  try{
+    await reautenticar(document.getElementById('senhaAtual').value);
+    await auth.currentUser.updatePassword(document.getElementById('senhaNova').value);
+    e.target.reset();
+    toast('Senha atualizada! 🔒');
+  }catch(ex){ toast(erroAuthPT(ex)); }
+});
 
 /* ---------------- Modais ---------------- */
 let txTipo='despesa';
@@ -1465,9 +1670,121 @@ document.getElementById('btnImportCSV').onclick=()=>{
   document.getElementById('impModal').classList.remove('hidden');
 };
 
+/* --- Leitura de PDF (extrato/fatura) --- */
+let pdfjsPromise=null;
+function loadPdfJs(){
+  if(pdfjsPromise) return pdfjsPromise;
+  pdfjsPromise=new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+    s.onload=()=>{
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+      res(window.pdfjsLib);
+    };
+    s.onerror=()=>{ pdfjsPromise=null; rej(new Error('Falha ao carregar o leitor de PDF — confira a internet')); };
+    document.head.appendChild(s);
+  });
+  return pdfjsPromise;
+}
+
+async function pdfParaLinhas(file){
+  const pdfjs=await loadPdfJs();
+  const buf=await file.arrayBuffer();
+  let doc;
+  try{ doc=await pdfjs.getDocument({data:buf.slice(0)}).promise; }
+  catch(ex){
+    if(ex&&ex.name==='PasswordException'){
+      const senha=prompt('Este PDF é protegido. Digite a senha dele (bancos costumam usar dígitos do CPF):');
+      if(!senha) throw new Error('PDF protegido por senha');
+      doc=await pdfjs.getDocument({data:buf.slice(0), password:senha}).promise;
+    }else throw ex;
+  }
+  const linhas=[];
+  for(let p=1;p<=doc.numPages;p++){
+    const page=await doc.getPage(p);
+    const tc=await page.getTextContent();
+    const rows=[];
+    tc.items.forEach(it=>{
+      if(!it.str||!it.str.trim()) return;
+      const y=it.transform[5], x=it.transform[4];
+      let row=rows.find(r=>Math.abs(r.y-y)<3);
+      if(!row){ row={y, itens:[]}; rows.push(row); }
+      row.itens.push({x, str:it.str});
+    });
+    rows.sort((a,b)=>b.y-a.y);
+    rows.forEach(r=>{
+      const txt=r.itens.sort((a,b)=>a.x-b.x).map(i=>i.str).join(' ').replace(/\s+/g,' ').trim();
+      if(txt) linhas.push(txt);
+    });
+  }
+  return linhas;
+}
+
+const MES_ABREV={jan:1,fev:2,mar:3,abr:4,mai:5,jun:6,jul:7,ago:8,set:9,out:10,nov:11,dez:12};
+function anoInferido(mo){
+  const hoje=new Date();
+  let y=hoje.getFullYear();
+  if(mo-1>hoje.getMonth()) y--; // mês futuro sem ano informado → ano passado
+  return y;
+}
+function dataInicioLinha(l){
+  let m=l.match(/^(\d{2})[\/\-.](\d{2})[\/\-.](\d{4})\b/);
+  if(m) return {iso:`${m[3]}-${m[2]}-${m[1]}`, len:m[0].length};
+  m=l.match(/^(\d{4})-(\d{2})-(\d{2})\b/);
+  if(m) return {iso:m[0].slice(0,10), len:m[0].length};
+  m=l.match(/^(\d{2})[\/\-.](\d{2})[\/\-.](\d{2})\b/);
+  if(m) return {iso:`20${m[3]}-${m[2]}-${m[1]}`, len:m[0].length};
+  m=l.match(/^(\d{1,2})\s+(?:de\s+)?(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\b\.?/i);
+  if(m){
+    const mo=MES_ABREV[m[2].toLowerCase()];
+    return {iso:`${anoInferido(mo)}-${String(mo).padStart(2,'0')}-${String(+m[1]).padStart(2,'0')}`, len:m[0].length};
+  }
+  m=l.match(/^(\d{1,2})[\/\-.](\d{1,2})\b(?![\/\-.\d])/);
+  if(m){
+    const d=+m[1], mo=+m[2];
+    if(d>=1&&d<=31&&mo>=1&&mo<=12)
+      return {iso:`${anoInferido(mo)}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`, len:m[0].length};
+  }
+  return null;
+}
+function extrairTxPDF(linhas){
+  const out=[];
+  const reValor=/(-\s?)?(?:R\$\s*)?(-\s?)?(\d{1,3}(?:\.\d{3})*,\d{2})(\s?[DC](?![A-Za-zà-úÀ-Ú]))?(\s?-)?/g;
+  linhas.forEach(l=>{
+    const dt=dataInicioLinha(l);
+    if(!dt) return;
+    const resto=l.slice(dt.len).trim();
+    const matches=[...resto.matchAll(reValor)];
+    if(!matches.length) return;
+    const m=matches[matches.length-1]; // último valor da linha (evita nº de documento no meio)
+    const cents=Math.round(parseFloat(m[3].replace(/\./g,'').replace(',','.'))*100);
+    if(!cents) return;
+    let neg=!!(m[1]||m[2]||m[5]);
+    if(m[4]){ neg = m[4].trim().toUpperCase()==='D'; }
+    const desc=(resto.slice(0,m.index)+' '+resto.slice(m.index+m[0].length)).replace(/\s+/g,' ').trim();
+    if(!desc || /^saldo\b/i.test(desc) || /saldo (anterior|final|do dia|dispon)/i.test(desc)) return;
+    out.push([dt.iso, desc, (neg?'-':'')+(cents/100).toFixed(2).replace('.',',')]);
+  });
+  return out;
+}
+
 document.getElementById('impFile').addEventListener('change', async e=>{
   const f=e.target.files[0]; if(!f) return;
-  const rows=parseCSV(await f.text());
+  const isPDF=/\.pdf$/i.test(f.name)||f.type==='application/pdf';
+  let rows;
+  if(isPDF){
+    toast('Lendo PDF…');
+    try{
+      const txs=extrairTxPDF(await pdfParaLinhas(f));
+      if(!txs.length){
+        toast('Não achei lançamentos neste PDF. Se ele for digitalizado (imagem), exporte em CSV no app do banco.');
+        return;
+      }
+      rows=[['Data','Descrição','Valor'],...txs];
+    }catch(ex){ toast('Erro ao ler o PDF: '+ex.message); return; }
+  }else{
+    rows=parseCSV(await f.text());
+  }
   if(!rows.length){ toast('Não consegui ler o arquivo'); return; }
   imp.rows=rows;
   detectarColunas();
