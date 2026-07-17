@@ -1,5 +1,5 @@
 /* Service worker do Cofre — cache do app shell + estáticos */
-const CACHE = 'cofre-v1';
+const CACHE = 'cofre-v2';
 const PRECACHE = [
   './',
   'index.html',
