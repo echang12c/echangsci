@@ -69,6 +69,17 @@ input,select{font-family:inherit;font-size:15px}
 .perfilFotoBox{display:flex;align-items:center;gap:14px;margin-bottom:16px}
 .perfilFotoBox .btns{display:flex;flex-direction:column;gap:8px}
 .perfilSub{font-family:var(--display);font-size:15px;margin:20px 0 10px;padding-top:16px;border-top:1px dashed var(--line)}
+.notifRow{display:flex;align-items:center;gap:12px;justify-content:space-between}
+.notifTxt b{font-size:14px}
+.notifSub{font-size:12px;color:var(--muted);margin-top:2px}
+.notifHint{font-size:12px;color:var(--muted);margin-top:8px}
+.notifHint:empty{display:none}
+#btnTestNotif{margin-top:10px}
+.switch{flex:none;width:52px;height:30px;border-radius:999px;border:1px solid var(--line);background:#E8ECE8;position:relative;transition:background .2s,border-color .2s;padding:0}
+.switch .knob{position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);transition:left .2s}
+.switch.on{background:linear-gradient(135deg,#00C87B,#009E62);border-color:#009E62}
+.switch.on .knob{left:24px}
+.switch:disabled{opacity:.5}
 
 /* ---------- Shell ---------- */
 header.app{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:3px solid transparent;border-image:linear-gradient(90deg,#00C87B,#FFC53D,#FF5C4D,#8B5CF6,#0E7DC2) 1}
@@ -80,8 +91,13 @@ header.app{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:3
 .monthBar{max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:14px;padding:4px 18px 10px}
 .monthBar button{border:1px solid var(--line);background:var(--surface);border-radius:50%;width:32px;height:32px;font-size:16px;line-height:1}
 .monthLabel{font-family:var(--display);font-weight:700;font-size:18px;min-width:190px;text-align:center;text-transform:capitalize}
-nav.tabs{max-width:980px;margin:0 auto;display:flex;gap:6px;padding:0 18px 12px;overflow-x:auto}
-nav.tabs button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 16px;font-weight:600;font-size:14px;color:var(--muted);white-space:nowrap}
+.tabsMenu{max-width:980px;margin:0 auto;padding:0 18px 12px;position:relative}
+.tabsToggle{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:1px solid #009E62;background:linear-gradient(135deg,#00C87B,#009E62);color:#fff;border-radius:999px;padding:9px 16px;font-weight:600;font-size:14px;box-shadow:0 3px 10px rgba(0,168,107,.3)}
+.tabsToggle .chev{font-size:11px;transition:transform .2s}
+.tabsMenu.open .tabsToggle .chev{transform:rotate(180deg)}
+nav.tabs{display:none;flex-direction:column;gap:6px;padding-top:8px}
+.tabsMenu.open nav.tabs{display:flex}
+nav.tabs button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px;font-weight:600;font-size:14px;color:var(--muted);white-space:nowrap;text-align:center}
 nav.tabs button.active{background:linear-gradient(135deg,#00C87B,#009E62);border-color:#009E62;color:#fff;box-shadow:0 3px 10px rgba(0,168,107,.3)}
 main{max-width:980px;margin:0 auto;padding:20px 18px 90px}
 
@@ -296,14 +312,19 @@ canvas{max-width:100%}
       <div class="monthLabel mono" id="monthLabel"></div>
       <button id="nextMonth" aria-label="Próximo mês">›</button>
     </div>
-    <nav class="tabs">
-      <button data-tab="dash" class="active">📊 Dashboard</button>
-      <button data-tab="tx">💸 Lançamentos</button>
-      <button data-tab="budget">🎯 Orçamento</button>
-      <button data-tab="subs">🔁 Assinaturas</button>
-      <button data-tab="metas">✅ Metas do dia</button>
-      <button data-tab="pets">🐾 Coleção</button>
-    </nav>
+    <div class="tabsMenu" id="tabsMenu">
+      <button type="button" class="tabsToggle" id="tabsToggle" aria-expanded="false" aria-controls="tabsList">
+        <span id="tabsToggleLabel">📊 Dashboard</span><span class="chev">▼</span>
+      </button>
+      <nav class="tabs" id="tabsList">
+        <button data-tab="dash" class="active">📊 Dashboard</button>
+        <button data-tab="tx">💸 Lançamentos</button>
+        <button data-tab="budget">🎯 Orçamento</button>
+        <button data-tab="subs">🔁 Assinaturas</button>
+        <button data-tab="metas">✅ Metas do dia</button>
+        <button data-tab="pets">🐾 Coleção</button>
+      </nav>
+    </div>
   </header>
 
   <main>
@@ -391,7 +412,7 @@ canvas{max-width:100%}
           </div>
         </div>
         <div class="metaFormRow">
-          <div class="field"><label>Horário (opcional)</label><input type="time" id="metaHora"></div>
+          <div class="field"><label>Horário (opcional) 🔔 avisa na hora</label><input type="time" id="metaHora"></div>
           <button type="submit" class="btnAddMeta">+ Programar</button>
         </div>
       </form>
@@ -552,6 +573,15 @@ canvas{max-width:100%}
       <div class="field"><label>Nome</label><input id="perfilNome" maxlength="40" required></div>
       <button class="btnPrimary" type="submit">Salvar nome e foto</button>
     </form>
+    <h4 class="perfilSub">Notificações</h4>
+    <div class="notifRow">
+      <div class="notifTxt"><b>Avisos de metas neste aparelho</b>
+        <div class="notifSub">Receba uma notificação na hora das metas que têm horário.</div>
+      </div>
+      <button type="button" class="switch" id="notifSwitch" role="switch" aria-checked="false" aria-label="Ativar notificações"><span class="knob"></span></button>
+    </div>
+    <div class="notifHint" id="notifHint"></div>
+    <button type="button" class="btnGhost hidden" id="btnTestNotif">🔔 Enviar notificação de teste</button>
     <h4 class="perfilSub">Alterar e-mail de login</h4>
     <form id="emailForm">
       <div class="field"><label>E-mail atual</label><input id="emailAtual" disabled></div>
@@ -725,12 +755,28 @@ auth.onAuthStateChanged(user=>{
 document.getElementById('prevMonth').onclick=()=>{ state.mes=shiftMes(state.mes,-1); carregarMes(); };
 document.getElementById('nextMonth').onclick=()=>{ state.mes=shiftMes(state.mes, 1); carregarMes(); };
 
+const tabsMenu=document.getElementById('tabsMenu');
+const tabsToggle=document.getElementById('tabsToggle');
+tabsToggle.onclick=()=>{
+  const open=tabsMenu.classList.toggle('open');
+  tabsToggle.setAttribute('aria-expanded', open);
+};
+document.addEventListener('click', e=>{
+  if(!tabsMenu.contains(e.target)){
+    tabsMenu.classList.remove('open');
+    tabsToggle.setAttribute('aria-expanded','false');
+  }
+});
+
 document.querySelectorAll('nav.tabs button').forEach(b=>{
   b.onclick=()=>{
     document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('active'));
     b.classList.add('active');
     ['dash','tx','budget','subs','metas','pets'].forEach(t=>
       document.getElementById('tab-'+t).classList.toggle('hidden', t!==b.dataset.tab));
+    document.getElementById('tabsToggleLabel').textContent=b.textContent.trim();
+    tabsMenu.classList.remove('open');
+    tabsToggle.setAttribute('aria-expanded','false');
   };
 });
 
@@ -988,6 +1034,7 @@ function escutarRotinas(){
   state.unsubRotinas = col('rotinas').onSnapshot(snap=>{
     state.rotinas = snap.docs.map(d=>({id:d.id,...d.data()}));
     renderMetas();
+    agendarSyncPush();
   });
 }
 function escutarDiaMetas(){
@@ -1326,6 +1373,111 @@ function renderPerfilChip(){
   document.getElementById('userAvatar').innerHTML =
     state.perfil.foto ? `<img src="${state.perfil.foto}" alt="">` : '👤';
 }
+
+/* ---------------- Notificações push de metas ---------------- */
+const PUSH_URL='https://cofre-notifier.ericchang12c.workers.dev';
+const VAPID_PUBLIC='BMltuIq-4X91hpwo0cnKurFGY-E67UZXLWO3vNpEYx_-Jtob4ITXNNZRQJMxkpv4fwP6n7n81v9CXzREfQ3jpFc';
+
+function pushSuportado(){
+  return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+}
+function b64uParaBytes(s){
+  s=s.replace(/-/g,'+').replace(/_/g,'/');
+  const bin=atob(s+'='.repeat((4-s.length%4)%4));
+  return Uint8Array.from(bin,c=>c.charCodeAt(0));
+}
+async function pushGetSub(){
+  if(!pushSuportado()) return null;
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    return await reg.pushManager.getSubscription();
+  }catch(e){ return null; }
+}
+async function apiPush(path, body){
+  const token=await auth.currentUser.getIdToken();
+  const r=await fetch(PUSH_URL+path,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body:JSON.stringify(body)
+  });
+  if(!r.ok) throw new Error('api push '+r.status);
+  return r.json();
+}
+function rotinasParaPush(){
+  return state.rotinas.filter(r=>r.hora).map(r=>({id:r.id,texto:r.texto,dias:r.dias||[],hora:r.hora}));
+}
+function tzLocal(){
+  try{ return Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo'; }
+  catch(e){ return 'America/Sao_Paulo'; }
+}
+async function ativarNotif(){
+  if(!pushSuportado()){
+    toast('Este navegador não suporta push. No iPhone, instale o app na tela de início primeiro.');
+    return false;
+  }
+  const perm=await Notification.requestPermission();
+  if(perm!=='granted'){
+    toast('Permissão negada — habilite as notificações do site nas configurações do navegador.');
+    return false;
+  }
+  const reg=await navigator.serviceWorker.ready;
+  const sub=await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:b64uParaBytes(VAPID_PUBLIC)});
+  await apiPush('/sync',{tz:tzLocal(), rotinas:rotinasParaPush(), sub:sub.toJSON()});
+  return true;
+}
+async function desativarNotif(){
+  const sub=await pushGetSub();
+  if(!sub) return;
+  const ep=sub.endpoint;
+  await sub.unsubscribe().catch(()=>{});
+  try{ await apiPush('/sync',{removeEndpoint:ep}); }catch(e){}
+}
+/* Reenvia metas ao worker quando elas mudam (só se este aparelho está inscrito) */
+let pushSyncTimer=null;
+function agendarSyncPush(){
+  clearTimeout(pushSyncTimer);
+  pushSyncTimer=setTimeout(async ()=>{
+    try{
+      const sub=await pushGetSub();
+      if(sub && auth.currentUser) await apiPush('/sync',{tz:tzLocal(), rotinas:rotinasParaPush()});
+    }catch(e){/* sem rede ou worker fora — tenta de novo na próxima mudança */}
+  }, 1500);
+}
+async function renderNotifUI(){
+  const sw=document.getElementById('notifSwitch');
+  const hint=document.getElementById('notifHint');
+  const teste=document.getElementById('btnTestNotif');
+  if(!pushSuportado()){
+    sw.disabled=true; sw.classList.remove('on'); teste.classList.add('hidden');
+    hint.textContent='Push não disponível aqui. No iPhone/iPad: toque em Compartilhar → "Adicionar à Tela de Início" e ative por lá.';
+    return;
+  }
+  sw.disabled=false;
+  const sub=await pushGetSub();
+  const on=!!sub && Notification.permission==='granted';
+  sw.classList.toggle('on', on);
+  sw.setAttribute('aria-checked', on);
+  teste.classList.toggle('hidden', !on);
+  hint.textContent = on ? 'Ativo neste aparelho. Metas com horário vão gerar um aviso na hora certa.' :
+    'Vale por aparelho: ative no celular para receber os avisos nele.';
+}
+document.getElementById('notifSwitch').onclick=async ()=>{
+  const sw=document.getElementById('notifSwitch');
+  sw.disabled=true;
+  try{
+    const ligado=sw.classList.contains('on');
+    if(ligado){ await desativarNotif(); toast('Notificações desativadas neste aparelho.'); }
+    else if(await ativarNotif()){ toast('Notificações ativadas! 🔔'); }
+  }catch(e){ toast('Não consegui falar com o servidor de notificações.'); }
+  await renderNotifUI();
+};
+document.getElementById('btnTestNotif').onclick=async ()=>{
+  const b=document.getElementById('btnTestNotif');
+  b.disabled=true;
+  try{ await apiPush('/test',{}); toast('Teste enviado! Deve chegar em alguns segundos.'); }
+  catch(e){ toast('Falha ao enviar o teste.'); }
+  b.disabled=false;
+};
 function renderPerfilAvatar(){
   const foto = fotoPendente!==undefined ? fotoPendente : state.perfil.foto;
   document.getElementById('perfilAvatar').innerHTML = foto ? `<img src="${foto}" alt="">` : '👤';
@@ -1361,6 +1513,7 @@ document.getElementById('btnPerfil').onclick=()=>{
   document.getElementById('emailForm').reset();
   document.getElementById('senhaForm').reset();
   renderPerfilAvatar();
+  renderNotifUI();
   document.getElementById('perfilModal').classList.remove('hidden');
 };
 document.getElementById('btnTrocarFoto').onclick=()=>document.getElementById('fotoInput').click();

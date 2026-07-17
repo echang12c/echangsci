@@ -1,0 +1,17 @@
+{
+  "name": "cofre-notifier",
+  "main": "src/index.js",
+  "compatibility_date": "2026-07-01",
+  "kv_namespaces": [
+    { "binding": "PUSH", "id": "b30a7e3a260342a5998a0f5b12ed84be" }
+  ],
+  "triggers": {
+    "crons": ["* * * * *"]
+  },
+  "vars": {
+    "FIREBASE_PROJECT_ID": "moneyericana",
+    "VAPID_PUBLIC_KEY": "BMltuIq-4X91hpwo0cnKurFGY-E67UZXLWO3vNpEYx_-Jtob4ITXNNZRQJMxkpv4fwP6n7n81v9CXzREfQ3jpFc",
+    "VAPID_SUBJECT": "mailto:ericchang12c@gmail.com"
+  },
+  "observability": { "enabled": true }
+}
