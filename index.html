@@ -708,7 +708,7 @@ firebase.initializeApp(firebaseConfig);
    Cole aqui a SITE KEY criada em Console Firebase → App Check → Apps → Web.
    Enquanto estiver vazia, o App Check fica desligado (o app funciona normalmente).
    Só ative o "enforcement" no console DEPOIS de publicar o app com a chave. */
-const APP_CHECK_SITE_KEY = "";
+const APP_CHECK_SITE_KEY = "6LcnU1ktAAAAAOJqplc-TzVwj5uI6PkdIXc7CXov";
 if (APP_CHECK_SITE_KEY) {
   firebase.appCheck().activate(APP_CHECK_SITE_KEY, true); // true = renova o token sozinho
 }
