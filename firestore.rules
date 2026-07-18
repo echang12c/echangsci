@@ -1,0 +1,167 @@
+rules_version = '2';
+
+// ============================================================
+// SeuCofrin — Security Rules do Firestore
+// Cole este arquivo inteiro em:
+// Console Firebase → Firestore Database → Regras → Publicar
+//
+// Princípios:
+//  - Cada usuário só acessa users/{uid} com uid == request.auth.uid
+//  - Só entra com e-mail verificado (email_verified no token)
+//  - Toda escrita passa por validação de schema (tipos, campos,
+//    enums, formatos de data e limites de tamanho)
+//  - Coleções fora das listadas abaixo: negado por padrão
+//  - delete é liberado para o dono (necessário para "Excluir conta")
+// ============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function souDono(uid) {
+      return request.auth != null
+          && request.auth.uid == uid
+          && request.auth.token.email_verified == true;
+    }
+
+    // ---------- validadores de formato ----------
+    function ehMes(s)  { return s is string && s.matches('[0-9]{4}-[0-9]{2}'); }
+    function ehDia(s)  { return s is string && s.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}'); }
+    function ehHora(s) { return s is string && s.matches('[0-9]{2}:[0-9]{2}'); }
+    function txt(s, max) { return s is string && s.size() >= 1 && s.size() <= max; }
+    // valores em centavos: > 0 e abaixo de R$ 1 bilhão
+    function centavos(v) { return v is int && v > 0 && v <= 100000000000; }
+    function raridade(r) { return r in ['comum', 'raro', 'epico', 'lendario']; }
+
+    match /users/{uid} {
+
+      // ---------- Lançamentos ----------
+      function txValida(d) {
+        return d.keys().hasAll(['tipo', 'valor', 'desc', 'cat', 'data', 'mes'])
+            && d.keys().hasOnly(['tipo', 'valor', 'desc', 'cat', 'data', 'mes',
+                                 'pagamento', 'custom', 'subId', 'origem', 'criadoEm'])
+            && d.tipo in ['despesa', 'receita']
+            && centavos(d.valor)
+            && d.desc is string && d.desc.size() <= 200
+            && txt(d.cat, 60)
+            && ehMes(d.mes)
+            && d.data.matches(d.mes + '-[0-9]{2}')   // data pertence ao mês declarado
+            && (!('pagamento' in d) || d.pagamento == null || txt(d.pagamento, 40))
+            && (!('custom' in d) || (d.custom is map && d.custom.size() <= 30))
+            && (!('subId' in d) || txt(d.subId, 40))
+            && (!('origem' in d) || d.origem in ['csv', 'pdf']);
+      }
+      match /tx/{id} {
+        allow read, delete: if souDono(uid);
+        allow create: if souDono(uid)
+                      && txValida(request.resource.data)
+                      && request.resource.data.criadoEm == request.time;
+        allow update: if souDono(uid)
+                      && txValida(request.resource.data)
+                      && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['tipo', 'valor', 'desc', 'cat', 'data', 'mes', 'pagamento', 'custom']);
+      }
+
+      // ---------- Orçamentos (1 doc por mês, id = "YYYY-MM") ----------
+      match /orcamentos/{mes} {
+        allow read, delete: if souDono(uid);
+        allow create, update: if souDono(uid)
+                      && mes.matches('[0-9]{4}-[0-9]{2}')
+                      && request.resource.data.keys().hasOnly(['cats'])
+                      && request.resource.data.cats is map
+                      && request.resource.data.cats.size() <= 60;
+      }
+
+      // ---------- Assinaturas ----------
+      function subValida(d) {
+        return d.keys().hasAll(['nome', 'valor', 'dia', 'cat', 'ativa'])
+            && d.keys().hasOnly(['nome', 'valor', 'dia', 'cat', 'ativa'])
+            && txt(d.nome, 80)
+            && centavos(d.valor)
+            && d.dia is int && d.dia >= 1 && d.dia <= 31
+            && txt(d.cat, 60)
+            && d.ativa is bool;
+      }
+      match /assinaturas/{id} {
+        allow read, delete: if souDono(uid);
+        allow create, update: if souDono(uid) && subValida(request.resource.data);
+      }
+
+      // ---------- Metas programadas (rotinas) ----------
+      match /rotinas/{id} {
+        allow read, delete: if souDono(uid);
+        allow create: if souDono(uid)
+                      && request.resource.data.keys().hasAll(['texto', 'dias', 'hora', 'criadoEm'])
+                      && request.resource.data.keys().hasOnly(['texto', 'dias', 'hora', 'criadoEm'])
+                      && txt(request.resource.data.texto, 120)
+                      && request.resource.data.dias is list
+                      && request.resource.data.dias.size() >= 1
+                      && request.resource.data.dias.size() <= 7
+                      && request.resource.data.dias.hasOnly([0, 1, 2, 3, 4, 5, 6])
+                      && (request.resource.data.hora == null || ehHora(request.resource.data.hora))
+                      && request.resource.data.criadoEm == request.time;
+      }
+
+      // ---------- Status do dia (1 doc por dia, id = "YYYY-MM-DD") ----------
+      function statusValido(d) {
+        return d.keys().hasOnly(['feitas', 'bau'])
+            && (!('feitas' in d) || (d.feitas is map && d.feitas.size() <= 100))
+            && (!('bau' in d) || (
+                  d.bau is map
+                  && d.bau.keys().hasAll(['pet', 'r'])
+                  && d.bau.keys().hasOnly(['pet', 'r', 'abertoEm'])
+                  && txt(d.bau.pet, 40)
+                  && raridade(d.bau.r)
+               ));
+      }
+      match /metasStatus/{dia} {
+        allow read, delete: if souDono(uid);
+        allow create, update: if souDono(uid)
+                      && dia.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
+                      && statusValido(request.resource.data);
+      }
+
+      // ---------- Coleção de pets ganhos ----------
+      match /inventario/{id} {
+        allow read, delete: if souDono(uid);
+        allow create: if souDono(uid)
+                      && request.resource.data.keys().hasAll(['pet', 'r', 'data', 'criadoEm'])
+                      && request.resource.data.keys().hasOnly(['pet', 'r', 'data', 'criadoEm'])
+                      && txt(request.resource.data.pet, 40)
+                      && raridade(request.resource.data.r)
+                      && ehDia(request.resource.data.data)
+                      && request.resource.data.criadoEm == request.time;
+      }
+
+      // ---------- Campos personalizados ----------
+      match /camposCustom/{id} {
+        allow read, delete: if souDono(uid);
+        allow create: if souDono(uid)
+                      && request.resource.data.keys().hasAll(['nome', 'tipo', 'criadoEm'])
+                      && request.resource.data.keys().hasOnly(['nome', 'tipo', 'opcoes', 'criadoEm'])
+                      && txt(request.resource.data.nome, 40)
+                      && request.resource.data.tipo in ['texto', 'monetario', 'numero', 'data', 'opcoes']
+                      && (request.resource.data.tipo == 'opcoes'
+                            ? (request.resource.data.opcoes is list
+                               && request.resource.data.opcoes.size() >= 1
+                               && request.resource.data.opcoes.size() <= 30)
+                            : !('opcoes' in request.resource.data))
+                      && request.resource.data.criadoEm == request.time;
+      }
+
+      // ---------- Perfil (doc único "dados") ----------
+      match /perfil/dados {
+        allow read, delete: if souDono(uid);
+        allow create, update: if souDono(uid)
+                      && request.resource.data.keys().hasAll(['nome'])
+                      && request.resource.data.keys().hasOnly(['nome', 'foto', 'aceite'])
+                      && txt(request.resource.data.nome, 40)
+                      && (!('aceite' in request.resource.data) || txt(request.resource.data.aceite, 40))
+                      && (!('foto' in request.resource.data) || (
+                            request.resource.data.foto is string
+                            && request.resource.data.foto.size() <= 300000
+                            && request.resource.data.foto.matches('data:image/.*')
+                         ));
+      }
+    }
+  }
+}

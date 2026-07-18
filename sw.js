@@ -1,8 +1,9 @@
 /* Service worker do SeuCofrin — cache do app shell + estáticos */
-const CACHE = 'cofre-v3';
+const CACHE = 'cofre-v4';
 const PRECACHE = [
   './',
   'index.html',
+  'privacidade.html',
   'manifest.json',
   'icons/icon-192.png',
   'icons/icon-512.png',

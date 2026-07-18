@@ -279,6 +279,14 @@ export default {
       return json({ ok: true, results });
     }
 
+    if (path === '/wipe') {
+      // Exclusão de conta (LGPD): apaga tudo que este usuário tem no KV
+      await env.PUSH.delete(key);
+      const idx = (await env.PUSH.get(IDX_KEY, 'json')) || [];
+      if (idx.includes(key)) await env.PUSH.put(IDX_KEY, JSON.stringify(idx.filter((k) => k !== key)));
+      return json({ ok: true });
+    }
+
     return json({ error: 'rota desconhecida' }, 404);
   },
 };

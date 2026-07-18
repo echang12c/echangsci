@@ -19,6 +19,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
 <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
 <style>
 :root{
@@ -44,7 +45,11 @@ input,select{font-family:inherit;font-size:15px}
 .hidden{display:none!important}
 
 /* ---------- Login ---------- */
-#loginView{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px}
+#loginView,#verifyView{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px}
+.verifyBody{margin-top:22px;display:grid;gap:12px;text-align:center}
+.verifyBody p{font-size:14px;color:var(--ink)}
+.verifyHint{font-size:13px;color:var(--muted)}
+.verifyOk{color:var(--primary);font-size:13px;min-height:18px}
 .loginCard{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:36px 32px;width:100%;max-width:380px;box-shadow:0 10px 40px rgba(21,32,25,.08)}
 .brand{font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:-.02em;background:linear-gradient(90deg,#00A86B,#0E7DC2 70%,#8B5CF6);-webkit-background-clip:text;background-clip:text;color:transparent}
 .brand small{display:block;font-family:var(--body);font-weight:500;font-size:13px;color:var(--muted);letter-spacing:.04em;margin-top:2px}
@@ -56,9 +61,18 @@ input,select{font-family:inherit;font-size:15px}
 .btnPrimary:hover{filter:brightness(1.08)}
 .btnGhost{background:transparent;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-weight:600;color:var(--ink)}
 .btnGhost:hover{background:#fff}
+.btnDanger{background:transparent;border:1px solid var(--danger);border-radius:10px;padding:10px 14px;font-weight:600;color:var(--danger)}
+.btnDanger:hover{background:var(--danger);color:#fff}
+.btnDanger:disabled,.btnGhost:disabled,.btnPrimary:disabled{opacity:.55;cursor:not-allowed}
 .loginErr{color:var(--danger);font-size:13px;min-height:18px}
 .loginSwap{border:none;background:none;color:var(--muted);font-size:13px;margin-top:16px;width:100%;text-align:center}
 .loginSwap b{color:var(--primary)}
+.aceiteRow{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--muted)}
+.aceiteRow input{margin-top:3px;accent-color:var(--primary)}
+.aceiteRow a{color:var(--primary);font-weight:600}
+.loginFooter{margin-top:14px;text-align:center;font-size:12px}
+.loginFooter a,.appFooter a{color:var(--muted);text-decoration:underline}
+.appFooter{text-align:center;font-size:12px;padding:18px 0 84px}
 
 /* ---------- Perfil ---------- */
 .perfilBtn{display:flex;align-items:center;gap:8px;border:none;background:none;padding:0}
@@ -303,16 +317,35 @@ canvas{max-width:100%}
       <div class="field"><label>Senha</label><input type="password" id="loginPass" autocomplete="current-password" required></div>
       <button class="btnPrimary" type="submit">Entrar</button>
       <div class="loginErr" id="loginErr"></div>
+      <button type="button" class="loginSwap" id="btnEsqueci" style="margin-top:0">Esqueci minha senha</button>
     </form>
     <form id="cadForm" class="hidden">
       <div class="field"><label>Seu nome</label><input id="cadNome" maxlength="40" autocomplete="name" required></div>
       <div class="field"><label>E-mail</label><input type="email" id="cadEmail" autocomplete="email" required></div>
       <div class="field"><label>Senha (mín. 6 caracteres)</label><input type="password" id="cadPass" minlength="6" autocomplete="new-password" required></div>
       <div class="field"><label>Repita a senha</label><input type="password" id="cadPass2" minlength="6" autocomplete="new-password" required></div>
+      <label class="aceiteRow"><input type="checkbox" id="cadAceite" required>
+        <span>Li e aceito a <a href="privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a></span></label>
       <button class="btnPrimary" type="submit">Criar conta</button>
       <div class="loginErr" id="cadErr"></div>
     </form>
     <button type="button" class="loginSwap" id="loginSwap">Não tem conta? <b>Criar cadastro</b></button>
+    <div class="loginFooter"><a href="privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a></div>
+  </div>
+</div>
+
+<!-- ================= VERIFICAÇÃO DE E-MAIL ================= -->
+<div id="verifyView" class="hidden">
+  <div class="loginCard">
+    <div class="brand">SeuCofrin<small>confirme seu e-mail</small></div>
+    <div class="verifyBody">
+      <p>📬 Enviamos um link de confirmação para<br><b id="verifyEmail"></b></p>
+      <p class="verifyHint">Abra o e-mail e toque no link — esta tela avança sozinha em alguns segundos. Não achou? Confira a caixa de spam.</p>
+      <div class="verifyOk" id="verifyMsg"></div>
+      <button class="btnPrimary" id="btnVerifyCheck" type="button">Já confirmei</button>
+      <button class="btnGhost" id="btnVerifyResend" type="button">Reenviar e-mail</button>
+      <button type="button" class="loginSwap" id="btnVerifyLogout">Sair e usar outra conta</button>
+    </div>
   </div>
 </div>
 
@@ -452,6 +485,8 @@ canvas{max-width:100%}
       <div class="petGrid" id="petGrid"></div>
     </section>
   </main>
+
+  <footer class="appFooter"><a href="privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a></footer>
 
   <button class="fab" id="fabAdd" aria-label="Novo lançamento">+</button>
 </div>
@@ -615,7 +650,29 @@ canvas{max-width:100%}
       <div class="field"><label>Nova senha (mín. 6 caracteres)</label><input type="password" id="senhaNova" minlength="6" autocomplete="new-password" required></div>
       <button class="btnGhost" type="submit">Atualizar senha</button>
     </form>
+    <h4 class="perfilSub">Meus dados</h4>
+    <div class="notifSub" style="margin-bottom:8px">Baixe uma cópia de tudo que você guardou no SeuCofrin (arquivo JSON) — seu direito de portabilidade pela LGPD.</div>
+    <button type="button" class="btnGhost" id="btnExportar">⬇️ Exportar meus dados</button>
+    <button type="button" class="btnDanger" id="btnExcluirConta" style="margin-top:8px">🗑️ Excluir minha conta e todos os dados</button>
     <div class="modalActions"><button type="button" class="btnGhost" data-close style="flex:1">Fechar</button></div>
+  </div>
+</div>
+
+<!-- ===== Modal excluir conta ===== -->
+<div class="modalWrap hidden" id="delModal">
+  <div class="modal">
+    <h3>Excluir minha conta</h3>
+    <p class="impHint" style="color:var(--danger)"><b>Esta ação é definitiva.</b> Serão apagados: seus lançamentos, orçamentos, assinaturas, metas, coleção de pets, perfil e sua conta de login. Não há como recuperar depois.</p>
+    <p class="impHint">Dica: exporte seus dados antes, se quiser guardar uma cópia.</p>
+    <form id="delForm">
+      <div class="field"><label>Sua senha (para confirmar que é você)</label><input type="password" id="delSenha" autocomplete="current-password" required></div>
+      <div class="field"><label>Digite <b>EXCLUIR</b> para confirmar</label><input id="delConfirma" autocomplete="off" required></div>
+      <div class="loginErr" id="delErr"></div>
+      <div class="modalActions">
+        <button type="button" class="btnGhost" data-close>Cancelar</button>
+        <button type="submit" class="btnDanger" id="btnDelFinal">Excluir tudo</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -646,7 +703,18 @@ const CATS_RECEITA = ["Salário","Extra","Investimentos","Outros"];
 const CAT_COLORS = ["#00A86B","#FF5C4D","#FFAA00","#2D9CDB","#8B5CF6","#00C4B4","#FF7A00","#EC4899","#84CC16","#0EA5E9","#F43F5E","#6366F1"];
 
 firebase.initializeApp(firebaseConfig);
+
+/* ---- Firebase App Check (reCAPTCHA v3) ----
+   Cole aqui a SITE KEY criada em Console Firebase → App Check → Apps → Web.
+   Enquanto estiver vazia, o App Check fica desligado (o app funciona normalmente).
+   Só ative o "enforcement" no console DEPOIS de publicar o app com a chave. */
+const APP_CHECK_SITE_KEY = "";
+if (APP_CHECK_SITE_KEY) {
+  firebase.appCheck().activate(APP_CHECK_SITE_KEY, true); // true = renova o token sozinho
+}
+
 const auth = firebase.auth();
+auth.useDeviceLanguage(); // e-mails de verificação/recuperação no idioma do aparelho
 const db = firebase.firestore();
 
 /* ---------------- Estado ---------------- */
@@ -703,26 +771,46 @@ function col(path){ return db.collection('users').doc(state.uid).collection(path
 /* ---------------- Auth ---------------- */
 function erroAuthPT(ex){
   const c=(ex&&ex.code)||'';
-  if(c.includes('email-already-in-use')) return 'Este e-mail já tem cadastro. Toque em "Entrar".';
-  if(c.includes('invalid-email')) return 'E-mail inválido.';
-  if(c.includes('weak-password')) return 'Senha muito fraca — use pelo menos 6 caracteres.';
+  if(c.includes('email-already-in-use')) return 'Não deu para criar a conta com este e-mail. Se você já tem cadastro, toque em "Entrar".';
+  if(c.includes('invalid-email')) return 'E-mail inválido — confira a digitação.';
+  if(c.includes('weak-password')||c.includes('password-does-not-meet-requirements')) return 'Senha muito fraca — use pelo menos 6 caracteres.';
+  if(c.includes('missing-password')) return 'Digite a senha.';
+  if(c.includes('user-disabled')) return 'Esta conta está desativada.';
   if(c.includes('wrong-password')||c.includes('invalid-credential')||c.includes('invalid-login')||c.includes('user-not-found')) return 'E-mail ou senha incorretos.';
-  if(c.includes('too-many-requests')) return 'Muitas tentativas — aguarde alguns minutos.';
+  if(c.includes('too-many-requests')) return 'Muitas tentativas — por segurança, aguarde alguns minutos e tente de novo.';
   if(c.includes('requires-recent-login')) return 'Por segurança, saia e entre de novo antes desta ação.';
-  if(c.includes('network-request-failed')) return 'Sem conexão — confira a internet.';
-  return 'Erro: '+(ex&&ex.message||ex);
+  if(c.includes('network-request-failed')) return 'Sem conexão — confira a internet e tente de novo.';
+  console.error('auth:', ex); // detalhe técnico só no console, nunca na tela
+  return 'Algo deu errado. Tente de novo em instantes.';
 }
 
 document.getElementById('loginForm').addEventListener('submit', async e=>{
   e.preventDefault();
   const err=document.getElementById('loginErr'); err.textContent='';
+  const btn=e.target.querySelector('button[type="submit"]');
+  btn.disabled=true;
   try{
     await auth.signInWithEmailAndPassword(
       document.getElementById('loginEmail').value.trim(),
       document.getElementById('loginPass').value
     );
   }catch(ex){ err.textContent=erroAuthPT(ex); }
+  btn.disabled=false;
 });
+
+/* "Esqueci minha senha" — resposta neutra: não revela se o e-mail tem cadastro */
+document.getElementById('btnEsqueci').onclick=async ()=>{
+  const email=document.getElementById('loginEmail').value.trim();
+  const err=document.getElementById('loginErr');
+  if(!email){ err.textContent='Digite seu e-mail no campo acima e toque de novo em "Esqueci minha senha".'; return; }
+  err.textContent='';
+  try{ await auth.sendPasswordResetEmail(email); }
+  catch(ex){
+    const c=String(ex&&ex.code||'');
+    if(!c.includes('user-not-found')){ err.textContent=erroAuthPT(ex); return; }
+  }
+  toast('Se este e-mail tiver cadastro, o link de redefinição chega em instantes 📬');
+};
 
 let modoCadastro=false;
 document.getElementById('loginSwap').onclick=()=>{
@@ -740,42 +828,106 @@ document.getElementById('cadForm').addEventListener('submit', async e=>{
   const p1=document.getElementById('cadPass').value;
   const p2=document.getElementById('cadPass2').value;
   if(p1!==p2){ err.textContent='As senhas não conferem.'; return; }
+  const btn=e.target.querySelector('button[type="submit"]');
+  btn.disabled=true;
   try{
     const cred=await auth.createUserWithEmailAndPassword(document.getElementById('cadEmail').value.trim(), p1);
     await cred.user.updateProfile({displayName:nome});
-    await db.collection('users').doc(cred.user.uid).collection('perfil').doc('dados').set({nome},{merge:true});
-    state.nome=nome; renderPerfilChip();
-    toast('Conta criada! Bem-vindo(a) ao SeuCofrin 🎉');
+    state.nome=nome;
+    // guarda a data do aceite da política p/ gravar no perfil no 1º acesso verificado
+    localStorage.setItem('aceitePend_'+cred.user.uid, new Date().toISOString());
+    await enviarVerificacao(cred.user); // o doc de perfil é criado no 1º acesso verificado
+    toast('Conta criada! Agora confirme seu e-mail 📬');
   }catch(ex){ err.textContent=erroAuthPT(ex); }
+  btn.disabled=false;
 });
 
 document.getElementById('btnLogout').addEventListener('click',()=>auth.signOut());
 
+/* --- Verificação de e-mail: o app só abre com e-mail confirmado --- */
+let verifyPoll=null, verifEnviadaEm=0;
+
+async function enviarVerificacao(user){
+  const agora=Date.now();
+  if(agora-verifEnviadaEm<60000) return false; // no máx. 1 envio por minuto
+  await user.sendEmailVerification();
+  verifEnviadaEm=agora;
+  return true;
+}
+
+function mostrarVerifyView(user){
+  document.getElementById('verifyEmail').textContent=user.email;
+  document.getElementById('appView').classList.add('hidden');
+  document.getElementById('loginView').classList.add('hidden');
+  document.getElementById('verifyView').classList.remove('hidden');
+  // conta antiga que nunca recebeu o link (ou recarregou a página): envia sem precisar clicar
+  enviarVerificacao(user).catch(()=>{});
+  clearInterval(verifyPoll);
+  verifyPoll=setInterval(()=>checarVerificacao(false), 5000);
+}
+
+async function checarVerificacao(manual){
+  const user=auth.currentUser;
+  if(!user){ clearInterval(verifyPoll); return; }
+  try{ await user.reload(); }catch(e){ return; }
+  if(user.emailVerified){
+    clearInterval(verifyPoll); verifyPoll=null;
+    await user.getIdToken(true); // renova o token p/ as security rules enxergarem email_verified
+    document.getElementById('verifyView').classList.add('hidden');
+    entrarNoApp(user);
+    toast('E-mail confirmado! 🎉');
+  }else if(manual){
+    document.getElementById('verifyMsg').textContent='Ainda não consta como confirmado. Abriu o link do e-mail?';
+  }
+}
+
+document.getElementById('btnVerifyCheck').onclick=()=>checarVerificacao(true);
+document.getElementById('btnVerifyResend').onclick=async ()=>{
+  const user=auth.currentUser; if(!user) return;
+  const msg=document.getElementById('verifyMsg');
+  try{
+    msg.textContent = await enviarVerificacao(user)
+      ? 'E-mail reenviado! Confira a caixa de entrada e o spam.'
+      : 'Acabei de enviar — aguarde um minutinho antes de reenviar.';
+  }catch(ex){ msg.textContent=erroAuthPT(ex); }
+};
+document.getElementById('btnVerifyLogout').onclick=()=>auth.signOut();
+
+function entrarNoApp(user){
+  state.uid=user.uid;
+  state.nome=user.displayName||(user.email||'').split('@')[0];
+  renderPerfilChip();
+  document.getElementById('loginView').classList.add('hidden');
+  document.getElementById('appView').classList.remove('hidden');
+  carregarMes();
+  escutarAssinaturas();
+  escutarRotinas();
+  escutarDiaMetas();
+  escutarInventario();
+  escutarCampos();
+  escutarPerfil();
+  carregarTendencia();
+  if(!localStorage.getItem('guiaVisto_'+state.uid)){
+    localStorage.setItem('guiaVisto_'+state.uid,'1');
+    abrirGuia(0);
+  }
+}
+
 auth.onAuthStateChanged(user=>{
-  if(user){
-    state.uid=user.uid;
-    state.nome=user.displayName||(user.email||'').split('@')[0];
-    renderPerfilChip();
-    document.getElementById('loginView').classList.add('hidden');
-    document.getElementById('appView').classList.remove('hidden');
-    carregarMes();
-    escutarAssinaturas();
-    escutarRotinas();
-    escutarDiaMetas();
-    escutarInventario();
-    escutarCampos();
-    escutarPerfil();
-    carregarTendencia();
-    if(!localStorage.getItem('guiaVisto_'+state.uid)){
-      localStorage.setItem('guiaVisto_'+state.uid,'1');
-      abrirGuia(0);
-    }
+  if(user && !user.emailVerified){
+    mostrarVerifyView(user);
+  }else if(user){
+    document.getElementById('verifyView').classList.add('hidden');
+    entrarNoApp(user);
   }else{
     state.uid=null; state.perfil={};
+    clearInterval(verifyPoll); verifyPoll=null;
+    document.getElementById('verifyMsg').textContent='';
     if(state.unsubTx)state.unsubTx(); if(state.unsubOrc)state.unsubOrc(); if(state.unsubSubs)state.unsubSubs();
     if(state.unsubRotinas)state.unsubRotinas(); if(state.unsubMetaStatus)state.unsubMetaStatus(); if(state.unsubInv)state.unsubInv();
     if(state.unsubCampos)state.unsubCampos(); if(state.unsubPerfil)state.unsubPerfil();
     document.getElementById('appView').classList.add('hidden');
+    document.getElementById('verifyView').classList.add('hidden');
     document.getElementById('loginView').classList.remove('hidden');
   }
 });
@@ -1393,6 +1545,12 @@ let fotoPendente; // undefined = sem mudança, null = remover, string = nova fot
 function escutarPerfil(){
   if(state.unsubPerfil)state.unsubPerfil();
   state.unsubPerfil = col('perfil').doc('dados').onSnapshot(doc=>{
+    if(!doc.exists && state.nome){ // 1º acesso verificado: cria o doc que o cadastro não grava mais
+      const novo={nome:state.nome};
+      const aceite=localStorage.getItem('aceitePend_'+state.uid);
+      if(aceite){ novo.aceite=aceite; localStorage.removeItem('aceitePend_'+state.uid); }
+      col('perfil').doc('dados').set(novo,{merge:true}).catch(()=>{});
+    }
     state.perfil = doc.exists ? doc.data() : {};
     if(state.perfil.nome) state.nome=state.perfil.nome;
     renderPerfilChip();
@@ -1597,6 +1755,76 @@ document.getElementById('senhaForm').addEventListener('submit', async e=>{
     e.target.reset();
     toast('Senha atualizada! 🔒');
   }catch(ex){ toast(erroAuthPT(ex)); }
+});
+
+/* ---------------- Meus dados: exportação e exclusão (LGPD) ---------------- */
+const COLECOES_USUARIO=['perfil','tx','orcamentos','assinaturas','rotinas','metasStatus','inventario','camposCustom'];
+
+function converterTimestamps(v){
+  if(v && typeof v.toDate==='function') return v.toDate().toISOString();
+  if(Array.isArray(v)) return v.map(converterTimestamps);
+  if(v && typeof v==='object'){ const o={}; for(const k in v) o[k]=converterTimestamps(v[k]); return o; }
+  return v;
+}
+
+document.getElementById('btnExportar').onclick=async ()=>{
+  const b=document.getElementById('btnExportar');
+  b.disabled=true; b.textContent='Preparando arquivo…';
+  try{
+    const out={app:'SeuCofrin', formato:1, exportadoEm:new Date().toISOString(),
+      conta:{email:auth.currentUser.email, nome:state.nome}, dados:{}};
+    for(const c of COLECOES_USUARIO){
+      const snap=await col(c).get();
+      out.dados[c]=snap.docs.map(d=>({id:d.id, ...converterTimestamps(d.data())}));
+    }
+    const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=`seucofrin-dados-${hojeISO()}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    toast('Dados exportados! 📦');
+  }catch(ex){ toast('Não consegui exportar agora. Tente de novo em instantes.'); }
+  b.disabled=false; b.textContent='⬇️ Exportar meus dados';
+};
+
+document.getElementById('btnExcluirConta').onclick=()=>{
+  document.getElementById('delForm').reset();
+  document.getElementById('delErr').textContent='';
+  document.getElementById('delModal').classList.remove('hidden');
+};
+
+async function apagarColecao(nome){
+  while(true){ // apaga em lotes de 300 até esvaziar
+    const snap=await col(nome).limit(300).get();
+    if(snap.empty) return;
+    const batch=db.batch();
+    snap.docs.forEach(d=>batch.delete(d.ref));
+    await batch.commit();
+    if(snap.size<300) return;
+  }
+}
+
+document.getElementById('delForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const err=document.getElementById('delErr'); err.textContent='';
+  if(document.getElementById('delConfirma').value.trim().toUpperCase()!=='EXCLUIR'){
+    err.textContent='Digite EXCLUIR (em maiúsculas) para confirmar.'; return;
+  }
+  const user=auth.currentUser; if(!user) return;
+  const btn=document.getElementById('btnDelFinal');
+  btn.disabled=true; btn.textContent='Excluindo…';
+  try{
+    await reautenticar(document.getElementById('delSenha').value);
+    try{ await desativarNotif(); }catch(_){}      // remove a inscrição de push deste aparelho
+    try{ await apiPush('/wipe',{}); }catch(_){}   // apaga os dados de push no worker (todos os aparelhos)
+    for(const c of COLECOES_USUARIO) await apagarColecao(c);
+    await user.delete(); // encerra a sessão sozinho → volta à tela de login
+    document.getElementById('delModal').classList.add('hidden');
+    document.getElementById('perfilModal').classList.add('hidden');
+    toast('Conta excluída. Cuide-se! 👋');
+  }catch(ex){ err.textContent=erroAuthPT(ex); }
+  btn.disabled=false; btn.textContent='Excluir tudo';
 });
 
 /* ---------------- Modais ---------------- */
