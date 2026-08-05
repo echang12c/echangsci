@@ -148,6 +148,22 @@ service cloud.firestore {
                       && request.resource.data.criadoEm == request.time;
       }
 
+      // ---------- Memória de categorias por destinatário ----------
+      // id = "c" + CNPJ (14 dígitos) ou "n" + nome normalizado
+      match /catMap/{chave} {
+        allow read, delete: if souDono(uid);
+        allow create, update: if souDono(uid)
+                      && chave.size() >= 2 && chave.size() <= 80
+                      && request.resource.data.keys().hasAll(['cat', 'atualizadoEm'])
+                      && request.resource.data.keys().hasOnly(['cat', 'desc', 'pagamento', 'atualizadoEm'])
+                      && txt(request.resource.data.cat, 60)
+                      && (!('desc' in request.resource.data)
+                            || (request.resource.data.desc is string
+                                && request.resource.data.desc.size() <= 120))
+                      && (!('pagamento' in request.resource.data) || txt(request.resource.data.pagamento, 40))
+                      && request.resource.data.atualizadoEm == request.time;
+      }
+
       // ---------- Perfil (doc único "dados") ----------
       match /perfil/dados {
         allow read, delete: if souDono(uid);

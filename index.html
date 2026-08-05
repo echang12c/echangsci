@@ -270,6 +270,18 @@ model-viewer{width:100%;height:280px;background:transparent;--poster-color:trans
 .campoItem{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line)}
 .campoItem:last-child{border-bottom:none}
 #camposList{margin-bottom:16px}
+.catChips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+.catChip{border:1px solid var(--line);background:#FAFCFA;border-radius:999px;padding:9px 14px;font-size:13.5px;font-weight:600;cursor:pointer;transition:background .12s,border-color .12s}
+.catChip:hover{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.catAskNome{font-weight:800}
+.autoTag{font-size:11px}
+.txSelBar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding:10px 12px;background:var(--expense-soft);border-radius:12px}
+.txSelBar .selCount{font-size:13px;font-weight:600;color:var(--muted);margin-right:auto}
+.btnDanger{border:none;background:var(--expense);color:#fff;border-radius:10px;padding:9px 13px;font-weight:700;font-size:13.5px;cursor:pointer}
+.btnDanger:disabled{opacity:.45;cursor:default}
+.btnDanger.ghost{background:transparent;color:var(--expense);border:1px solid var(--expense)}
+.txSelChk{width:18px;height:18px;accent-color:var(--expense);flex-shrink:0}
+.txList.selMode .txDel{display:none}
 
 /* ---------- Guia de boas-vindas ---------- */
 .ajudaBtn{border:1px solid var(--line);background:var(--surface);border-radius:999px;width:30px;height:30px;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0}
@@ -405,8 +417,16 @@ canvas{max-width:100%}
       <div class="toolRow">
         <button class="btnGhost" id="btnImportCSV">📥 Importar CSV/PDF</button>
         <button class="btnGhost" id="btnCampos">⚙️ Campos personalizados</button>
+        <button class="btnGhost" id="btnTxSel">🗑️ Excluir vários</button>
       </div>
       <div class="chipRow" id="txFilter"></div>
+      <div class="txSelBar hidden" id="txSelBar">
+        <label class="chkLine" style="padding:0"><input type="checkbox" id="txSelAll" class="txSelChk"> Marcar todos</label>
+        <span class="selCount" id="txSelCount">0 selecionados</span>
+        <button type="button" class="btnDanger" id="btnTxDelSel" disabled>Excluir selecionados</button>
+        <button type="button" class="btnDanger ghost" id="btnTxDelAll">Apagar todos do mês</button>
+        <button type="button" class="btnGhost" id="btnTxSelCancel">Cancelar</button>
+      </div>
       <div class="card txList" id="txList"><div class="empty">Nenhum lançamento neste mês. Toque em + para adicionar.</div></div>
     </section>
 
@@ -584,6 +604,18 @@ canvas{max-width:100%}
         <button type="button" class="btnGhost" data-close>Cancelar</button>
         <button type="button" class="btnPrimary" id="btnImpConfirm">Importar</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal pergunta de categoria (Pix p/ pessoa) ===== -->
+<div class="modalWrap hidden" id="catAskModal">
+  <div class="modal">
+    <h3>🧠 Ajude o app a aprender</h3>
+    <p class="impHint" id="catAskMsg" style="font-size:14.5px"></p>
+    <div class="catChips" id="catAskChips"></div>
+    <div class="modalActions">
+      <button type="button" class="btnGhost" id="catAskSkip" style="flex:1">Deixar como "Outros"</button>
     </div>
   </div>
 </div>
@@ -920,7 +952,7 @@ auth.onAuthStateChanged(user=>{
     document.getElementById('verifyView').classList.add('hidden');
     entrarNoApp(user);
   }else{
-    state.uid=null; state.perfil={};
+    state.uid=null; state.perfil={}; catMap=null;
     clearInterval(verifyPoll); verifyPoll=null;
     document.getElementById('verifyMsg').textContent='';
     if(state.unsubTx)state.unsubTx(); if(state.unsubOrc)state.unsubOrc(); if(state.unsubSubs)state.unsubSubs();
@@ -1037,7 +1069,7 @@ function renderDash(){
   // top 5 gastos
   const top=[...state.txs].filter(t=>t.tipo==='despesa').sort((a,b)=>b.valor-a.valor).slice(0,5);
   const box=document.getElementById('topGastos');
-  box.innerHTML = top.length ? top.map(txHTML).join('') : '<div class="empty">Sem lançamentos ainda.</div>';
+  box.innerHTML = top.length ? top.map(t=>txHTML(t)).join('') : '<div class="empty">Sem lançamentos ainda.</div>';
   ligarAcoes(box);
 
   // gráfico categorias
@@ -1084,12 +1116,13 @@ function customResumo(t){
     }).join(' · ');
 }
 
-function txHTML(t){
+function txHTML(t, sel){
   const [y,m,d]=t.data.split('-');
   const sinal=t.tipo==='receita'?'+':'−';
   const cls=t.tipo==='receita'?'pos':'neg';
   const cust=customResumo(t);
-  return `<div class="txItem" data-id="${t.id}" title="Toque para editar">
+  return `<div class="txItem" data-id="${t.id}" title="${sel?'Toque para selecionar':'Toque para editar'}">
+    ${sel?`<input type="checkbox" class="txSelChk"${txSelIds.has(t.id)?' checked':''}>`:''}
     <div class="txDate"><b>${d}</b>${new Date(y,m-1,d).toLocaleDateString('pt-BR',{month:'short'}).replace('.','')}</div>
     <div class="txInfo"><div class="d">${esc(t.desc)}</div>
       <div class="c">${esc(t.cat)}${t.pagamento?` <span class="payTag">${PAG_LABEL[t.pagamento]||esc(t.pagamento)}</span>`:''}${cust?' · '+cust:''}</div></div>
@@ -1108,16 +1141,27 @@ function renderTx(){
   fbox.querySelectorAll('.chip').forEach(ch=>ch.onclick=()=>{state.filtroCat=ch.dataset.c||null;renderTx();});
 
   const list=document.getElementById('txList');
-  const txs=state.filtroCat? state.txs.filter(t=>t.cat===state.filtroCat) : state.txs;
-  list.innerHTML = txs.length ? txs.map(txHTML).join('') : '<div class="empty">Nenhum lançamento neste mês. Toque em + para adicionar.</div>';
-  ligarAcoes(list);
+  const txs=txsVisiveis();
+  // remove da seleção ids que já saíram da lista (ex.: excluídos em outro aparelho)
+  [...txSelIds].forEach(id=>{ if(!state.txs.some(t=>t.id===id)) txSelIds.delete(id); });
+  list.classList.toggle('selMode', txSelMode);
+  list.innerHTML = txs.length ? txs.map(t=>txHTML(t, txSelMode)).join('') : '<div class="empty">Nenhum lançamento neste mês. Toque em + para adicionar.</div>';
+  ligarAcoes(list, txSelMode);
+  atualizarSelBar();
 }
 
-function ligarAcoes(container){
+function ligarAcoes(container, selMode){
   container.querySelectorAll('.txItem').forEach(el=>{
     const id=el.dataset.id;
     el.onclick=e=>{
       if(e.target.closest('.txDel')) return;
+      if(selMode){
+        const chk=el.querySelector('.txSelChk');
+        if(e.target!==chk) chk.checked=!chk.checked;
+        if(chk.checked) txSelIds.add(id); else txSelIds.delete(id);
+        atualizarSelBar();
+        return;
+      }
       const t=state.txs.find(x=>x.id===id);
       if(t) abrirTxModal(t);
     };
@@ -1127,6 +1171,46 @@ function ligarAcoes(container){
     };
   });
 }
+
+/* ---------------- Exclusão em massa de lançamentos ---------------- */
+let txSelMode=false;
+const txSelIds=new Set();
+function txsVisiveis(){ return state.filtroCat? state.txs.filter(t=>t.cat===state.filtroCat) : state.txs; }
+function atualizarSelBar(){
+  document.getElementById('txSelBar').classList.toggle('hidden', !txSelMode);
+  if(!txSelMode) return;
+  const vis=txsVisiveis();
+  document.getElementById('txSelCount').textContent=`${txSelIds.size} selecionado${txSelIds.size===1?'':'s'}`;
+  document.getElementById('txSelAll').checked = vis.length>0 && vis.every(t=>txSelIds.has(t.id));
+  document.getElementById('btnTxDelSel').disabled = txSelIds.size===0;
+}
+async function excluirTxIds(ids, msg){
+  if(!ids.length){ toast('Nenhum lançamento para excluir'); return; }
+  if(!confirm(msg)) return;
+  try{
+    for(let i=0;i<ids.length;i+=400){
+      const batch=db.batch();
+      ids.slice(i,i+400).forEach(id=>batch.delete(col('tx').doc(id)));
+      await batch.commit();
+    }
+    txSelMode=false; txSelIds.clear();
+    toast(`${ids.length} lançamento${ids.length>1?'s':''} excluído${ids.length>1?'s':''}`);
+  }catch(ex){ toast('Erro ao excluir: '+ex.message); }
+}
+document.getElementById('btnTxSel').onclick=()=>{ txSelMode=!txSelMode; txSelIds.clear(); renderTx(); };
+document.getElementById('btnTxSelCancel').onclick=()=>{ txSelMode=false; txSelIds.clear(); renderTx(); };
+document.getElementById('txSelAll').onchange=e=>{
+  const vis=txsVisiveis();
+  if(e.target.checked) vis.forEach(t=>txSelIds.add(t.id)); else vis.forEach(t=>txSelIds.delete(t.id));
+  renderTx();
+};
+document.getElementById('btnTxDelSel').onclick=()=>
+  excluirTxIds([...txSelIds], `Excluir ${txSelIds.size} lançamento${txSelIds.size===1?'':'s'} selecionado${txSelIds.size===1?'':'s'}? Essa ação não pode ser desfeita.`);
+document.getElementById('btnTxDelAll').onclick=()=>{
+  const vis=txsVisiveis();
+  const filtro=state.filtroCat? ` da categoria "${state.filtroCat}"` : '';
+  excluirTxIds(vis.map(t=>t.id), `Apagar TODOS os ${vis.length} lançamentos${filtro} de ${mesLabel(state.mes)}? Essa ação não pode ser desfeita.`);
+};
 
 function renderBudget(){
   const {porCat}=totais();
@@ -1758,7 +1842,7 @@ document.getElementById('senhaForm').addEventListener('submit', async e=>{
 });
 
 /* ---------------- Meus dados: exportação e exclusão (LGPD) ---------------- */
-const COLECOES_USUARIO=['perfil','tx','orcamentos','assinaturas','rotinas','metasStatus','inventario','camposCustom'];
+const COLECOES_USUARIO=['perfil','tx','orcamentos','assinaturas','rotinas','metasStatus','inventario','camposCustom','catMap'];
 
 function converterTimestamps(v){
   if(v && typeof v.toDate==='function') return v.toDate().toISOString();
@@ -1883,6 +1967,7 @@ document.getElementById('txForm').addEventListener('submit', async e=>{
     pagamento:document.getElementById('txPag').value||null,
     custom
   };
+  if(docTx.desc && docTx.cat!=='Outros') salvarCatMap(chaveDest(docTx.desc),{cat:docTx.cat,pagamento:docTx.pagamento,desc:docTx.desc});
   if(editandoTx){
     await col('tx').doc(editandoTx.id).update(docTx);
     toast('Lançamento atualizado');
@@ -1914,6 +1999,145 @@ document.getElementById('subForm').addEventListener('submit', async e=>{
   document.getElementById('subForm').reset();
   toast('Assinatura salva');
 });
+
+/* ---------------- Categoria automática por destinatário ----------------
+   A "memória" fica em users/{uid}/catMap: 1 doc por destinatário
+   (CNPJ ou nome normalizado) com a categoria escolhida pelo usuário.
+   Por privacidade, CPF de pessoa física nunca é usado como chave —
+   pessoas são identificadas só pelo nome que aparece no extrato. */
+let catMap=null; // Map(chave -> {cat, pagamento?, desc})
+
+function cnpjValido(d){
+  if(!/^\d{14}$/.test(d) || /^(\d)\1{13}$/.test(d)) return false;
+  const dv=n=>{
+    let s=0, p=n-7;
+    for(let i=0;i<n;i++){ s+=d[i]*p--; if(p<2)p=9; }
+    const r=s%11; return r<2?0:11-r;
+  };
+  return dv(12)===+d[12] && dv(13)===+d[13];
+}
+function extrairCNPJ(desc){
+  const m=String(desc||'').match(/(?<!\d)\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}(?!\d)/);
+  if(!m) return null;
+  const dig=m[0].replace(/\D/g,'');
+  return cnpjValido(dig)? dig : null;
+}
+// CPF completo ou mascarado (•••.123.456-•• / ***.123.456-**) — usado só para detectar pessoa física
+const RE_CPF=/(\d{3}|[•*]{2,3})\.?\d{3}\.?\d{3}[-.]?(\d{2}|[•*]{2})/;
+
+function normalizarDesc(desc){
+  return String(desc||'').toUpperCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[^A-Z0-9 ]+/g,' ')
+    .replace(/\s+/g,' ').trim();
+}
+function chaveNome(desc){
+  const s=normalizarDesc(desc)
+    .replace(/\b\d+\b/g,' ')
+    .replace(/\b(COMPRA|NO|DEBITO|CREDITO|CARTAO|PGTO|PAGAMENTO|PIX|TRANSFERENCIA|ENVIADA|RECEBIDA|ENVIADO|RECEBIDO|PELO|TED|DOC|LTDA|SA|ME|EIRELI|AGENCIA|CONTA|DE|DA|DO|BR)\b/g,' ')
+    .replace(/\s+/g,' ').trim();
+  return s.length>=3 ? s.slice(0,60) : null;
+}
+// chave do destinatário: CNPJ quando houver (e for válido); senão nome normalizado
+function chaveDest(desc){
+  const c=extrairCNPJ(desc);
+  if(c) return 'c'+c;
+  const n=chaveNome(desc);
+  return n ? 'n'+n.replace(/ /g,'_') : null;
+}
+
+/* dicionário embutido de estabelecimentos conhecidos (só despesas) */
+const CAT_BUILTIN=[
+  [/IFOOD|RAPPI|RESTAURANTE|LANCHONETE|PIZZARIA|HAMBURG|BURGER|MC ?DONALD|SUBWAY|HABIBS|OUTBACK|CHURRASCARIA/,'Restaurantes'],
+  [/\bUBER\b|99 ?APP|99 ?POP|CABIFY|\bPOSTO\b|IPIRANGA|PETROBRAS|ESTACIONAMENTO|BILHETE UNICO|\bMETRO\b/,'Transporte'],
+  [/SUPERMERC|MERCADO|CARREFOUR|ATACAD|PAO DE ACUCAR|ASSAI|SACOLAO|HORTIFRUTI|ACOUGUE|PADARIA/,'Mercado'],
+  [/FARMACIA|DROGARIA|DROGASIL|DROGA RAIA|PACHECO|PAGUE MENOS|LABORATORIO|CLINICA|HOSPITAL/,'Saúde'],
+  [/NETFLIX|SPOTIFY|DISNEY|\bHBO\b|GLOBOPLAY|YOUTUBE PREMIUM|DEEZER|CRUNCHYROLL|PRIME VIDEO/,'Assinaturas'],
+  [/\bPETZ\b|COBASI|PET ?SHOP|VETERINAR/,'Pets'],
+  [/SMART ?FIT|BLUEFIT|ACADEMIA|CROSSFIT/,'Esportes'],
+  [/CINEMA|CINEMARK|INGRESSO|\bSTEAM\b|PLAYSTATION|XBOX|NINTENDO/,'Lazer'],
+];
+function catBuiltin(desc){
+  const s=normalizarDesc(desc);
+  const hit=CAT_BUILTIN.find(([re])=>re.test(s));
+  return hit? hit[1] : null;
+}
+
+async function carregarCatMap(){
+  if(catMap) return catMap;
+  catMap=new Map();
+  try{
+    const snap=await col('catMap').get();
+    snap.forEach(d=>catMap.set(d.id, d.data()));
+  }catch(ex){ console.warn('catMap:', ex); }
+  return catMap;
+}
+function salvarCatMap(chave, dados){
+  if(!chave || !state.uid || !dados.cat || dados.cat==='Outros') return;
+  const doc={cat:dados.cat, desc:String(dados.desc||'').slice(0,120)};
+  if(dados.pagamento) doc.pagamento=dados.pagamento;
+  if(catMap) catMap.set(chave, doc);
+  try{
+    col('catMap').doc(chave).set({...doc, atualizadoEm:firebase.firestore.FieldValue.serverTimestamp()})
+      .catch(ex=>console.warn('catMap save:', ex));
+  }catch(ex){ console.warn('catMap save:', ex); }
+}
+
+/* tenta extrair o nome da pessoa num Pix/transferência (para o popup de pergunta) */
+function nomePessoaPix(desc){
+  const d=String(desc||'');
+  if(!/pix|transf|\bted\b|\bdoc\b/i.test(d)) return null;
+  if(extrairCNPJ(d)) return null; // tem CNPJ → é empresa, não pergunta
+  const segs=d.split(/\s[-–—|]\s/).map(s=>s.trim()).filter(Boolean);
+  const ruido=/^(pix|transf|transfer[eê]ncia|pagamento|envio|recebimento|ted|doc|ag[eê]ncia|conta|banco|bco|nu pagamentos|itau|bradesco|santander|caixa|sicredi|sicoob|inter|c6|picpay|mercado ?pago|pagseguro|stone|nubank)/i;
+  for(const seg of segs.slice(1)){
+    if(RE_CPF.test(seg)) continue;
+    if(ruido.test(seg)) continue;
+    const soLetras=seg.replace(/[^A-Za-zÀ-ÿ ]/g,'').trim();
+    if(soLetras.length>=5 && soLetras.split(/\s+/).length>=2) return soLetras;
+  }
+  return null;
+}
+
+/* fila de perguntas "esse Pix é de qual categoria?" */
+let catAskFila=[], catAskAtual=null;
+function proximoCatAsk(){
+  catAskAtual=catAskFila.shift()||null;
+  const modal=document.getElementById('catAskModal');
+  if(!catAskAtual){ modal.classList.add('hidden'); return; }
+  const p=catAskAtual;
+  document.getElementById('catAskMsg').innerHTML = p.tipo==='receita'
+    ? `Vimos que você recebeu um Pix de <span class="catAskNome">${esc(p.nome)}</span>. Ele se encaixa em qual categoria?`
+    : `Vimos que você fez um Pix para <span class="catAskNome">${esc(p.nome)}</span>. Ele se encaixa em qual categoria?`;
+  const cats=p.tipo==='receita'?CATS_RECEITA:CATS_DESPESA;
+  document.getElementById('catAskChips').innerHTML =
+    cats.map(c=>`<button type="button" class="catChip" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
+  modal.classList.remove('hidden');
+}
+document.getElementById('catAskChips').addEventListener('click', e=>{
+  const b=e.target.closest('.catChip');
+  if(!b || !catAskAtual) return;
+  const {chave, nome}=catAskAtual, cat=b.dataset.cat;
+  imp.items.forEach(it=>{ if(it.chave===chave){ it.cat=cat; it.auto=true; } });
+  salvarCatMap(chave, {cat, desc:nome});
+  renderImpPreview();
+  proximoCatAsk();
+});
+document.getElementById('catAskSkip').onclick=()=>proximoCatAsk();
+
+function perguntarPixDesconhecidos(){
+  const vistos=new Set();
+  catAskFila=[];
+  imp.items.forEach(it=>{
+    if(it.cat!=='Outros' || !it.chave || vistos.has(it.chave)) return;
+    if(catMap && catMap.has(it.chave)) return;
+    const nome=nomePessoaPix(it.desc);
+    if(!nome) return;
+    vistos.add(it.chave);
+    catAskFila.push({chave:it.chave, nome, tipo:it.tipo});
+  });
+  if(catAskFila.length) proximoCatAsk();
+}
 
 /* ---------------- Importação de CSV ---------------- */
 const imp={rows:[], items:[], header:true, cols:{data:0,desc:1,valor:2}, sinal:'neg'};
@@ -2041,7 +2265,19 @@ function rebuildItems(){
     let tipo='despesa';
     if(imp.sinal==='neg') tipo = v<0?'despesa':'receita';
     else if(imp.sinal==='pos') tipo = v>0?'despesa':'receita';
-    imp.items.push({data, desc, valor:Math.abs(v), tipo, cat:'Outros', pagamento:'', incluir:true});
+    // categoria automática: memória do usuário > dicionário embutido > Outros
+    const chave=chaveDest(desc);
+    const cats=tipo==='receita'?CATS_RECEITA:CATS_DESPESA;
+    let cat='Outros', pagamento='', auto=false;
+    const lembrado=chave && catMap && catMap.get(chave);
+    if(lembrado && cats.includes(lembrado.cat)){
+      cat=lembrado.cat; auto=true;
+      if(lembrado.pagamento) pagamento=lembrado.pagamento;
+    }else if(tipo==='despesa'){
+      const b=catBuiltin(desc);
+      if(b){ cat=b; auto=true; }
+    }
+    imp.items.push({data, desc, valor:Math.abs(v), tipo, cat, pagamento, incluir:true, chave, auto});
   });
   renderImpPreview();
 }
@@ -2062,7 +2298,7 @@ function renderImpPreview(){
     <div class="impRow ${it.incluir?'':'off'}" data-i="${i}">
       <input type="checkbox" data-k="incluir" ${it.incluir?'checked':''}>
       <div class="txInfo"><div class="d">${esc(it.desc)}</div>
-        <div class="c mono">${it.data.split('-').reverse().join('/')} · <span class="${it.tipo==='receita'?'pos':'neg'}">${fmt(it.valor)}</span></div></div>
+        <div class="c mono">${it.data.split('-').reverse().join('/')} · <span class="${it.tipo==='receita'?'pos':'neg'}">${fmt(it.valor)}</span>${it.auto?' · <span class="autoTag" title="categoria preenchida automaticamente">🧠 auto</span>':''}</div></div>
       <div class="selRow">
         <select data-k="tipo">
           <option value="despesa"${it.tipo==='despesa'?' selected':''}>Despesa</option>
@@ -2197,12 +2433,14 @@ document.getElementById('impFile').addEventListener('change', async e=>{
     rows=parseCSV(await f.text());
   }
   if(!rows.length){ toast('Não consegui ler o arquivo'); return; }
+  await carregarCatMap();
   imp.rows=rows;
   detectarColunas();
   montarMapa();
   rebuildItems();
   document.getElementById('impStep1').classList.add('hidden');
   document.getElementById('impStep2').classList.remove('hidden');
+  perguntarPixDesconhecidos();
 });
 
 document.getElementById('impColData').onchange=e=>{ imp.cols.data=+e.target.value; rebuildItems(); };
@@ -2228,6 +2466,9 @@ document.getElementById('impList').addEventListener('change', e=>{
   const it=imp.items[+row.dataset.i]; const k=e.target.dataset.k;
   if(k==='incluir'){ it.incluir=e.target.checked; row.classList.toggle('off',!it.incluir); impCountTxt(); return; }
   it[k]=e.target.value;
+  // aprende com a correção do usuário (só edição individual, não a em massa)
+  if(k==='cat'){ it.auto=false; salvarCatMap(it.chave,{cat:it.cat,pagamento:it.pagamento,desc:it.desc}); }
+  if(k==='pagamento'&&it.cat!=='Outros') salvarCatMap(it.chave,{cat:it.cat,pagamento:it.pagamento,desc:it.desc});
   if(k==='tipo'){
     const cats=it.tipo==='receita'?CATS_RECEITA:CATS_DESPESA;
     if(!cats.includes(it.cat)) it.cat='Outros';
