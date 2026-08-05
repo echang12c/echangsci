@@ -198,39 +198,70 @@ async function processUser(env, key, now) {
       }
     }
   }
-  if (mudou) await env.PUSH.put(key, JSON.stringify({ ...doc, subs }));
+  if (mudou) {
+    const novoDoc = { ...doc, subs };
+    await env.PUSH.put(key, JSON.stringify(novoDoc));
+    await idxAtualizar(env, key, novoDoc); // sem aparelhos → agenda esvazia no idx
+  }
 }
 
-/* Índice de usuários ("idx"): evita usar PUSH.list() no cron — o plano
-   gratuito do KV permite só 1.000 lists/dia e o cron roda 1.440×/dia.
-   Leituras (get) têm cota de 100.000/dia, folgada. */
+/* Índice de usuários ("idx"): evita usar PUSH.list() no cron (cota de
+   1.000 lists/dia × cron 1.440×/dia) e carrega a AGENDA de cada usuário
+   — [{k, tz, a:[{h:'07:30', d:[1,2]}]}] — para o cron ler só o idx
+   (1 get/min) e buscar o doc completo apenas de quem tem meta batendo
+   naquele minuto. Sem isso, cada usuário custaria 1.440 gets/dia. */
 const IDX_KEY = 'idx';
+
+function entradaIdx(key, doc) {
+  const temSub = doc && doc.subs && Object.keys(doc.subs).length > 0;
+  return {
+    k: key,
+    tz: (doc && doc.tz) || 'America/Sao_Paulo',
+    a: temSub ? (doc.rotinas || []).map((r) => ({ h: r.hora, d: r.dias })) : [],
+  };
+}
+function idxFormatoAntigo(idx) {
+  return idx.some((e) => typeof e === 'string' || !e || !Array.isArray(e.a));
+}
 async function rebuildIdx(env) {
-  const keys = [];
+  const entries = [];
   let cursor;
   do {
     const page = await env.PUSH.list({ prefix: 'u:', cursor });
     cursor = page.list_complete ? null : page.cursor;
-    for (const k of page.keys) keys.push(k.name);
+    for (const k of page.keys) {
+      entries.push(entradaIdx(k.name, await env.PUSH.get(k.name, 'json')));
+    }
   } while (cursor);
-  await env.PUSH.put(IDX_KEY, JSON.stringify(keys));
-  console.log('idx reconstruído com', keys.length, 'usuário(s)');
-  return keys;
+  await env.PUSH.put(IDX_KEY, JSON.stringify(entries));
+  console.log('idx reconstruído com', entries.length, 'usuário(s)');
+  return entries;
 }
-async function idxGarantir(env, key) {
-  const idx = (await env.PUSH.get(IDX_KEY, 'json')) || [];
-  if (!idx.includes(key)) {
-    idx.push(key);
-    await env.PUSH.put(IDX_KEY, JSON.stringify(idx));
-  }
+/* Atualiza a entrada do usuário no idx, gravando só se a agenda mudou */
+async function idxAtualizar(env, key, doc) {
+  const idx = await env.PUSH.get(IDX_KEY, 'json');
+  if (!Array.isArray(idx) || idxFormatoAntigo(idx)) { await rebuildIdx(env); return; }
+  const nova = entradaIdx(key, doc);
+  const i = idx.findIndex((e) => e.k === key);
+  if (i >= 0 && JSON.stringify(idx[i]) === JSON.stringify(nova)) return;
+  if (i >= 0) idx[i] = nova; else idx.push(nova);
+  await env.PUSH.put(IDX_KEY, JSON.stringify(idx));
 }
 
 export default {
   async scheduled(event, env, ctx) {
     const now = new Date(event.scheduledTime);
     let idx = await env.PUSH.get(IDX_KEY, 'json');
-    if (!Array.isArray(idx)) idx = await rebuildIdx(env);
-    for (const k of idx) await processUser(env, k, now);
+    if (!Array.isArray(idx) || idxFormatoAntigo(idx)) idx = await rebuildIdx(env);
+    const tzCache = {}; // hora local por fuso, calculada 1× por rodada
+    for (const e of idx) {
+      if (!e.a.length) continue;
+      const tz = e.tz || 'America/Sao_Paulo';
+      const { hhmm, dw } = tzCache[tz] || (tzCache[tz] = localNow(now, tz));
+      if (e.a.some((x) => x.h === hhmm && (x.d || []).includes(dw))) {
+        await processUser(env, e.k, now); // só lê o doc de quem tem meta neste minuto
+      }
+    }
   },
 
   async fetch(req, env) {
@@ -260,7 +291,7 @@ export default {
       }
       if (body.removeEndpoint) delete doc.subs[await endpointId(String(body.removeEndpoint))];
       await env.PUSH.put(key, JSON.stringify(doc));
-      await idxGarantir(env, key);
+      await idxAtualizar(env, key, doc);
       return json({ ok: true, aparelhos: Object.keys(doc.subs).length });
     }
 
@@ -283,7 +314,8 @@ export default {
       // Exclusão de conta (LGPD): apaga tudo que este usuário tem no KV
       await env.PUSH.delete(key);
       const idx = (await env.PUSH.get(IDX_KEY, 'json')) || [];
-      if (idx.includes(key)) await env.PUSH.put(IDX_KEY, JSON.stringify(idx.filter((k) => k !== key)));
+      const semUsuario = idx.filter((e) => (typeof e === 'string' ? e : e && e.k) !== key);
+      if (semUsuario.length !== idx.length) await env.PUSH.put(IDX_KEY, JSON.stringify(semUsuario));
       return json({ ok: true });
     }
 
