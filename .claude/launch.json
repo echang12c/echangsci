@@ -2,10 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "seucofrin",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["--yes", "http-server", "-p", "8090", "-c-1"],
-      "port": 8090
+      "name": "cofre-static",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [".claude/serve.js"],
+      "port": 8123
     }
   ]
 }

@@ -155,33 +155,27 @@ h2.section:first-child{margin-top:0}
 .chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--muted)}
 .chip.active{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
 
-/* ---------- Orçamento ---------- */
-.budgetRow{padding:14px 0;border-bottom:1px solid var(--line)}
-.budgetRow:last-child{border-bottom:none}
-.budgetTop{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
-.budgetTop .name{font-weight:700}
-.budgetTop .nums{font-family:var(--mono);font-size:13px;color:var(--muted)}
-.budgetTop .nums b{color:var(--ink)}
+/* ---------- Relatórios ---------- */
 .bar{height:10px;border-radius:999px;background:#F5EBD8;overflow:hidden;position:relative}
 .bar>span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#00C87B,#00A86B);transition:width .4s ease}
-.bar.over>span{background:var(--expense)}
-.bar.warn>span{background:var(--warn)}
-.budgetEdit{display:flex;align-items:center;gap:6px}
-.budgetEdit input{width:110px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-family:var(--mono);font-size:13px;text-align:right;background:#FAFCFA}
-.budgetTotal{display:flex;justify-content:space-between;font-weight:700;padding-top:14px}
-.budgetTotal span{font-family:var(--mono)}
+.relCtrls{display:grid;gap:12px}
+.relRow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:640px){.relRow{grid-template-columns:1fr}}
+.relRow .segment{display:flex;width:100%}
+.relRow .segment button{flex:1}
+.relTableWrap{overflow-x:auto}
+.relTable{width:100%;border-collapse:collapse;font-size:14px}
+.relTable th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:8px 10px;border-bottom:2px solid var(--line)}
+.relTable td{padding:9px 10px;border-bottom:1px solid var(--line)}
+.relTable tr:last-child td{border-bottom:none}
+.relTable .num{font-family:var(--mono);text-align:right;white-space:nowrap}
+.relTable tr.totRow td{font-weight:700;border-top:2px solid var(--line)}
+.relGrupo{font-family:var(--display);font-size:15px;margin:14px 0 6px}
+.relGrupo:first-child{margin-top:0}
 
-/* ---------- Assinaturas ---------- */
-.subItem{display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid var(--line)}
-.subItem:last-child{border-bottom:none}
-.subDay{font-family:var(--mono);font-size:12px;color:var(--muted);width:52px;text-align:center;line-height:1.2}
-.subDay b{display:block;font-size:16px;color:var(--ink)}
-.subItem.inactive{opacity:.45}
-.pill{font-size:11px;font-weight:700;border-radius:999px;padding:3px 9px}
-.pill.ok{background:var(--income-soft);color:var(--income)}
-.pill.pend{background:var(--warn-soft);color:var(--warn)}
-.subBtn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600}
-.subBtn:hover{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
+/* ---------- Categorias ---------- */
+.catEditBtn{border:none;background:none;color:var(--muted);font-size:15px;padding:4px 6px;border-radius:8px;cursor:pointer}
+.catEditBtn:hover{background:var(--accent-soft);color:var(--accent)}
 
 /* ---------- Metas do dia ---------- */
 .diaBar{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:14px}
@@ -384,8 +378,7 @@ canvas{max-width:100%}
       <nav class="tabs" id="tabsList">
         <button data-tab="dash" class="active">📊 Dashboard</button>
         <button data-tab="tx">💸 Lançamentos</button>
-        <button data-tab="budget">🎯 Orçamento</button>
-        <button data-tab="subs">🔁 Assinaturas</button>
+        <button data-tab="relat">📈 Relatórios</button>
         <button data-tab="metas">✅ Metas do dia</button>
         <button data-tab="pets">🐾 Coleção</button>
       </nav>
@@ -416,6 +409,7 @@ canvas{max-width:100%}
     <section id="tab-tx" class="hidden">
       <div class="toolRow">
         <button class="btnGhost" id="btnImportCSV">📥 Importar CSV/PDF</button>
+        <button class="btnGhost" id="btnCats">🏷️ Categorias</button>
         <button class="btnGhost" id="btnCampos">⚙️ Campos personalizados</button>
         <button class="btnGhost" id="btnTxSel">🗑️ Excluir vários</button>
       </div>
@@ -430,24 +424,43 @@ canvas{max-width:100%}
       <div class="card txList" id="txList"><div class="empty">Nenhum lançamento neste mês. Toque em + para adicionar.</div></div>
     </section>
 
-    <!-- ===== Orçamento ===== -->
-    <section id="tab-budget" class="hidden">
-      <div class="card">
-        <div id="budgetList"></div>
-        <div class="budgetTotal"><span>Total orçado × gasto</span><span class="mono" id="budgetTotals"></span></div>
+    <!-- ===== Relatórios ===== -->
+    <section id="tab-relat" class="hidden">
+      <div class="card relCtrls">
+        <div class="relRow">
+          <div class="field"><label>Período</label>
+            <div class="segment" id="relModo">
+              <button type="button" data-m="mensal" class="selInc">Mensal</button>
+              <button type="button" data-m="diario">Diário</button>
+            </div>
+          </div>
+          <div class="field"><label>Categoria</label><select id="relCatSel"></select></div>
+        </div>
+        <div class="relRow" id="relPeriodoMensal">
+          <div class="field"><label>De (mês)</label><input type="month" id="relDe"></div>
+          <div class="field"><label>Até (mês)</label><input type="month" id="relAte"></div>
+        </div>
+        <div class="relRow hidden" id="relPeriodoDiario">
+          <div class="field"><label>Mês do relatório</label><input type="month" id="relMes"></div>
+        </div>
       </div>
-      <p style="color:var(--muted);font-size:13px;margin-top:10px">Defina o limite de cada categoria. A barra mostra quanto do limite já foi consumido no mês selecionado. Os limites são copiados automaticamente do mês anterior quando um mês novo começa vazio.</p>
-    </section>
-
-    <!-- ===== Assinaturas ===== -->
-    <section id="tab-subs" class="hidden">
-      <div class="grid2">
-        <div class="card kpi"><div class="lbl">Assinaturas ativas</div><div class="val" id="kSubsCount">0</div></div>
-        <div class="card kpi"><div class="lbl">Custo mensal</div><div class="val" id="kSubsTotal">R$ 0,00</div></div>
+      <div class="grid3" style="margin-top:14px">
+        <div class="card kpi"><div class="lbl">Receitas</div><div class="val pos" id="relRec">R$ 0,00</div></div>
+        <div class="card kpi"><div class="lbl">Despesas</div><div class="val neg" id="relDesp">R$ 0,00</div></div>
+        <div class="card kpi"><div class="lbl">Saldo</div><div class="val" id="relSaldo">R$ 0,00</div></div>
       </div>
-      <h2 class="section">Suas assinaturas</h2>
-      <div class="card txList" id="subList"><div class="empty">Nenhuma assinatura cadastrada.</div></div>
-      <div style="margin-top:14px"><button class="btnGhost" id="btnAddSub">+ Nova assinatura</button></div>
+      <h2 class="section" id="relChartTitle">Evolução</h2>
+      <div class="card chartBox"><canvas id="chartRel"></canvas></div>
+      <div id="relDonutBox">
+        <h2 class="section" id="relDonutTitle">Distribuição por categoria</h2>
+        <div class="card chartBox"><canvas id="chartRelDonut"></canvas></div>
+      </div>
+      <div id="relLinhaBox">
+        <h2 class="section" id="relLinhaTitle">Categorias ao longo do tempo</h2>
+        <div class="card chartBox"><canvas id="chartRelLinha"></canvas></div>
+      </div>
+      <h2 class="section">Detalhes</h2>
+      <div class="card" id="relTabela"><div class="empty">Escolha o período para montar o relatório.</div></div>
     </section>
 
     <!-- ===== Metas do dia ===== -->
@@ -539,18 +552,24 @@ canvas{max-width:100%}
   </div>
 </div>
 
-<!-- ===== Modal assinatura ===== -->
-<div class="modalWrap hidden" id="subModal">
+<!-- ===== Modal categorias ===== -->
+<div class="modalWrap hidden" id="catModal">
   <div class="modal">
-    <h3>Nova assinatura</h3>
-    <form id="subForm">
-      <div class="field"><label>Nome</label><input id="subNome" placeholder="Ex.: Spotify" required></div>
-      <div class="field"><label>Valor mensal (R$)</label><input inputmode="decimal" id="subValor" placeholder="0,00" required></div>
-      <div class="field"><label>Dia da cobrança</label><input type="number" id="subDia" min="1" max="31" value="1" required></div>
-      <div class="field"><label>Categoria</label><select id="subCat"></select></div>
+    <h3>🏷️ Minhas categorias</h3>
+    <p class="impHint">Toque em ✎ para renomear (os lançamentos existentes são atualizados juntos) ou em ✕ para excluir. A categoria "Outros" é fixa.</p>
+    <h4 class="perfilSub" style="margin-top:0;padding-top:0;border-top:none">Despesas</h4>
+    <div id="catListDesp"></div>
+    <h4 class="perfilSub">Receitas</h4>
+    <div id="catListRec"></div>
+    <form id="catForm">
+      <div class="field"><label>Nova categoria</label><input id="catNome" maxlength="40" placeholder="Ex.: Doações" required></div>
+      <div class="field"><label>Tipo</label><select id="catTipo">
+        <option value="despesa">Despesa</option>
+        <option value="receita">Receita</option>
+      </select></div>
       <div class="modalActions">
-        <button type="button" class="btnGhost" data-close>Cancelar</button>
-        <button type="submit" class="btnPrimary">Salvar</button>
+        <button type="button" class="btnGhost" data-close>Fechar</button>
+        <button type="submit" class="btnPrimary">+ Adicionar</button>
       </div>
     </form>
   </div>
@@ -694,7 +713,7 @@ canvas{max-width:100%}
 <div class="modalWrap hidden" id="delModal">
   <div class="modal">
     <h3>Excluir minha conta</h3>
-    <p class="impHint" style="color:var(--danger)"><b>Esta ação é definitiva.</b> Serão apagados: seus lançamentos, orçamentos, assinaturas, metas, coleção de pets, perfil e sua conta de login. Não há como recuperar depois.</p>
+    <p class="impHint" style="color:var(--danger)"><b>Esta ação é definitiva.</b> Serão apagados: seus lançamentos, categorias, metas, coleção de pets, perfil e sua conta de login. Não há como recuperar depois.</p>
     <p class="impHint">Dica: exporte seus dados antes, se quiser guardar uma cópia.</p>
     <form id="delForm">
       <div class="field"><label>Sua senha (para confirmar que é você)</label><input type="password" id="delSenha" autocomplete="current-password" required></div>
@@ -729,7 +748,7 @@ const firebaseConfig = {
   appId: "1:365886103218:web:3bb068a075eab00e2ef3ab"
 };
 
-/* Categorias padrão (edite à vontade) */
+/* Categorias padrão — valem até o usuário personalizar as dele (aba Lançamentos → 🏷️ Categorias) */
 const CATS_DESPESA = ["Moradia","Mercado","Restaurantes","Transporte","Saúde","Esportes","Pets","Lazer","Assinaturas","Educação","Viagem","Outros"];
 const CATS_RECEITA = ["Salário","Extra","Investimentos","Outros"];
 const CAT_COLORS = ["#00A86B","#FF5C4D","#FFAA00","#2D9CDB","#8B5CF6","#00C4B4","#FF7A00","#EC4899","#84CC16","#0EA5E9","#F43F5E","#6366F1"];
@@ -755,8 +774,6 @@ const state = {
   mes: mesAtual(),              // "YYYY-MM"
   dia: hojeISO(),               // "YYYY-MM-DD" (aba Metas)
   txs: [],                      // lançamentos do mês
-  orcamento: {},                // {categoria: centavos}
-  assinaturas: [],
   rotinas: [],                  // metas programadas (recorrentes por dia da semana)
   metasFeitas: {},              // {rotinaId:true} — status do dia selecionado
   bauDia: null,                 // recompensa já aberta no dia selecionado
@@ -765,8 +782,9 @@ const state = {
   filtroCat: null,
   camposCustom: [],             // definições de campos personalizados
   perfil: {},                   // {nome, foto} salvos no Firestore
-  unsubTx:null, unsubOrc:null, unsubSubs:null, unsubRotinas:null, unsubMetaStatus:null, unsubInv:null, unsubCampos:null, unsubPerfil:null,
-  charts:{cat:null, trend:null},
+  cats: null,                   // {despesa:[...], receita:[...]} — null = usa o padrão
+  unsubTx:null, unsubRotinas:null, unsubMetaStatus:null, unsubInv:null, unsubCampos:null, unsubPerfil:null, unsubCats:null,
+  charts:{cat:null, trend:null, rel:null, relDonut:null, relLinha:null},
 };
 
 /* ---------------- Utilidades ---------------- */
@@ -932,7 +950,7 @@ function entrarNoApp(user){
   document.getElementById('loginView').classList.add('hidden');
   document.getElementById('appView').classList.remove('hidden');
   carregarMes();
-  escutarAssinaturas();
+  escutarCats();
   escutarRotinas();
   escutarDiaMetas();
   escutarInventario();
@@ -955,7 +973,7 @@ auth.onAuthStateChanged(user=>{
     state.uid=null; state.perfil={}; catMap=null;
     clearInterval(verifyPoll); verifyPoll=null;
     document.getElementById('verifyMsg').textContent='';
-    if(state.unsubTx)state.unsubTx(); if(state.unsubOrc)state.unsubOrc(); if(state.unsubSubs)state.unsubSubs();
+    if(state.unsubTx)state.unsubTx(); if(state.unsubCats)state.unsubCats();
     if(state.unsubRotinas)state.unsubRotinas(); if(state.unsubMetaStatus)state.unsubMetaStatus(); if(state.unsubInv)state.unsubInv();
     if(state.unsubCampos)state.unsubCampos(); if(state.unsubPerfil)state.unsubPerfil();
     document.getElementById('appView').classList.add('hidden');
@@ -985,19 +1003,19 @@ document.querySelectorAll('nav.tabs button').forEach(b=>{
   b.onclick=()=>{
     document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('active'));
     b.classList.add('active');
-    ['dash','tx','budget','subs','metas','pets'].forEach(t=>
+    ['dash','tx','relat','metas','pets'].forEach(t=>
       document.getElementById('tab-'+t).classList.toggle('hidden', t!==b.dataset.tab));
     document.getElementById('tabsToggleLabel').textContent=b.textContent.trim();
     tabsMenu.classList.remove('open');
     tabsToggle.setAttribute('aria-expanded','false');
+    if(b.dataset.tab==='relat') abrirRelatorios();
   };
 });
 
-/* ---------------- Dados do mês (tx + orçamento) ---------------- */
+/* ---------------- Dados do mês ---------------- */
 function carregarMes(){
   document.getElementById('monthLabel').textContent=mesLabel(state.mes);
   if(state.unsubTx)state.unsubTx();
-  if(state.unsubOrc)state.unsubOrc();
 
   state.unsubTx = col('tx').where('mes','==',state.mes)
     .onSnapshot(snap=>{
@@ -1005,28 +1023,6 @@ function carregarMes(){
         .sort((a,b)=> b.data.localeCompare(a.data));
       renderTudo();
       carregarTendencia(); // mantém gráfico coerente com edições
-    });
-
-  state.unsubOrc = col('orcamentos').doc(state.mes)
-    .onSnapshot(async doc=>{
-      if(doc.exists){ state.orcamento = doc.data().cats || {}; }
-      else{
-        // herda orçamento do mês anterior
-        const prev = await col('orcamentos').doc(shiftMes(state.mes,-1)).get();
-        state.orcamento = prev.exists ? (prev.data().cats||{}) : {};
-        if(prev.exists) col('orcamentos').doc(state.mes).set({cats:state.orcamento});
-      }
-      renderBudget(); renderDash();
-    });
-}
-
-/* ---------------- Assinaturas ---------------- */
-function escutarAssinaturas(){
-  if(state.unsubSubs)state.unsubSubs();
-  state.unsubSubs = col('assinaturas').orderBy('dia')
-    .onSnapshot(snap=>{
-      state.assinaturas = snap.docs.map(d=>({id:d.id,...d.data()}));
-      renderSubs();
     });
 }
 
@@ -1045,7 +1041,7 @@ async function carregarTendencia(){
 }
 
 /* ---------------- Render ---------------- */
-function renderTudo(){ renderDash(); renderTx(); renderBudget(); renderSubs(); }
+function renderTudo(){ renderDash(); renderTx(); }
 
 function totais(){
   let rec=0,desp=0; const porCat={};
@@ -1212,75 +1208,339 @@ document.getElementById('btnTxDelAll').onclick=()=>{
   excluirTxIds(vis.map(t=>t.id), `Apagar TODOS os ${vis.length} lançamentos${filtro} de ${mesLabel(state.mes)}? Essa ação não pode ser desfeita.`);
 };
 
-function renderBudget(){
-  const {porCat}=totais();
-  const box=document.getElementById('budgetList');
-  let totOrc=0, totGasto=0;
-  box.innerHTML = CATS_DESPESA.map(cat=>{
-    const orc=state.orcamento[cat]||0;
-    const gasto=porCat[cat]||0;
-    totOrc+=orc; totGasto+=gasto;
-    const pct = orc>0 ? Math.min(100, gasto/orc*100) : 0;
-    const cls = orc>0 && gasto>orc ? 'over' : (orc>0 && gasto>orc*0.85 ? 'warn' : '');
-    return `<div class="budgetRow">
-      <div class="budgetTop">
-        <span class="name">${cat}</span>
-        <span class="nums"><b>${fmt(gasto)}</b> / </span>
-        <span class="budgetEdit"><input data-cat="${cat}" value="${orc?(orc/100).toFixed(2).replace('.',','):''}" placeholder="0,00"></span>
-      </div>
-      <div class="bar ${cls}"><span style="width:${orc>0?pct:0}%"></span></div>
-    </div>`;
-  }).join('');
-  document.getElementById('budgetTotals').textContent = `${fmt(totOrc)} × ${fmt(totGasto)}`;
+/* ---------------- Categorias personalizadas ----------------
+   Ficam em users/{uid}/config/categorias: {despesa:[...], receita:[...]}.
+   Enquanto o doc não existe, valem as listas padrão. */
+function catsD(){ return (state.cats&&state.cats.despesa)||CATS_DESPESA; }
+function catsR(){ return (state.cats&&state.cats.receita)||CATS_RECEITA; }
+function catsDe(tipo){ return tipo==='receita'? catsR() : catsD(); }
 
-  box.querySelectorAll('input[data-cat]').forEach(inp=>{
-    inp.onchange=async ()=>{
-      const v=parseValor(inp.value);
-      const cats={...state.orcamento};
-      if(v===null) delete cats[inp.dataset.cat]; else cats[inp.dataset.cat]=v;
-      await col('orcamentos').doc(state.mes).set({cats});
-      toast('Orçamento atualizado');
+function escutarCats(){
+  if(state.unsubCats)state.unsubCats();
+  state.unsubCats = col('config').doc('categorias').onSnapshot(doc=>{
+    state.cats = doc.exists ? doc.data() : null;
+    renderCatModal();
+    renderTudo();
+  });
+}
+async function salvarCats(despesa, receita){
+  if(!despesa.includes('Outros')) despesa=[...despesa,'Outros'];
+  if(!receita.includes('Outros')) receita=[...receita,'Outros'];
+  await col('config').doc('categorias').set({despesa, receita});
+}
+
+function renderCatModal(){
+  const item=(tipo,c)=>`<div class="campoItem" data-tipo="${tipo}" data-cat="${esc(c)}">
+    <div class="txInfo"><div class="d">${esc(c)}</div></div>
+    ${c==='Outros' ? '' : `<button type="button" class="catEditBtn" data-act="ren" title="Renomear">✎</button>
+    <button type="button" class="txDel" data-act="del" title="Excluir">✕</button>`}
+  </div>`;
+  document.getElementById('catListDesp').innerHTML=catsD().map(c=>item('despesa',c)).join('');
+  document.getElementById('catListRec').innerHTML=catsR().map(c=>item('receita',c)).join('');
+  document.querySelectorAll('#catListDesp [data-act],#catListRec [data-act]').forEach(b=>{
+    b.onclick=()=>{
+      const el=b.closest('.campoItem');
+      if(b.dataset.act==='ren') renomearCat(el.dataset.tipo, el.dataset.cat);
+      else excluirCat(el.dataset.tipo, el.dataset.cat);
     };
   });
 }
 
-function renderSubs(){
-  const ativas=state.assinaturas.filter(s=>s.ativa!==false);
-  document.getElementById('kSubsCount').textContent=ativas.length;
-  document.getElementById('kSubsTotal').textContent=fmt(ativas.reduce((a,s)=>a+s.valor,0));
+async function renomearCat(tipo, antiga){
+  const nova=(prompt(`Novo nome para a categoria "${antiga}":`, antiga)||'').trim().slice(0,40);
+  if(!nova || nova===antiga) return;
+  const lista=[...catsDe(tipo)];
+  if(lista.some(c=>c.toLowerCase()===nova.toLowerCase())){ toast('Já existe uma categoria com esse nome'); return; }
+  const i=lista.indexOf(antiga); if(i<0) return;
+  lista[i]=nova;
+  try{
+    await salvarCats(tipo==='despesa'?lista:[...catsD()], tipo==='receita'?lista:[...catsR()]);
+    // atualiza os lançamentos existentes e a memória de categorias
+    const [txSnap, cmSnap]=await Promise.all([
+      col('tx').where('cat','==',antiga).get(),
+      col('catMap').where('cat','==',antiga).get()
+    ]);
+    const ops=[
+      ...txSnap.docs.map(d=>({ref:d.ref, dados:{cat:nova}})),
+      ...cmSnap.docs.map(d=>({ref:d.ref, dados:{cat:nova, atualizadoEm:firebase.firestore.FieldValue.serverTimestamp()}}))
+    ];
+    for(let k=0;k<ops.length;k+=400){
+      const batch=db.batch();
+      ops.slice(k,k+400).forEach(o=>batch.update(o.ref,o.dados));
+      await batch.commit();
+    }
+    toast(txSnap.size
+      ? `Categoria renomeada — ${txSnap.size} lançamento${txSnap.size>1?'s':''} atualizado${txSnap.size>1?'s':''}`
+      : 'Categoria renomeada');
+  }catch(ex){ toast('Erro ao renomear: '+ex.message); }
+}
 
-  const lancadas=new Set(state.txs.filter(t=>t.subId).map(t=>t.subId));
-  const box=document.getElementById('subList');
-  if(!state.assinaturas.length){ box.innerHTML='<div class="empty">Nenhuma assinatura cadastrada.</div>'; return; }
-  box.innerHTML = state.assinaturas.map(s=>{
-    const foi = lancadas.has(s.id);
-    return `<div class="subItem ${s.ativa===false?'inactive':''}" data-id="${s.id}">
-      <div class="subDay"><b>${String(s.dia).padStart(2,'0')}</b>dia</div>
-      <div class="txInfo"><div class="d">${esc(s.nome)}</div><div class="c">${esc(s.cat)}</div></div>
-      <span class="pill ${foi?'ok':'pend'}">${foi?'lançada':'pendente'}</span>
-      <div class="txVal">${fmt(s.valor)}</div>
-      ${s.ativa===false
-        ? `<button class="subBtn" data-act="on">Reativar</button>`
-        : `<button class="subBtn" data-act="post" ${foi?'disabled':''}>Lançar</button>
-           <button class="subBtn" data-act="off">Pausar</button>`}
-    </div>`;
-  }).join('');
+async function excluirCat(tipo, nome){
+  if(nome==='Outros') return;
+  if(!confirm(`Excluir a categoria "${nome}"? Os lançamentos já feitos continuam com esse nome — ela só deixa de aparecer nas opções.`)) return;
+  try{
+    const lista=catsDe(tipo).filter(c=>c!==nome);
+    await salvarCats(tipo==='despesa'?lista:[...catsD()], tipo==='receita'?lista:[...catsR()]);
+    toast('Categoria excluída');
+  }catch(ex){ toast('Erro ao excluir: '+ex.message); }
+}
 
-  box.querySelectorAll('.subBtn').forEach(b=>{
-    b.onclick=async ()=>{
-      const id=b.closest('.subItem').dataset.id;
-      const s=state.assinaturas.find(x=>x.id===id);
-      if(b.dataset.act==='post'){
-        const dia=Math.min(s.dia, new Date(state.mes+'-01T12:00').getMonth()===11?31:28+4); // proteção simples
-        const data=`${state.mes}-${String(Math.min(s.dia,28)).padStart(2,'0')}`;
-        await col('tx').add({tipo:'despesa',valor:s.valor,desc:s.nome,cat:s.cat,data,mes:state.mes,subId:s.id,
-          criadoEm:firebase.firestore.FieldValue.serverTimestamp()});
-        toast(`${s.nome} lançada em ${mesLabel(state.mes)}`);
-      }
-      if(b.dataset.act==='off'){ await col('assinaturas').doc(id).update({ativa:false}); }
-      if(b.dataset.act==='on'){ await col('assinaturas').doc(id).update({ativa:true}); }
-    };
+document.getElementById('btnCats').onclick=()=>{
+  renderCatModal();
+  document.getElementById('catModal').classList.remove('hidden');
+};
+document.getElementById('catForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const nome=document.getElementById('catNome').value.trim();
+  const tipo=document.getElementById('catTipo').value;
+  if(!nome) return;
+  const lista=catsDe(tipo);
+  if(lista.some(c=>c.toLowerCase()===nome.toLowerCase())){ toast('Essa categoria já existe'); return; }
+  try{
+    // a nova entra antes de "Outros", que fica sempre por último
+    const nova=[...lista.filter(c=>c!=='Outros'), nome, 'Outros'];
+    await salvarCats(tipo==='despesa'?nova:[...catsD()], tipo==='receita'?nova:[...catsR()]);
+    document.getElementById('catNome').value='';
+    toast(`Categoria "${nome}" criada! 🏷️`);
+  }catch(ex){ toast('Erro ao criar: '+ex.message); }
+});
+
+/* ---------------- Relatórios ----------------
+   Os filtros do topo (período, de/até e categoria) valem para
+   todos os gráficos e tabelas da aba ao mesmo tempo. */
+const rel={modo:'mensal', cat:''};
+
+function abrirRelatorios(){
+  if(!document.getElementById('relDe').value){
+    document.getElementById('relDe').value=shiftMes(state.mes,-5);
+    document.getElementById('relAte').value=state.mes;
+    document.getElementById('relMes').value=state.mes;
+  }
+  preencherRelCats();
+  gerarRelatorio();
+}
+function preencherRelCats(){
+  const sel=document.getElementById('relCatSel');
+  const atual=rel.cat;
+  const todas=[...new Set([...catsD(),...catsR()])];
+  sel.innerHTML='<option value="">— todas as categorias —</option>'+
+    todas.map(c=>`<option value="${esc(c)}"${c===atual?' selected':''}>${esc(c)}</option>`).join('');
+}
+function relSegAtivo(segId, attr, val){
+  document.querySelectorAll('#'+segId+' button').forEach(b=>
+    b.className = b.dataset[attr]===val ? 'selInc' : '');
+}
+document.querySelectorAll('#relModo button').forEach(b=>{
+  b.onclick=()=>{
+    rel.modo=b.dataset.m;
+    relSegAtivo('relModo','m',rel.modo);
+    document.getElementById('relPeriodoMensal').classList.toggle('hidden', rel.modo!=='mensal');
+    document.getElementById('relPeriodoDiario').classList.toggle('hidden', rel.modo!=='diario');
+    gerarRelatorio();
+  };
+});
+document.getElementById('relDe').onchange=gerarRelatorio;
+document.getElementById('relAte').onchange=gerarRelatorio;
+document.getElementById('relMes').onchange=gerarRelatorio;
+document.getElementById('relCatSel').onchange=e=>{ rel.cat=e.target.value; gerarRelatorio(); };
+
+function mesesEntre(ini,fim){
+  const out=[]; let m=ini;
+  while(m<=fim && out.length<60){ out.push(m); m=shiftMes(m,1); }
+  return out;
+}
+function mesCurto(m){
+  const [y,mo]=m.split('-');
+  return new Date(y,mo-1,1).toLocaleDateString('pt-BR',{month:'short',year:'2-digit'});
+}
+function mkChart(slot, canvasId, cfg){
+  if(state.charts[slot]) state.charts[slot].destroy();
+  state.charts[slot]=new Chart(document.getElementById(canvasId), cfg);
+}
+function relBoxVisivel(boxId, slot, on){
+  document.getElementById(boxId).classList.toggle('hidden', !on);
+  if(!on && state.charts[slot]){ state.charts[slot].destroy(); state.charts[slot]=null; }
+}
+/* eixo do tempo do relatório: meses do intervalo ou dias do mês escolhido */
+function relBuckets(mIni, mFim){
+  if(rel.modo==='mensal') return {labels:mesesEntre(mIni,mFim), chave:t=>t.mes};
+  const nDias=new Date(+mIni.slice(0,4), +mIni.slice(5,7), 0).getDate();
+  return {labels:[...Array(nDias)].map((_,i)=>mIni+'-'+String(i+1).padStart(2,'0')), chave:t=>t.data};
+}
+function relBucketLbl(l){ return rel.modo==='mensal' ? mesCurto(l) : l.slice(8); }
+/* totais por categoria de um tipo, em ordem decrescente (define a ordem das cores) */
+function aggCats(txs, tipo){
+  const m={};
+  txs.forEach(t=>{
+    if(t.tipo!==tipo) return;
+    if(!m[t.cat]) m[t.cat]={total:0,qtd:0};
+    m[t.cat].total+=t.valor; m[t.cat].qtd++;
   });
+  return Object.entries(m).sort((a,b)=>b[1].total-a[1].total);
+}
+const moedaCB=v=>'R$ '+Number(v).toLocaleString('pt-BR');
+const relTooltip={callbacks:{label:c=>` ${c.dataset.label||c.label}: ${(c.parsed.y!==undefined?c.parsed.y:c.parsed).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}`}};
+
+let relBusy=false;
+async function gerarRelatorio(){
+  if(!state.uid || relBusy) return;
+  // campo de período vazio nunca trava o relatório: entra o padrão no lugar
+  let mIni,mFim;
+  if(rel.modo==='mensal'){
+    mIni=document.getElementById('relDe').value;
+    mFim=document.getElementById('relAte').value;
+    if(!mIni){ mIni=shiftMes(state.mes,-5); document.getElementById('relDe').value=mIni; }
+    if(!mFim){ mFim=state.mes; document.getElementById('relAte').value=mFim; }
+    if(mIni>mFim){ [mIni,mFim]=[mFim,mIni];
+      document.getElementById('relDe').value=mIni;
+      document.getElementById('relAte').value=mFim;
+    }
+  }else{
+    mIni=mFim=document.getElementById('relMes').value;
+    if(!mIni){ mIni=mFim=state.mes; document.getElementById('relMes').value=mIni; }
+  }
+  relBusy=true;
+  const tabela=document.getElementById('relTabela');
+  tabela.innerHTML='<div class="empty">Montando o relatório…</div>';
+  try{
+    const snap=await col('tx').where('mes','>=',mIni).where('mes','<=',mFim).get();
+    let txs=snap.docs.map(d=>d.data());
+    if(rel.cat) txs=txs.filter(t=>t.cat===rel.cat);
+
+    let rec=0,desp=0;
+    txs.forEach(t=>{ if(t.tipo==='receita') rec+=t.valor; else desp+=t.valor; });
+    document.getElementById('relRec').textContent=fmt(rec);
+    document.getElementById('relDesp').textContent=fmt(desp);
+    const saldoEl=document.getElementById('relSaldo');
+    saldoEl.textContent=fmt(rec-desp);
+    saldoEl.className='val '+(rec-desp>=0?'pos':'neg');
+
+    if(!txs.length){
+      mkChart('rel','chartRel',{type:'bar',data:{labels:[],datasets:[]},options:{maintainAspectRatio:false}});
+      relBoxVisivel('relDonutBox','relDonut',false);
+      relBoxVisivel('relLinhaBox','relLinha',false);
+      document.getElementById('relChartTitle').textContent='Evolução';
+      tabela.innerHTML='<div class="empty">Nenhum lançamento no período selecionado.</div>';
+      return;
+    }
+
+    const bk=relBuckets(mIni,mFim);
+    relEvolucao(txs, bk);        // gráfico 1: receitas × despesas no tempo
+    relDistribuicao(txs);        // gráfico 2: rosca por categoria (some com categoria específica)
+    relLinhasCategorias(txs, bk);// gráfico 3: linhas categoria a categoria
+    tabela.innerHTML = tabelaTempoHTML(bk) + (rel.cat ? '' : tabelasCategoriaHTML(txs));
+  }catch(ex){
+    tabela.innerHTML='<div class="empty">Não consegui montar o relatório agora. Tente de novo.</div>';
+    console.error('relatorio:', ex);
+  }finally{ relBusy=false; }
+}
+
+/* gráfico 1: receitas × despesas ao longo do tempo (respeita o filtro de categoria) */
+function relEvolucao(txs, bk){
+  const agg={}; bk.labels.forEach(l=>agg[l]={rec:0,desp:0});
+  txs.forEach(t=>{
+    const b=agg[bk.chave(t)]; if(!b) return;
+    if(t.tipo==='receita') b.rec+=t.valor; else b.desp+=t.valor;
+  });
+  bk.agg=agg; // reaproveitado pela tabela de detalhes
+  document.getElementById('relChartTitle').textContent=
+    (rel.modo==='mensal'?'Evolução mensal':'Movimento por dia')+(rel.cat?` — ${rel.cat}`:'');
+  mkChart('rel','chartRel',{type:'bar',
+    data:{labels:bk.labels.map(relBucketLbl),datasets:[
+      {label:'Receitas',data:bk.labels.map(l=>agg[l].rec/100),backgroundColor:'#00C87B',borderRadius:5},
+      {label:'Despesas',data:bk.labels.map(l=>agg[l].desp/100),backgroundColor:'#FF5C4D',borderRadius:5},
+    ]},
+    options:{maintainAspectRatio:false,
+      plugins:{legend:{labels:{boxWidth:12,font:{family:'Schibsted Grotesk'}}},tooltip:relTooltip},
+      scales:{y:{ticks:{callback:moedaCB}}}}
+  });
+}
+
+/* tabela de detalhes por período (usa o agg calculado em relEvolucao) */
+function tabelaTempoHTML(bk){
+  const linhas=bk.labels.filter(l=>bk.agg[l].rec||bk.agg[l].desp);
+  const nomeLinha=l=>rel.modo==='mensal'
+    ? mesLabel(l)
+    : new Date(l+'T12:00').toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'});
+  let totR=0,totD=0;
+  const rows=linhas.map(l=>{
+    const b=bk.agg[l]; totR+=b.rec; totD+=b.desp;
+    const s=b.rec-b.desp;
+    return `<tr><td>${esc(nomeLinha(l))}</td>
+      <td class="num pos">${b.rec?fmt(b.rec):'—'}</td>
+      <td class="num neg">${b.desp?fmt(b.desp):'—'}</td>
+      <td class="num ${s>=0?'pos':'neg'}">${fmt(s)}</td></tr>`;
+  }).join('');
+  return `<div class="relGrupo">Por ${rel.modo==='mensal'?'mês':'dia'}${rel.cat?` — ${esc(rel.cat)}`:''}</div>
+  <div class="relTableWrap"><table class="relTable">
+    <thead><tr><th>${rel.modo==='mensal'?'Mês':'Dia'}</th><th class="num">Receitas</th><th class="num">Despesas</th><th class="num">Saldo</th></tr></thead>
+    <tbody>${rows}
+    <tr class="totRow"><td>Total</td><td class="num pos">${fmt(totR)}</td><td class="num neg">${fmt(totD)}</td>
+      <td class="num ${totR-totD>=0?'pos':'neg'}">${fmt(totR-totD)}</td></tr></tbody>
+  </table></div>`;
+}
+
+/* gráfico 2: rosca da distribuição por categoria (some quando há categoria filtrada) */
+function relDistribuicao(txs){
+  if(rel.cat){ relBoxVisivel('relDonutBox','relDonut',false); return; }
+  const despCats=aggCats(txs,'despesa');
+  const base=despCats.length ? despCats : aggCats(txs,'receita');
+  if(!base.length){ relBoxVisivel('relDonutBox','relDonut',false); return; }
+  document.getElementById('relDonutTitle').textContent=
+    'Distribuição — '+(despCats.length?'despesas':'receitas')+' por categoria';
+  relBoxVisivel('relDonutBox','relDonut',true);
+  mkChart('relDonut','chartRelDonut',{type:'doughnut',
+    data:{labels:base.map(([c])=>c),
+      datasets:[{data:base.map(([,v])=>v.total/100),
+        backgroundColor:base.map((_,i)=>CAT_COLORS[i%CAT_COLORS.length]),borderWidth:0}]},
+    options:{maintainAspectRatio:false,cutout:'62%',
+      plugins:{legend:{position:'right',labels:{boxWidth:12,font:{family:'Schibsted Grotesk'}}},tooltip:relTooltip}}
+  });
+}
+
+/* gráfico 3: linhas — eixo X com os meses (ou dias), uma linha por categoria */
+function relLinhasCategorias(txs, bk){
+  const tipoBase = txs.some(t=>t.tipo==='despesa') ? 'despesa' : 'receita';
+  const base=aggCats(txs, tipoBase); // ordem decrescente = cores iguais às da rosca
+  if(!base.length){ relBoxVisivel('relLinhaBox','relLinha',false); return; }
+  const idx={}; bk.labels.forEach((l,i)=>idx[l]=i);
+  const serie={}; base.forEach(([c])=>serie[c]=bk.labels.map(()=>0));
+  txs.forEach(t=>{
+    if(t.tipo!==tipoBase || !serie[t.cat]) return;
+    const i=idx[bk.chave(t)]; if(i!==undefined) serie[t.cat][i]+=t.valor;
+  });
+  document.getElementById('relLinhaTitle').textContent=
+    (tipoBase==='despesa'?'Despesas':'Receitas')+' por categoria — '+(rel.modo==='mensal'?'mês a mês':'dia a dia');
+  relBoxVisivel('relLinhaBox','relLinha',true);
+  mkChart('relLinha','chartRelLinha',{type:'line',
+    data:{labels:bk.labels.map(relBucketLbl),
+      datasets:base.map(([c],i)=>({label:c, data:serie[c].map(v=>v/100),
+        borderColor:CAT_COLORS[i%CAT_COLORS.length],
+        backgroundColor:CAT_COLORS[i%CAT_COLORS.length],
+        borderWidth:2, pointRadius:3, tension:.3}))},
+    options:{maintainAspectRatio:false,
+      plugins:{legend:{labels:{boxWidth:12,font:{family:'Schibsted Grotesk'}}},tooltip:relTooltip},
+      scales:{y:{ticks:{callback:moedaCB}}}}
+  });
+}
+
+/* tabelas de detalhes por categoria (despesas e receitas) */
+function tabelasCategoriaHTML(txs){
+  const grupo=(titulo, cats, cls)=>{
+    if(!cats.length) return '';
+    const tot=cats.reduce((a,[,v])=>a+v.total,0);
+    return `<div class="relGrupo">${titulo}</div><div class="relTableWrap"><table class="relTable">
+      <thead><tr><th>Categoria</th><th class="num">Total</th><th class="num">%</th><th class="num">Lançamentos</th></tr></thead>
+      <tbody>${cats.map(([c,v])=>`<tr><td>${esc(c)}</td>
+        <td class="num ${cls}">${fmt(v.total)}</td>
+        <td class="num">${(v.total/tot*100).toFixed(1).replace('.',',')}%</td>
+        <td class="num">${v.qtd}</td></tr>`).join('')}
+      <tr class="totRow"><td>Total</td><td class="num ${cls}">${fmt(tot)}</td><td class="num">100%</td>
+        <td class="num">${cats.reduce((a,[,v])=>a+v.qtd,0)}</td></tr></tbody>
+    </table></div>`;
+  };
+  return grupo('Despesas por categoria', aggCats(txs,'despesa'), 'neg')
+       + grupo('Receitas por categoria', aggCats(txs,'receita'), 'pos');
 }
 
 /* ---------------- Metas do dia (rotinas programáveis) ---------------- */
@@ -1842,7 +2102,7 @@ document.getElementById('senhaForm').addEventListener('submit', async e=>{
 });
 
 /* ---------------- Meus dados: exportação e exclusão (LGPD) ---------------- */
-const COLECOES_USUARIO=['perfil','tx','orcamentos','assinaturas','rotinas','metasStatus','inventario','camposCustom','catMap'];
+const COLECOES_USUARIO=['perfil','tx','orcamentos','assinaturas','rotinas','metasStatus','inventario','camposCustom','catMap','config'];
 
 function converterTimestamps(v){
   if(v && typeof v.toDate==='function') return v.toDate().toISOString();
@@ -1915,8 +2175,7 @@ document.getElementById('delForm').addEventListener('submit', async e=>{
 let txTipo='despesa';
 let editandoTx=null;
 function preencherCats(sel, tipo){
-  const cats = tipo==='receita'? CATS_RECEITA : CATS_DESPESA;
-  sel.innerHTML=cats.map(c=>`<option>${c}</option>`).join('');
+  sel.innerHTML=catsDe(tipo).map(c=>`<option>${esc(c)}</option>`).join('');
 }
 function abrirTxModal(tx){
   editandoTx = tx||null;
@@ -1979,25 +2238,6 @@ document.getElementById('txForm').addEventListener('submit', async e=>{
   }
   editandoTx=null;
   document.getElementById('txModal').classList.add('hidden');
-});
-
-document.getElementById('btnAddSub').onclick=()=>{
-  preencherCats(document.getElementById('subCat'),'despesa');
-  document.getElementById('subCat').value='Assinaturas';
-  document.getElementById('subModal').classList.remove('hidden');
-};
-document.getElementById('subForm').addEventListener('submit', async e=>{
-  e.preventDefault();
-  const valor=parseValor(document.getElementById('subValor').value);
-  if(valor===null){ toast('Valor inválido'); return; }
-  await col('assinaturas').add({
-    nome:document.getElementById('subNome').value.trim(),
-    valor, dia:Number(document.getElementById('subDia').value),
-    cat:document.getElementById('subCat').value, ativa:true
-  });
-  document.getElementById('subModal').classList.add('hidden');
-  document.getElementById('subForm').reset();
-  toast('Assinatura salva');
 });
 
 /* ---------------- Categoria automática por destinatário ----------------
@@ -2109,7 +2349,7 @@ function proximoCatAsk(){
   document.getElementById('catAskMsg').innerHTML = p.tipo==='receita'
     ? `Vimos que você recebeu um Pix de <span class="catAskNome">${esc(p.nome)}</span>. Ele se encaixa em qual categoria?`
     : `Vimos que você fez um Pix para <span class="catAskNome">${esc(p.nome)}</span>. Ele se encaixa em qual categoria?`;
-  const cats=p.tipo==='receita'?CATS_RECEITA:CATS_DESPESA;
+  const cats=catsDe(p.tipo);
   document.getElementById('catAskChips').innerHTML =
     cats.map(c=>`<button type="button" class="catChip" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
   modal.classList.remove('hidden');
@@ -2249,7 +2489,7 @@ function montarMapa(){
   document.getElementById('impColValor').innerHTML=opts(imp.cols.valor);
   document.getElementById('impHeader').checked=imp.header;
   document.getElementById('impSinal').value=imp.sinal;
-  const todasCats=[...new Set([...CATS_DESPESA,...CATS_RECEITA])];
+  const todasCats=[...new Set([...catsD(),...catsR()])];
   document.getElementById('impBulkCat').innerHTML=
     '<option value="">— aplicar a todas —</option>'+todasCats.map(c=>`<option>${c}</option>`).join('');
 }
@@ -2267,7 +2507,7 @@ function rebuildItems(){
     else if(imp.sinal==='pos') tipo = v>0?'despesa':'receita';
     // categoria automática: memória do usuário > dicionário embutido > Outros
     const chave=chaveDest(desc);
-    const cats=tipo==='receita'?CATS_RECEITA:CATS_DESPESA;
+    const cats=catsDe(tipo);
     let cat='Outros', pagamento='', auto=false;
     const lembrado=chave && catMap && catMap.get(chave);
     if(lembrado && cats.includes(lembrado.cat)){
@@ -2275,7 +2515,7 @@ function rebuildItems(){
       if(lembrado.pagamento) pagamento=lembrado.pagamento;
     }else if(tipo==='despesa'){
       const b=catBuiltin(desc);
-      if(b){ cat=b; auto=true; }
+      if(b && cats.includes(b)){ cat=b; auto=true; }
     }
     imp.items.push({data, desc, valor:Math.abs(v), tipo, cat, pagamento, incluir:true, chave, auto});
   });
@@ -2290,8 +2530,8 @@ function impCountTxt(){
 
 function renderImpPreview(){
   impCountTxt();
-  const catOpts=(tipo,sel)=>(tipo==='receita'?CATS_RECEITA:CATS_DESPESA)
-    .map(c=>`<option${c===sel?' selected':''}>${c}</option>`).join('');
+  const catOpts=(tipo,sel)=>catsDe(tipo)
+    .map(c=>`<option${c===sel?' selected':''}>${esc(c)}</option>`).join('');
   const pagOpts=sel=>['','credito','debito','pix'].map(p=>
     `<option value="${p}"${p===sel?' selected':''}>${p===''?'—':p==='credito'?'Crédito':p==='debito'?'Débito':'PIX'}</option>`).join('');
   document.getElementById('impList').innerHTML=imp.items.map((it,i)=>`
@@ -2451,8 +2691,7 @@ document.getElementById('impSinal').onchange=e=>{ imp.sinal=e.target.value; rebu
 document.getElementById('impBulkCat').onchange=e=>{
   const v=e.target.value; if(!v) return;
   imp.items.forEach(it=>{
-    const cats=it.tipo==='receita'?CATS_RECEITA:CATS_DESPESA;
-    if(cats.includes(v)) it.cat=v;
+    if(catsDe(it.tipo).includes(v)) it.cat=v;
   });
   renderImpPreview(); e.target.value='';
 };
@@ -2470,8 +2709,7 @@ document.getElementById('impList').addEventListener('change', e=>{
   if(k==='cat'){ it.auto=false; salvarCatMap(it.chave,{cat:it.cat,pagamento:it.pagamento,desc:it.desc}); }
   if(k==='pagamento'&&it.cat!=='Outros') salvarCatMap(it.chave,{cat:it.cat,pagamento:it.pagamento,desc:it.desc});
   if(k==='tipo'){
-    const cats=it.tipo==='receita'?CATS_RECEITA:CATS_DESPESA;
-    if(!cats.includes(it.cat)) it.cat='Outros';
+    if(!catsDe(it.tipo).includes(it.cat)) it.cat='Outros';
     renderImpPreview();
   }
 });
@@ -2505,7 +2743,7 @@ document.getElementById('btnImpConfirm').onclick=async ()=>{
 /* ---------------- Guia de boas-vindas ---------------- */
 const GUIA_PASSOS=[
   {e:'👋',t:'Bem-vindo ao SeuCofrin!',c:`
-    <p>Este é o organizador financeiro da casa: gastos, orçamento, assinaturas e metas do dia — tudo num lugar só.</p>
+    <p>Este é o organizador financeiro da casa: gastos, relatórios e metas do dia — tudo num lugar só.</p>
     <ul>
       <li>Seus dados ficam salvos na nuvem: entre com a mesma conta no celular e no computador.</li>
       <li>Use as setas <b>‹ ›</b> no topo para navegar entre os meses.</li>
@@ -2527,21 +2765,16 @@ const GUIA_PASSOS=[
       <li>Toque em um lançamento da lista para <b>editar ou excluir</b>.</li>
       <li>Use os chips de categoria para filtrar a lista.</li>
       <li><b>📥 Importar CSV/PDF</b>: exporte o extrato ou a fatura no app do banco e importe aqui — você revisa cada linha antes de confirmar.</li>
+      <li><b>🏷️ Categorias</b>: crie, renomeie ou exclua suas próprias categorias de despesa e receita.</li>
       <li><b>⚙️ Campos personalizados</b>: crie campos extras para todo lançamento, como "Quem gastou" ou "Parcelas".</li>
     </ul>`},
-  {e:'🎯',t:'Orçamento',c:`
-    <p>Defina um limite mensal para cada categoria de despesa.</p>
+  {e:'📈',t:'Relatórios',c:`
+    <p>Monte relatórios do jeito que você quiser e entenda para onde o dinheiro vai.</p>
     <ul>
-      <li>A barra de cada categoria mostra quanto do limite já foi consumido no mês.</li>
-      <li>No rodapé, o total orçado × o total gasto.</li>
-      <li>Quando um mês novo começa, os limites do mês anterior são <b>copiados automaticamente</b> — é só ajustar o que mudou.</li>
-    </ul>`},
-  {e:'🔁',t:'Assinaturas',c:`
-    <p>Cadastre os serviços recorrentes — streaming, academia, aplicativos…</p>
-    <ul>
-      <li>Veja quantas assinaturas estão ativas e o <b>custo mensal total</b> delas.</li>
-      <li>Informe o dia da cobrança para não ser pego de surpresa.</li>
-      <li>Dá para <b>pausar e reativar</b> uma assinatura sem apagá-la.</li>
+      <li><b>Mensal</b>: escolha um intervalo de meses e compare receitas × despesas mês a mês.</li>
+      <li><b>Diário</b>: veja o movimento dia a dia dentro de um mês.</li>
+      <li>Três gráficos de uma vez: evolução no tempo, distribuição por categoria e linhas categoria a categoria.</li>
+      <li>Os filtros do topo (período e categoria) valem para <b>todos os gráficos e tabelas</b> ao mesmo tempo.</li>
     </ul>`},
   {e:'✅',t:'Metas do dia',c:`
     <p>Transforme tarefas em rotina — e ganhe recompensas por cumprir.</p>

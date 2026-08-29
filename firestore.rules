@@ -61,29 +61,31 @@ service cloud.firestore {
                          .hasOnly(['tipo', 'valor', 'desc', 'cat', 'data', 'mes', 'pagamento', 'custom']);
       }
 
-      // ---------- Orçamentos (1 doc por mês, id = "YYYY-MM") ----------
+      // ---------- Orçamentos e Assinaturas (LEGADO) ----------
+      // As seções saíram do app; leitura e exclusão continuam liberadas
+      // para a exportação de dados e a exclusão de conta (LGPD).
       match /orcamentos/{mes} {
         allow read, delete: if souDono(uid);
-        allow create, update: if souDono(uid)
-                      && mes.matches('[0-9]{4}-[0-9]{2}')
-                      && request.resource.data.keys().hasOnly(['cats'])
-                      && request.resource.data.cats is map
-                      && request.resource.data.cats.size() <= 60;
-      }
-
-      // ---------- Assinaturas ----------
-      function subValida(d) {
-        return d.keys().hasAll(['nome', 'valor', 'dia', 'cat', 'ativa'])
-            && d.keys().hasOnly(['nome', 'valor', 'dia', 'cat', 'ativa'])
-            && txt(d.nome, 80)
-            && centavos(d.valor)
-            && d.dia is int && d.dia >= 1 && d.dia <= 31
-            && txt(d.cat, 60)
-            && d.ativa is bool;
       }
       match /assinaturas/{id} {
         allow read, delete: if souDono(uid);
-        allow create, update: if souDono(uid) && subValida(request.resource.data);
+      }
+
+      // ---------- Configurações (hoje só o doc "categorias") ----------
+      // Wildcard + checagem do id: permite a query da coleção inteira
+      // (exportação de dados e exclusão de conta) sem abrir escrita livre.
+      match /config/{doc} {
+        allow read, delete: if souDono(uid);
+        allow create, update: if souDono(uid)
+                      && doc == 'categorias'
+                      && request.resource.data.keys().hasAll(['despesa', 'receita'])
+                      && request.resource.data.keys().hasOnly(['despesa', 'receita'])
+                      && request.resource.data.despesa is list
+                      && request.resource.data.despesa.size() >= 1
+                      && request.resource.data.despesa.size() <= 60
+                      && request.resource.data.receita is list
+                      && request.resource.data.receita.size() >= 1
+                      && request.resource.data.receita.size() <= 60;
       }
 
       // ---------- Metas programadas (rotinas) ----------
