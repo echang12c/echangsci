@@ -48,7 +48,7 @@ service cloud.firestore {
             && (!('pagamento' in d) || d.pagamento == null || txt(d.pagamento, 40))
             && (!('custom' in d) || (d.custom is map && d.custom.size() <= 30))
             && (!('subId' in d) || txt(d.subId, 40))
-            && (!('origem' in d) || d.origem in ['csv', 'pdf']);
+            && (!('origem' in d) || d.origem in ['csv', 'pdf', 'mercado']);
       }
       match /tx/{id} {
         allow read, delete: if souDono(uid);
@@ -59,6 +59,39 @@ service cloud.firestore {
                       && txValida(request.resource.data)
                       && request.resource.data.diff(resource.data).affectedKeys()
                          .hasOnly(['tipo', 'valor', 'desc', 'cat', 'data', 'mes', 'pagamento', 'custom']);
+      }
+
+      // ---------- Notas do mercado (aba Mercado) ----------
+      // 1 doc por nota fiscal, com os itens embutidos. Preço médio, menor
+      // preço e R$/kg são calculados no app a partir daqui — nada de
+      // produto fica duplicado no banco.
+      function compraValida(d) {
+        return d.keys().hasAll(['mercado', 'data', 'mes', 'itens', 'total'])
+            && d.keys().hasOnly(['mercado', 'mercadoKey', 'data', 'mes', 'itens',
+                                 'subtotal', 'desconto', 'total', 'txId', 'origem', 'criadoEm'])
+            && txt(d.mercado, 80)
+            && (!('mercadoKey' in d) || txt(d.mercadoKey, 60))
+            && ehMes(d.mes)
+            && d.data.matches(d.mes + '-[0-9]{2}')   // data pertence ao mês declarado
+            && d.itens is list
+            && d.itens.size() >= 1
+            && d.itens.size() <= 300
+            && d.total is int && d.total >= 0 && d.total <= 100000000000
+            && (!('subtotal' in d) || (d.subtotal is int && d.subtotal >= 0))
+            && (!('desconto' in d) || (d.desconto is int && d.desconto >= 0))
+            && (!('txId' in d) || txt(d.txId, 60))
+            && (!('origem' in d) || d.origem in ['foto', 'pdf', 'manual']);
+      }
+      match /compras/{id} {
+        allow read, delete: if souDono(uid);
+        allow create: if souDono(uid)
+                      && compraValida(request.resource.data)
+                      && request.resource.data.criadoEm == request.time;
+        allow update: if souDono(uid)
+                      && compraValida(request.resource.data)
+                      && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['mercado', 'mercadoKey', 'data', 'mes', 'itens',
+                                   'subtotal', 'desconto', 'total', 'txId']);
       }
 
       // ---------- Orçamentos e Assinaturas (LEGADO) ----------

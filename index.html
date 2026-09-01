@@ -310,6 +310,52 @@ model-viewer{width:100%;height:280px;background:transparent;--poster-color:trans
 #toast.show{opacity:1}
 canvas{max-width:100%}
 .chartBox{height:260px;position:relative}
+
+/* ---------- Mercado (notas fiscais) ---------- */
+.mkHero{background:linear-gradient(135deg,#0E7DC2 0%,#00A88F 60%,#00C87B 100%);color:#fff;border:none;box-shadow:0 8px 24px rgba(14,125,194,.35);display:flex;align-items:center;gap:16px}
+.mkHero .emoji{font-size:42px;line-height:1}
+.mkHero .info{flex:1}
+.mkHero .t{font-family:var(--display);font-weight:800;font-size:19px}
+.mkHero .s{font-size:13px;color:rgba(255,255,255,.9);margin-top:2px}
+.mkHero .btns{display:flex;flex-direction:column;gap:8px}
+.mkHero button{background:#fff;color:#0B6BA8;border:none;border-radius:12px;padding:11px 16px;font-weight:800;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,.15);white-space:nowrap}
+@media(max-width:560px){.mkHero{flex-direction:column;text-align:center}.mkHero .btns{width:100%}}
+.mkTag{display:inline-block;font-size:11px;font-weight:700;background:var(--primary-soft);color:#00794E;border-radius:999px;padding:2px 8px;margin-left:6px;white-space:nowrap}
+.mkTag.alta{background:var(--expense-soft);color:var(--expense)}
+.mkTag.baixa{background:var(--income-soft);color:#00794E}
+.relTable tr.clicavel{cursor:pointer}
+.relTable tr.clicavel:hover td{background:#FFFDF6}
+.relTable tr.sel td{background:var(--primary-soft)}
+.relTable td .sub{display:block;font-size:11px;color:var(--muted);font-family:var(--body);max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* nome do produto/mercado não quebra: a tabela rola de lado e a linha fica legível */
+#mkTabProdutos .relTable td:first-child,#mkTabNotas .relTable td:nth-child(2){white-space:nowrap;min-width:150px}
+.mkResumo{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+.mkResumo .b{background:#FAF6EC;border-radius:12px;padding:10px 12px}
+.mkResumo .b .k{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.mkResumo .b .v{font-family:var(--mono);font-weight:600;font-size:16px;margin-top:3px}
+.mkResumo .b .w{font-size:11px;color:var(--muted)}
+
+/* leitura da nota */
+.ocrProg{margin:14px 0}
+.ocrProg .bar{margin-bottom:6px}
+.notaFile{width:100%;border:1px dashed var(--line);border-radius:12px;padding:14px;background:#FAF6EC;font-size:14px}
+.notaBtns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+@media(max-width:520px){.notaBtns{grid-template-columns:1fr}}
+.itensBox{max-height:44dvh;overflow:auto;border:1px solid var(--line);border-radius:12px;margin:10px 0}
+.itemRow{padding:10px 12px;border-bottom:1px solid var(--line)}
+.itemRow:last-child{border-bottom:none}
+.itemTop{display:flex;gap:8px;align-items:center}
+.itemTop input{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:14px;font-weight:600;background:#FAFCFA}
+.itemDel{border:none;background:none;color:var(--muted);font-size:16px;padding:4px 6px;border-radius:8px;flex:none}
+.itemDel:hover{background:var(--expense-soft);color:var(--expense)}
+.itemGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:7px}
+@media(max-width:620px){.itemGrid{grid-template-columns:repeat(3,1fr)}}
+.itemGrid label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.itemGrid input,.itemGrid select{width:100%;border:1px solid var(--line);border-radius:8px;padding:6px 7px;font-size:13px;background:#FAFCFA;font-family:var(--mono)}
+.itemKg{font-size:11px;color:var(--muted);margin-top:5px;min-height:14px}
+.notaTot{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#FAF6EC;border-radius:12px;padding:10px 14px;margin-bottom:10px;font-size:14px}
+.notaTot b{font-family:var(--mono);font-size:17px}
+.notaTot .dif{color:var(--warn);font-size:12px;font-weight:600}
 </style>
 </head>
 <body>
@@ -379,6 +425,7 @@ canvas{max-width:100%}
         <button data-tab="dash" class="active">📊 Dashboard</button>
         <button data-tab="tx">💸 Lançamentos</button>
         <button data-tab="relat">📈 Relatórios</button>
+        <button data-tab="mercado">🛒 Mercado</button>
         <button data-tab="metas">✅ Metas do dia</button>
         <button data-tab="pets">🐾 Coleção</button>
       </nav>
@@ -461,6 +508,75 @@ canvas{max-width:100%}
       </div>
       <h2 class="section">Detalhes</h2>
       <div class="card" id="relTabela"><div class="empty">Escolha o período para montar o relatório.</div></div>
+    </section>
+
+    <!-- ===== Mercado ===== -->
+    <section id="tab-mercado" class="hidden">
+      <div class="card mkHero">
+        <div class="emoji">🛒</div>
+        <div class="info">
+          <div class="t">Notas do mercado</div>
+          <div class="s">Fotografe a nota fiscal e o app monta o histórico de preço de cada produto.</div>
+        </div>
+        <div class="btns">
+          <button type="button" id="btnNotaFoto">📷 Escanear nota</button>
+          <button type="button" id="btnNotaManual" style="background:rgba(255,255,255,.18);color:#fff;box-shadow:none">✏️ Digitar nota</button>
+        </div>
+      </div>
+
+      <div class="card relCtrls" style="margin-top:14px">
+        <div class="relRow">
+          <div class="field"><label>De (mês)</label><input type="month" id="mkDe"></div>
+          <div class="field"><label>Até (mês)</label><input type="month" id="mkAte"></div>
+        </div>
+        <div class="relRow">
+          <div class="field"><label>Mercado</label><select id="mkMercadoSel"></select></div>
+          <div class="field"><label>Buscar produto</label><input id="mkBusca" placeholder="Ex.: arroz, leite…" autocomplete="off"></div>
+        </div>
+      </div>
+
+      <div class="grid3" style="margin-top:14px">
+        <div class="card kpi"><div class="lbl">Gasto no período</div><div class="val neg" id="mkKTotal">R$ 0,00</div></div>
+        <div class="card kpi"><div class="lbl">Notas · itens</div><div class="val" id="mkKNotas">0</div></div>
+        <div class="card kpi"><div class="lbl">Descontos</div><div class="val pos" id="mkKDesc">R$ 0,00</div></div>
+      </div>
+
+      <h2 class="section">Preço de um produto ao longo do tempo</h2>
+      <div class="card relCtrls">
+        <div class="relRow">
+          <div class="field"><label>Produto</label><select id="mkProdSel"></select></div>
+          <div class="field"><label>Comparar por</label>
+            <div class="segment" id="mkMetrica">
+              <button type="button" data-m="un" class="selInc">Preço unitário</button>
+              <button type="button" data-m="kg">Preço por kg</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card mkResumo" id="mkProdResumo" style="margin-top:12px"></div>
+      <div class="card chartBox" style="margin-top:12px"><canvas id="chartMkProd"></canvas></div>
+
+      <div id="mkCompBox">
+        <h2 class="section" id="mkCompTitle">Onde está mais barato</h2>
+        <div class="card chartBox"><canvas id="chartMkComp"></canvas></div>
+      </div>
+
+      <h2 class="section">Histórico de compras do produto</h2>
+      <div class="card" id="mkTabProd"><div class="empty">Escolha um produto acima.</div></div>
+
+      <div id="mkMercadoBox">
+        <h2 class="section">Gasto por mercado</h2>
+        <div class="card chartBox"><canvas id="chartMkMercado"></canvas></div>
+      </div>
+
+      <h2 class="section">Produtos que mais pesam no carrinho</h2>
+      <div class="card chartBox"><canvas id="chartMkTop"></canvas></div>
+
+      <h2 class="section">Meus produtos</h2>
+      <div class="card" id="mkTabProdutos"><div class="empty">Nenhuma nota no período.</div></div>
+
+      <h2 class="section">Minhas notas</h2>
+      <div class="card" id="mkTabNotas"><div class="empty">Nenhuma nota no período.</div></div>
     </section>
 
     <!-- ===== Metas do dia ===== -->
@@ -663,6 +779,49 @@ canvas{max-width:100%}
   </div>
 </div>
 
+<!-- ===== Modal nota do mercado ===== -->
+<div class="modalWrap hidden" id="notaModal">
+  <div class="modal wide">
+    <h3 id="notaTitle">Nota do mercado</h3>
+
+    <div id="notaStep1">
+      <p class="impHint">Tire a foto da nota <b>inteira</b>, bem iluminada e sem dobras — ou anexe o PDF/imagem da nota eletrônica. O app lê os itens e <b>você confere tudo</b> antes de salvar.</p>
+      <div class="notaBtns">
+        <button type="button" class="btnPrimary" id="btnNotaCam">📷 Tirar foto agora</button>
+        <button type="button" class="btnGhost" id="btnNotaArq">📎 Escolher arquivo</button>
+      </div>
+      <input type="file" id="notaCam" accept="image/*" capture="environment" class="hidden">
+      <input type="file" id="notaArq" accept="image/*,.pdf,application/pdf" class="hidden">
+      <div class="ocrProg hidden" id="notaProg">
+        <div class="bar"><span id="notaBar" style="width:0%"></span></div>
+        <div class="notifSub" id="notaProgTxt">Preparando…</div>
+      </div>
+      <p class="impHint" style="margin-bottom:0">A foto <b>não</b> é enviada para lugar nenhum: a leitura acontece dentro do seu aparelho e só os itens conferidos são salvos.</p>
+      <div class="modalActions"><button type="button" class="btnGhost" data-close style="flex:1">Cancelar</button></div>
+    </div>
+
+    <div id="notaStep2" class="hidden">
+      <div class="impMap">
+        <div class="field"><label>Mercado</label><input id="notaMercado" list="mkMercadosDL" maxlength="80" placeholder="Ex.: Assaí Vila A"></div>
+        <div class="field"><label>Data da compra</label><input type="date" id="notaData"></div>
+        <div class="field"><label>Desconto da nota (R$)</label><input inputmode="decimal" id="notaDescTotal" placeholder="0,00"></div>
+      </div>
+      <datalist id="mkMercadosDL"></datalist>
+      <div class="notaTot">
+        <span>Total dos itens − desconto</span>
+        <span style="text-align:right"><b id="notaTotCalc">R$ 0,00</b><span class="dif" id="notaTotDif"></span></span>
+      </div>
+      <div class="itensBox" id="notaItens"></div>
+      <button type="button" class="btnGhost" id="btnNotaAddItem" style="width:100%">+ Adicionar item</button>
+      <label class="chkLine"><input type="checkbox" id="notaLancar" checked> Lançar o total como despesa em "Mercado"</label>
+      <div class="modalActions">
+        <button type="button" class="btnGhost" data-close>Cancelar</button>
+        <button type="button" class="btnPrimary" id="btnNotaSalvar">Salvar nota</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== Modal perfil ===== -->
 <div class="modalWrap hidden" id="perfilModal">
   <div class="modal">
@@ -784,7 +943,8 @@ const state = {
   perfil: {},                   // {nome, foto} salvos no Firestore
   cats: null,                   // {despesa:[...], receita:[...]} — null = usa o padrão
   unsubTx:null, unsubRotinas:null, unsubMetaStatus:null, unsubInv:null, unsubCampos:null, unsubPerfil:null, unsubCats:null,
-  charts:{cat:null, trend:null, rel:null, relDonut:null, relLinha:null},
+  charts:{cat:null, trend:null, rel:null, relDonut:null, relLinha:null,
+           mkProd:null, mkComp:null, mkMercado:null, mkTop:null},
 };
 
 /* ---------------- Utilidades ---------------- */
@@ -1003,12 +1163,13 @@ document.querySelectorAll('nav.tabs button').forEach(b=>{
   b.onclick=()=>{
     document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('active'));
     b.classList.add('active');
-    ['dash','tx','relat','metas','pets'].forEach(t=>
+    ['dash','tx','relat','mercado','metas','pets'].forEach(t=>
       document.getElementById('tab-'+t).classList.toggle('hidden', t!==b.dataset.tab));
     document.getElementById('tabsToggleLabel').textContent=b.textContent.trim();
     tabsMenu.classList.remove('open');
     tabsToggle.setAttribute('aria-expanded','false');
     if(b.dataset.tab==='relat') abrirRelatorios();
+    if(b.dataset.tab==='mercado') abrirMercado();
   };
 });
 
@@ -1541,6 +1702,726 @@ function tabelasCategoriaHTML(txs){
   };
   return grupo('Despesas por categoria', aggCats(txs,'despesa'), 'neg')
        + grupo('Receitas por categoria', aggCats(txs,'receita'), 'pos');
+}
+
+/* ====================================================================
+   MERCADO — notas fiscais, preço por produto e comparação entre lojas
+   Modelo de dados: users/{uid}/compras/{id}
+     { mercado, mercadoKey, data, mes, itens:[...], subtotal, desconto,
+       total, txId, origem, criadoEm }
+   Cada item: { nome, qtd, un, unit, desconto, total, peso? }
+     - unit / desconto / total em centavos (igual ao resto do app)
+     - qtd numérica (0,674 kg · 2 un…) e peso opcional em gramas
+   Preço médio, mínimo, máximo e R$/kg são sempre derivados das notas —
+   nada de produto é duplicado no banco.
+   ==================================================================== */
+const UNIDADES=['UN','KG','G','L','ML','PCT','CX','DZ','M'];
+const UN_MAP={UNIDADE:'UN',UNID:'UN',UND:'UN',UN:'UN',PCS:'UN',PC:'UN',PECA:'UN',BDJ:'UN',
+  KGS:'KG',KILO:'KG',KG:'KG',GRAMA:'G',GR:'G',G:'G',
+  LTS:'L',LITRO:'L',LT:'L',L:'L',ML:'ML',
+  PCT:'PCT',PT:'PCT',FD:'CX',CX:'CX',DZ:'DZ',MT:'M',M:'M'};
+function normUn(u){ return UN_MAP[String(u||'').toUpperCase()]||'UN'; }
+
+function numBR(s){
+  const t=String(s==null?'':s).trim().replace(/\s/g,'');
+  if(!t) return 0;
+  const n=parseFloat(t.replace(/\.(?=\d{3}(\D|$))/g,'').replace(',','.'));
+  return isNaN(n)?0:n;
+}
+function centsBR(s){ return Math.round(numBR(s)*100); }
+function cIn(c){ return c? (c/100).toFixed(2).replace('.',',') : ''; }
+function qIn(q){ return q? String(q).replace('.',',') : ''; }
+function fmtQtd(q,un){ return Number(q||0).toLocaleString('pt-BR',{maximumFractionDigits:3})+(un?' '+un.toLowerCase():''); }
+function dataCurta(d){ return d? d.slice(8,10)+'/'+d.slice(5,7)+'/'+d.slice(2,4) : ''; }
+/* chave de agrupamento: o mesmo produto escrito de jeitos diferentes cai no mesmo lugar */
+function mkNorm(s){
+  return String(s||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^A-Z0-9% ]/g,' ').replace(/\s+/g,' ').trim();
+}
+/* R$/kg: direto quando a nota vende por peso, senão a partir do peso informado */
+function precoKgItem(it){
+  if(it.un==='KG' && it.unit>0) return it.unit;
+  if(it.un==='G'  && it.unit>0) return Math.round(it.unit*1000);
+  if(it.peso>0 && it.total>0)   return Math.round(it.total/(it.peso/1000));
+  return null;
+}
+
+const mk={de:'', ate:'', mercado:'', busca:'', prod:'', metrica:'un', compras:[], busy:false};
+
+function abrirMercado(){
+  const de=document.getElementById('mkDe'), ate=document.getElementById('mkAte');
+  if(!de.value){ de.value=shiftMes(state.mes,-5); ate.value=state.mes; }
+  carregarMercado();
+}
+async function carregarMercado(){
+  if(!state.uid || mk.busy) return;
+  let de=document.getElementById('mkDe').value, ate=document.getElementById('mkAte').value;
+  if(!de){ de=shiftMes(state.mes,-5); document.getElementById('mkDe').value=de; }
+  if(!ate){ ate=state.mes; document.getElementById('mkAte').value=ate; }
+  if(de>ate){ [de,ate]=[ate,de];
+    document.getElementById('mkDe').value=de; document.getElementById('mkAte').value=ate; }
+  mk.busy=true; mk.de=de; mk.ate=ate;
+  document.getElementById('mkTabNotas').innerHTML='<div class="empty">Carregando…</div>';
+  try{
+    const snap=await col('compras').where('mes','>=',de).where('mes','<=',ate).get();
+    mk.compras=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.data.localeCompare(a.data));
+    renderMercado();
+  }catch(ex){
+    console.error('mercado:',ex);
+    document.getElementById('mkTabNotas').innerHTML='<div class="empty">Não consegui carregar as notas agora. Tente de novo.</div>';
+  }finally{ mk.busy=false; }
+}
+
+document.getElementById('mkDe').onchange=carregarMercado;
+document.getElementById('mkAte').onchange=carregarMercado;
+document.getElementById('mkMercadoSel').onchange=e=>{ mk.mercado=e.target.value; renderMercado(); };
+document.getElementById('mkProdSel').onchange=e=>{ mk.prod=e.target.value; renderMercado(); };
+document.getElementById('mkBusca').oninput=e=>{ mk.busca=e.target.value.trim(); renderMercado(); };
+document.querySelectorAll('#mkMetrica button').forEach(b=>{
+  b.onclick=()=>{ mk.metrica=b.dataset.m; relSegAtivo('mkMetrica','m',mk.metrica); renderMercado(); };
+});
+
+/* achata as notas numa lista de itens comprados (já com mercado e data) */
+function mkItens(){
+  const out=[];
+  mk.compras.forEach(c=>{
+    (c.itens||[]).forEach(it=>{
+      const nome=(it.nome||'').trim(); if(!nome) return;
+      out.push({...it, nome, chave:mkNorm(nome), compraId:c.id,
+        data:c.data, mercado:(c.mercado||'—').trim(), precoKg:precoKgItem(it)});
+    });
+  });
+  return out;
+}
+/* um "produto" = todos os itens com a mesma chave, com preço mín/máx/médio */
+function mkProdutos(itens){
+  const m={};
+  itens.forEach(it=>{
+    if(!it.chave) return;
+    if(!m[it.chave]) m[it.chave]={chave:it.chave, nome:it.nome, un:it.un, qtd:0, gasto:0, desconto:0, hist:[]};
+    const p=m[it.chave];
+    p.qtd+=it.qtd||0; p.gasto+=it.total||0; p.desconto+=it.desconto||0; p.hist.push(it);
+  });
+  return Object.values(m).map(p=>{
+    p.hist.sort((a,b)=>a.data.localeCompare(b.data));
+    const precos=p.hist.map(h=>h.unit).filter(v=>v>0);
+    p.min=precos.length?Math.min(...precos):0;
+    p.max=precos.length?Math.max(...precos):0;
+    p.minItem=p.hist.find(h=>h.unit===p.min)||p.hist[0];
+    p.maxItem=p.hist.find(h=>h.unit===p.max)||p.hist[0];
+    p.primeiro=p.hist[0].unit; p.ultimo=p.hist[p.hist.length-1].unit;
+    p.ultimaData=p.hist[p.hist.length-1].data;
+    p.ultimoMercado=p.hist[p.hist.length-1].mercado;
+    p.medio=p.qtd>0?Math.round(p.gasto/p.qtd):0;
+    p.varia=p.primeiro>0?((p.ultimo-p.primeiro)/p.primeiro*100):0;
+    const kgs=p.hist.map(h=>h.precoKg).filter(v=>v>0);
+    p.kgMedio=kgs.length?Math.round(kgs.reduce((a,b)=>a+b,0)/kgs.length):null;
+    p.mercados=[...new Set(p.hist.map(h=>h.mercado))];
+    return p;
+  }).sort((a,b)=>b.gasto-a.gasto);
+}
+
+function renderMercado(){
+  const todos=mkItens();
+  const mercados=[...new Set(mk.compras.map(c=>(c.mercado||'—').trim()))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  if(mk.mercado && !mercados.includes(mk.mercado)) mk.mercado='';
+  document.getElementById('mkMercadoSel').innerHTML='<option value="">— todos os mercados —</option>'+
+    mercados.map(m=>`<option value="${esc(m)}"${m===mk.mercado?' selected':''}>${esc(m)}</option>`).join('');
+  document.getElementById('mkMercadosDL').innerHTML=mercados.map(m=>`<option value="${esc(m)}">`).join('');
+
+  const notas = mk.mercado ? mk.compras.filter(c=>(c.mercado||'—').trim()===mk.mercado) : mk.compras;
+  const itens = mk.mercado ? todos.filter(i=>i.mercado===mk.mercado) : todos;
+
+  const totalGasto=notas.reduce((a,c)=>a+(c.total||0),0);
+  const totalDesc=notas.reduce((a,c)=>a+(c.desconto||0),0);
+  document.getElementById('mkKTotal').textContent=fmt(totalGasto);
+  document.getElementById('mkKNotas').innerHTML=`${notas.length} <small>nota${notas.length===1?'':'s'} · ${itens.length} itens</small>`;
+  document.getElementById('mkKDesc').textContent=fmt(totalDesc);
+
+  const produtos=mkProdutos(itens);
+
+  /* select de produtos: os mais comprados primeiro */
+  const ordProd=[...produtos].sort((a,b)=>b.hist.length-a.hist.length||b.gasto-a.gasto);
+  if(mk.prod && !produtos.some(p=>p.chave===mk.prod)) mk.prod='';
+  if(!mk.prod && ordProd.length) mk.prod=ordProd[0].chave;
+  document.getElementById('mkProdSel').innerHTML=ordProd.length
+    ? ordProd.map(p=>`<option value="${esc(p.chave)}"${p.chave===mk.prod?' selected':''}>${esc(p.nome)} (${p.hist.length}×)</option>`).join('')
+    : '<option value="">— nenhum produto ainda —</option>';
+  relSegAtivo('mkMetrica','m',mk.metrica);
+
+  const sel=produtos.find(p=>p.chave===mk.prod)||null;
+  mkResumoProduto(sel);
+  mkGraficoProduto(sel);
+  mkGraficoComparativo(sel);
+  document.getElementById('mkTabProd').innerHTML=mkTabelaProdutoHTML(sel);
+
+  /* rosca de gasto por mercado — some quando já há um mercado filtrado */
+  const porMerc={};
+  notas.forEach(c=>{ const m=(c.mercado||'—').trim(); porMerc[m]=(porMerc[m]||0)+(c.total||0); });
+  const listaMerc=Object.entries(porMerc).sort((a,b)=>b[1]-a[1]);
+  const mostrarRosca=!mk.mercado && listaMerc.length>1;
+  document.getElementById('mkMercadoBox').classList.toggle('hidden', !mostrarRosca);
+  if(mostrarRosca){
+    mkChart('mkMercado','chartMkMercado',{type:'doughnut',
+      data:{labels:listaMerc.map(([m])=>m),
+        datasets:[{data:listaMerc.map(([,v])=>v/100),
+          backgroundColor:listaMerc.map((_,i)=>CAT_COLORS[i%CAT_COLORS.length]),borderWidth:0}]},
+      options:{maintainAspectRatio:false,cutout:'62%',
+        plugins:{legend:{position:'right',labels:{boxWidth:12,font:{family:'Schibsted Grotesk'}}},tooltip:relTooltip}}});
+  }else if(state.charts.mkMercado){ state.charts.mkMercado.destroy(); state.charts.mkMercado=null; }
+
+  /* top produtos por gasto */
+  const top=produtos.slice(0,10);
+  mkChart('mkTop','chartMkTop',{type:'bar',
+    data:{labels:top.map(p=>p.nome.length>26?p.nome.slice(0,25)+'…':p.nome),
+      datasets:[{label:'Gasto no período',data:top.map(p=>p.gasto/100),
+        backgroundColor:top.map((_,i)=>CAT_COLORS[i%CAT_COLORS.length]),borderRadius:5}]},
+    options:{indexAxis:'y',maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:relTooltip},
+      scales:{x:{ticks:{callback:moedaCB}}}}});
+
+  document.getElementById('mkTabProdutos').innerHTML=mkTabelaProdutosHTML(produtos);
+  document.getElementById('mkTabNotas').innerHTML=mkTabelaNotasHTML(notas);
+  mkLigarTabelas();
+}
+
+const mkMetricaLbl=()=> mk.metrica==='kg' ? 'preço por kg' : 'preço unitário';
+function mkValor(h){ return mk.metrica==='kg' ? h.precoKg : h.unit; }
+
+function mkResumoProduto(p){
+  const box=document.getElementById('mkProdResumo');
+  if(!p){ box.innerHTML='<div class="empty">Escaneie uma nota para começar a acompanhar os preços.</div>'; return; }
+  const pts=p.hist.filter(h=>mkValor(h)>0);
+  if(!pts.length){
+    box.innerHTML=`<div class="empty">Ainda não dá para calcular o ${mkMetricaLbl()} de "${esc(p.nome)}" — informe o peso do item ao editar a nota.</div>`;
+    return;
+  }
+  const vals=pts.map(mkValor);
+  const min=Math.min(...vals), max=Math.max(...vals);
+  const barato=pts.find(h=>mkValor(h)===min), caro=pts.find(h=>mkValor(h)===max);
+  const ult=pts[pts.length-1], prim=pts[0];
+  const dif=mkValor(prim)>0 ? (mkValor(ult)-mkValor(prim))/mkValor(prim)*100 : 0;
+  const sufixo=mk.metrica==='kg'?'/kg':'/'+(p.un||'un').toLowerCase();
+  const economia=max-min;
+  box.innerHTML=`
+    <div class="b"><div class="k">Mais barato</div><div class="v pos">${fmt(min)}${sufixo}</div><div class="w">${esc(barato.mercado)} · ${dataCurta(barato.data)}</div></div>
+    <div class="b"><div class="k">Mais caro</div><div class="v neg">${fmt(max)}${sufixo}</div><div class="w">${esc(caro.mercado)} · ${dataCurta(caro.data)}</div></div>
+    <div class="b"><div class="k">Último preço</div><div class="v">${fmt(mkValor(ult))}${sufixo}</div><div class="w">${esc(ult.mercado)} · ${dataCurta(ult.data)}</div></div>
+    <div class="b"><div class="k">Variação</div><div class="v ${dif>0.5?'neg':dif<-0.5?'pos':''}">${dif>0?'+':''}${dif.toFixed(1).replace('.',',')}%</div><div class="w">do 1º ao último preço</div></div>
+    <div class="b"><div class="k">Diferença entre lojas</div><div class="v">${fmt(economia)}</div><div class="w">${min>0&&economia>0?('até '+(economia/min*100).toFixed(0)+'% de economia comprando no mais barato'):'mesmo preço em todas'}</div></div>`;
+}
+
+/* gráfico principal: uma linha por mercado com o preço a cada compra */
+function mkGraficoProduto(p){
+  const pts=p? p.hist.filter(h=>mkValor(h)>0) : [];
+  const datas=[...new Set(pts.map(h=>h.data))].sort();
+  const mercados=[...new Set(pts.map(h=>h.mercado))];
+  const datasets=mercados.map((m,i)=>({
+    label:m,
+    data:datas.map(d=>{
+      const hs=pts.filter(h=>h.mercado===m&&h.data===d);
+      return hs.length ? hs.reduce((a,h)=>a+mkValor(h),0)/hs.length/100 : null;
+    }),
+    borderColor:CAT_COLORS[i%CAT_COLORS.length],
+    backgroundColor:CAT_COLORS[i%CAT_COLORS.length],
+    borderWidth:2, pointRadius:4, tension:.25, spanGaps:true,
+  }));
+  mkChart('mkProd','chartMkProd',{type:'line',
+    data:{labels:datas.map(d=>d.slice(8,10)+'/'+d.slice(5,7)),datasets},
+    options:{maintainAspectRatio:false,
+      plugins:{legend:{labels:{boxWidth:12,font:{family:'Schibsted Grotesk'}}},tooltip:relTooltip},
+      scales:{y:{ticks:{callback:moedaCB}}}}});
+}
+
+/* comparativo: preço médio × menor preço em cada mercado */
+function mkGraficoComparativo(p){
+  const pts=p? p.hist.filter(h=>mkValor(h)>0) : [];
+  const mercados=[...new Set(pts.map(h=>h.mercado))];
+  document.getElementById('mkCompBox').classList.toggle('hidden', !mercados.length);
+  if(!mercados.length){
+    if(state.charts.mkComp){ state.charts.mkComp.destroy(); state.charts.mkComp=null; }
+    return;
+  }
+  const medias=mercados.map(m=>{
+    const v=pts.filter(h=>h.mercado===m).map(mkValor);
+    return {m, media:v.reduce((a,b)=>a+b,0)/v.length/100, min:Math.min(...v)/100};
+  }).sort((a,b)=>a.media-b.media);
+  document.getElementById('mkCompTitle').textContent=`Onde está mais barato — ${p.nome} (${mkMetricaLbl()})`;
+  mkChart('mkComp','chartMkComp',{type:'bar',
+    data:{labels:medias.map(x=>x.m),datasets:[
+      {label:'Preço médio',data:medias.map(x=>x.media),
+        backgroundColor:medias.map((_,i)=>i===0?'#00C87B':'#8FA3B8'),borderRadius:5},
+      {label:'Menor preço',data:medias.map(x=>x.min),backgroundColor:'#FFC53D',borderRadius:5},
+    ]},
+    options:{maintainAspectRatio:false,
+      plugins:{legend:{labels:{boxWidth:12,font:{family:'Schibsted Grotesk'}}},tooltip:relTooltip},
+      scales:{y:{ticks:{callback:moedaCB}}}}});
+}
+
+/* tabela 1: cada compra do produto escolhido — o detalhe que a nota traz */
+function mkTabelaProdutoHTML(p){
+  if(!p) return '<div class="empty">Escolha um produto acima.</div>';
+  const rows=[...p.hist].reverse().map(h=>`<tr>
+    <td>${dataCurta(h.data)}</td>
+    <td>${esc(h.mercado)}</td>
+    <td class="num">${fmtQtd(h.qtd,h.un)}</td>
+    <td class="num">${fmt(h.unit)}</td>
+    <td class="num">${h.desconto?('−'+fmt(h.desconto)):'—'}</td>
+    <td class="num neg">${fmt(h.total)}</td>
+    <td class="num">${h.precoKg?fmt(h.precoKg):'—'}</td></tr>`).join('');
+  return `<div class="relGrupo">${esc(p.nome)} — ${p.hist.length} compra${p.hist.length===1?'':'s'}</div>
+  <div class="relTableWrap"><table class="relTable">
+    <thead><tr><th>Data</th><th>Mercado</th><th class="num">Qtd</th><th class="num">Vl. unit.</th>
+      <th class="num">Desconto</th><th class="num">Total</th><th class="num">R$/kg</th></tr></thead>
+    <tbody>${rows}
+    <tr class="totRow"><td>Total</td><td></td><td class="num">${fmtQtd(p.qtd,p.un)}</td>
+      <td class="num">${fmt(p.medio)}</td><td class="num">${p.desconto?('−'+fmt(p.desconto)):'—'}</td>
+      <td class="num neg">${fmt(p.gasto)}</td><td class="num">${p.kgMedio?fmt(p.kgMedio):'—'}</td></tr></tbody>
+  </table></div>`;
+}
+
+/* tabela 2: todos os produtos do período, com mínimo, máximo e variação */
+function mkTabelaProdutosHTML(produtos){
+  const busca=mkNorm(mk.busca);
+  const lista=busca? produtos.filter(p=>p.chave.includes(busca)) : produtos;
+  if(!lista.length) return `<div class="empty">${produtos.length?'Nenhum produto com esse nome.':'Nenhuma nota no período — escaneie a primeira! 📷'}</div>`;
+  const rows=lista.slice(0,300).map(p=>{
+    const v=p.varia;
+    const tag=Math.abs(v)<1?'':`<span class="mkTag ${v>0?'alta':'baixa'}">${v>0?'▲':'▼'} ${Math.abs(v).toFixed(0)}%</span>`;
+    return `<tr class="clicavel${p.chave===mk.prod?' sel':''}" data-prod="${esc(p.chave)}">
+      <td><b>${esc(p.nome)}</b>${tag}<span class="sub">${p.hist.length} compra${p.hist.length===1?'':'s'} · ${esc(p.mercados.join(', '))}</span></td>
+      <td class="num">${fmtQtd(p.qtd,p.un)}</td>
+      <td class="num neg">${fmt(p.gasto)}</td>
+      <td class="num">${fmt(p.medio)}</td>
+      <td class="num pos">${fmt(p.min)}<span class="sub">${esc(p.minItem.mercado)}</span></td>
+      <td class="num neg">${fmt(p.max)}<span class="sub">${esc(p.maxItem.mercado)}</span></td>
+      <td class="num">${p.kgMedio?fmt(p.kgMedio):'—'}</td>
+      <td class="num">${dataCurta(p.ultimaData)}<span class="sub">${esc(p.ultimoMercado)}</span></td>
+      <td><button type="button" class="catEditBtn mkRen" data-prod="${esc(p.chave)}" title="Renomear produto">✎</button></td></tr>`;
+  }).join('');
+  return `<p class="impHint">Toque num produto para ver o gráfico de preço dele. O ✎ renomeia o produto em <b>todas</b> as notas — útil para juntar nomes que a nota abrevia de jeitos diferentes.</p>
+  <div class="relTableWrap"><table class="relTable">
+    <thead><tr><th>Produto</th><th class="num">Qtd</th><th class="num">Gasto</th><th class="num">Preço médio</th>
+      <th class="num">Menor</th><th class="num">Maior</th><th class="num">R$/kg</th><th class="num">Última</th><th></th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+/* tabela 3: as notas do período (toque para revisar/corrigir a nota inteira) */
+function mkTabelaNotasHTML(notas){
+  if(!notas.length) return '<div class="empty">Nenhuma nota no período.</div>';
+  const rows=notas.map(c=>`<tr class="clicavel" data-nota="${esc(c.id)}">
+    <td>${dataCurta(c.data)}</td>
+    <td><b>${esc(c.mercado||'—')}</b><span class="sub">${(c.itens||[]).length} itens${c.txId?' · lançado como despesa':''}</span></td>
+    <td class="num">${c.desconto?('−'+fmt(c.desconto)):'—'}</td>
+    <td class="num neg">${fmt(c.total||0)}</td>
+    <td><button type="button" class="txDel mkDelNota" data-nota="${esc(c.id)}" title="Excluir nota">✕</button></td></tr>`).join('');
+  const tot=notas.reduce((a,c)=>a+(c.total||0),0);
+  return `<div class="relTableWrap"><table class="relTable">
+    <thead><tr><th>Data</th><th>Mercado</th><th class="num">Desconto</th><th class="num">Total</th><th></th></tr></thead>
+    <tbody>${rows}
+    <tr class="totRow"><td>Total</td><td></td><td></td><td class="num neg">${fmt(tot)}</td><td></td></tr></tbody>
+  </table></div>`;
+}
+
+function mkLigarTabelas(){
+  document.querySelectorAll('#mkTabProdutos tr.clicavel').forEach(tr=>{
+    tr.onclick=e=>{
+      if(e.target.closest('.mkRen')) return;
+      mk.prod=tr.dataset.prod; renderMercado();
+      document.getElementById('mkProdResumo').scrollIntoView({behavior:'smooth',block:'center'});
+    };
+  });
+  document.querySelectorAll('#mkTabProdutos .mkRen').forEach(b=>{
+    b.onclick=e=>{ e.stopPropagation(); renomearProduto(b.dataset.prod); };
+  });
+  document.querySelectorAll('#mkTabNotas tr.clicavel').forEach(tr=>{
+    tr.onclick=e=>{
+      if(e.target.closest('.mkDelNota')) return;
+      const c=mk.compras.find(x=>x.id===tr.dataset.nota);
+      if(c) abrirNotaEdicao(c, c.id);
+    };
+  });
+  document.querySelectorAll('#mkTabNotas .mkDelNota').forEach(b=>{
+    b.onclick=e=>{ e.stopPropagation(); excluirNota(b.dataset.nota); };
+  });
+}
+
+/* renomear um produto em todas as notas (junta "COCA 2L" com "REFRIG COCA 2LT") */
+async function renomearProduto(chave){
+  const atual=(mkItens().find(i=>i.chave===chave)||{}).nome||'';
+  const novo=prompt('Novo nome do produto (vale para todas as notas):', atual);
+  if(novo===null) return;
+  const nome=novo.trim().slice(0,80);
+  if(!nome || nome===atual) return;
+  try{
+    const snap=await col('compras').get();
+    let batch=db.batch(), n=0, mudadas=0;
+    for(const d of snap.docs){
+      const c=d.data(); let mudou=false;
+      const itens=(c.itens||[]).map(it=>{
+        if(mkNorm(it.nome)===chave){ mudou=true; return {...it, nome}; }
+        return it;
+      });
+      if(!mudou) continue;
+      batch.update(d.ref,{itens}); n++; mudadas++;
+      if(n===400){ await batch.commit(); batch=db.batch(); n=0; }
+    }
+    if(n) await batch.commit();
+    mk.prod=mkNorm(nome);
+    toast(mudadas? `Renomeado em ${mudadas} nota${mudadas===1?'':'s'} ✏️` : 'Nada para renomear');
+    carregarMercado();
+  }catch(ex){ console.error('renomear produto:',ex); toast('Não consegui renomear agora'); }
+}
+
+async function excluirNota(id){
+  const c=mk.compras.find(x=>x.id===id); if(!c) return;
+  if(!confirm(`Excluir a nota de ${c.mercado} (${dataCurta(c.data)}) com ${(c.itens||[]).length} itens?`)) return;
+  try{
+    if(c.txId){ try{ await col('tx').doc(c.txId).delete(); }catch(_){ } }
+    await col('compras').doc(id).delete();
+    toast('Nota excluída');
+    carregarMercado();
+  }catch(ex){ console.error('excluir nota:',ex); toast('Não consegui excluir agora'); }
+}
+
+/* ---------------- Nota do mercado: leitura e conferência ---------------- */
+const nota={id:null, txId:null, origem:'manual', itens:[], totalNota:0};
+
+function passoNota(n){
+  document.getElementById('notaStep1').classList.toggle('hidden', n!==1);
+  document.getElementById('notaStep2').classList.toggle('hidden', n!==2);
+}
+document.getElementById('btnNotaFoto').onclick=()=>{
+  nota.origem='foto';
+  document.getElementById('notaTitle').textContent='Escanear nota fiscal';
+  document.getElementById('notaProg').classList.add('hidden');
+  passoNota(1);
+  document.getElementById('notaModal').classList.remove('hidden');
+};
+document.getElementById('btnNotaManual').onclick=()=>{
+  nota.origem='manual';
+  abrirNotaEdicao({mercado:'', data:hojeISO(), itens:[{nome:'',qtd:1,un:'UN',unit:0,desconto:0,total:0,peso:0}], desconto:0, total:0});
+};
+document.getElementById('btnNotaCam').onclick=()=>document.getElementById('notaCam').click();
+document.getElementById('btnNotaArq').onclick=()=>document.getElementById('notaArq').click();
+document.getElementById('notaCam').onchange=e=>{ const f=e.target.files[0]; e.target.value=''; if(f) lerNota(f); };
+document.getElementById('notaArq').onchange=e=>{ const f=e.target.files[0]; e.target.value=''; if(f) lerNota(f); };
+
+/* abre o passo de conferência — serve tanto para nota nova quanto para editar uma salva */
+function abrirNotaEdicao(r, id){
+  nota.id=id||null;
+  nota.txId=r.txId||null;
+  nota.totalNota=r.total||0;
+  nota.itens=(r.itens||[]).map(it=>({
+    nome:it.nome||'', qtd:it.qtd||1, un:normUn(it.un), unit:it.unit||0,
+    desconto:it.desconto||0, total:it.total||0, peso:it.peso||0,
+  }));
+  document.getElementById('notaTitle').textContent = nota.id
+    ? 'Editar nota'
+    : (nota.origem==='manual' ? 'Nova nota do mercado' : `Confira a nota — ${nota.itens.length} ${nota.itens.length===1?'item lido':'itens lidos'}`);
+  document.getElementById('notaMercado').value=r.mercado||'';
+  document.getElementById('notaData').value=r.data||hojeISO();
+  document.getElementById('notaDescTotal').value=r.desconto?cIn(r.desconto):'';
+  document.getElementById('notaLancar').checked = nota.id ? !!nota.txId : true;
+  renderNotaItens();
+  passoNota(2);
+  document.getElementById('notaModal').classList.remove('hidden');
+  if(!nota.id && nota.origem!=='manual' && !nota.itens.length)
+    toast('Não achei os itens na imagem — dá para digitar aqui 👇');
+}
+
+function kgHint(it){
+  const kg=precoKgItem(it);
+  const partes=[];
+  if(kg) partes.push('R$/kg: '+fmt(kg));
+  if(it.qtd>0 && it.unit>0) partes.push('qtd × unit = '+fmt(Math.round(it.qtd*it.unit)));
+  return partes.join('  ·  ');
+}
+function renderNotaItens(){
+  const box=document.getElementById('notaItens');
+  if(!nota.itens.length){
+    box.innerHTML='<div class="empty">Nenhum item ainda. Toque em "+ Adicionar item".</div>';
+    atualizarNotaTotal(); return;
+  }
+  box.innerHTML=nota.itens.map((it,i)=>`
+    <div class="itemRow" data-i="${i}">
+      <div class="itemTop">
+        <input class="iNome" value="${esc(it.nome)}" placeholder="Nome do produto" maxlength="80">
+        <button type="button" class="itemDel" title="Remover item">✕</button>
+      </div>
+      <div class="itemGrid">
+        <label>Qtd<input class="iQtd" inputmode="decimal" value="${qIn(it.qtd)}"></label>
+        <label>Un<select class="iUn">${UNIDADES.map(u=>`<option${u===it.un?' selected':''}>${u}</option>`).join('')}</select></label>
+        <label>Unit R$<input class="iUnit" inputmode="decimal" value="${cIn(it.unit)}"></label>
+        <label>Desc R$<input class="iDesc" inputmode="decimal" value="${cIn(it.desconto)}"></label>
+        <label>Total R$<input class="iTotal" inputmode="decimal" value="${cIn(it.total)}"></label>
+        <label>Peso g<input class="iPeso" inputmode="decimal" value="${it.peso||''}"></label>
+      </div>
+      <div class="itemKg">${kgHint(it)}</div>
+    </div>`).join('');
+  atualizarNotaTotal();
+}
+function atualizarNotaTotal(){
+  const soma=nota.itens.reduce((a,it)=>a+(it.total||0),0);
+  const descNota=Math.max(0,centsBR(document.getElementById('notaDescTotal').value));
+  const total=Math.max(0, soma-descNota);
+  document.getElementById('notaTotCalc').textContent=fmt(total);
+  const dif=document.getElementById('notaTotDif');
+  dif.textContent = (nota.totalNota && Math.abs(nota.totalNota-total)>2)
+    ? ` a nota diz ${fmt(nota.totalNota)}` : '';
+}
+/* um listener só para a lista inteira: o campo não perde o foco enquanto se digita */
+const notaItensBox=document.getElementById('notaItens');
+notaItensBox.addEventListener('input', e=>{
+  const row=e.target.closest('.itemRow'); if(!row) return;
+  const it=nota.itens[+row.dataset.i]; if(!it) return;
+  const c=e.target.className;
+  if(c==='iNome') it.nome=e.target.value;
+  else if(c==='iQtd'){ it.qtd=numBR(e.target.value); recalcItem(it,row); }
+  else if(c==='iUnit'){ it.unit=centsBR(e.target.value); recalcItem(it,row); }
+  else if(c==='iDesc'){ it.desconto=centsBR(e.target.value); recalcItem(it,row); }
+  else if(c==='iTotal') it.total=centsBR(e.target.value);
+  else if(c==='iPeso') it.peso=numBR(e.target.value);
+  row.querySelector('.itemKg').textContent=kgHint(it);
+  atualizarNotaTotal();
+});
+notaItensBox.addEventListener('change', e=>{
+  if(e.target.className!=='iUn') return;
+  const row=e.target.closest('.itemRow');
+  const it=nota.itens[+row.dataset.i]; if(!it) return;
+  it.un=e.target.value;
+  row.querySelector('.itemKg').textContent=kgHint(it);
+});
+notaItensBox.addEventListener('click', e=>{
+  if(!e.target.classList.contains('itemDel')) return;
+  nota.itens.splice(+e.target.closest('.itemRow').dataset.i,1);
+  renderNotaItens();
+});
+function recalcItem(it,row){
+  it.total=Math.max(0, Math.round((it.qtd||0)*(it.unit||0)) - (it.desconto||0));
+  row.querySelector('.iTotal').value=cIn(it.total);
+}
+document.getElementById('notaDescTotal').oninput=atualizarNotaTotal;
+document.getElementById('btnNotaAddItem').onclick=()=>{
+  nota.itens.push({nome:'',qtd:1,un:'UN',unit:0,desconto:0,total:0,peso:0});
+  renderNotaItens();
+  const inputs=notaItensBox.querySelectorAll('.iNome');
+  if(inputs.length) inputs[inputs.length-1].focus();
+};
+
+document.getElementById('btnNotaSalvar').onclick=async ()=>{
+  const btn=document.getElementById('btnNotaSalvar');
+  const mercado=document.getElementById('notaMercado').value.trim();
+  const data=document.getElementById('notaData').value;
+  if(!mercado){ toast('Escreva o nome do mercado'); return; }
+  if(!data){ toast('Escolha a data da compra'); return; }
+  const itens=nota.itens.filter(it=>(it.nome||'').trim()).map(it=>{
+    const o={ nome:it.nome.trim().slice(0,80),
+      qtd:Math.round((it.qtd>0?it.qtd:1)*1000)/1000,
+      un:UNIDADES.includes(it.un)?it.un:'UN',
+      unit:Math.max(0,Math.round(it.unit||0)),
+      desconto:Math.max(0,Math.round(it.desconto||0)),
+      total:Math.max(0,Math.round(it.total||0)) };
+    if(it.peso>0) o.peso=Math.round(it.peso);
+    return o;
+  });
+  if(!itens.length){ toast('Adicione pelo menos um item com nome'); return; }
+  const subtotal=itens.reduce((a,i)=>a+i.total,0);
+  const descNota=Math.max(0,centsBR(document.getElementById('notaDescTotal').value));
+  const total=Math.max(0, subtotal-descNota);
+  const doc={ mercado:mercado.slice(0,80), mercadoKey:(mkNorm(mercado).slice(0,60)||'-'),
+    data, mes:data.slice(0,7), itens, subtotal,
+    desconto:descNota+itens.reduce((a,i)=>a+i.desconto,0), total, origem:nota.origem };
+
+  btn.disabled=true; btn.textContent='Salvando…';
+  try{
+    const lancar=document.getElementById('notaLancar').checked && total>0;
+    const catMercado=catsD().includes('Mercado')?'Mercado':'Outros';
+    const txDoc={ tipo:'despesa', valor:total, desc:`Mercado — ${mercado}`.slice(0,200),
+      cat:catMercado, data, mes:data.slice(0,7), pagamento:null, custom:{}, origem:'mercado' };
+
+    let txId=nota.txId;
+    if(lancar && txId){ await col('tx').doc(txId).update(txDoc); }
+    else if(lancar){
+      txDoc.criadoEm=firebase.firestore.FieldValue.serverTimestamp();
+      txId=(await col('tx').add(txDoc)).id;
+    }else if(txId){ try{ await col('tx').doc(txId).delete(); }catch(_){ } txId=null; }
+    if(txId) doc.txId=txId;
+
+    if(nota.id){
+      await col('compras').doc(nota.id).set(doc,{merge:true});
+      if(!txId) await col('compras').doc(nota.id).update({txId:firebase.firestore.FieldValue.delete()});
+      toast('Nota atualizada 🛒');
+    }else{
+      doc.criadoEm=firebase.firestore.FieldValue.serverTimestamp();
+      await col('compras').add(doc);
+      toast(`Nota salva com ${itens.length} ${itens.length===1?'item':'itens'} 🛒`);
+    }
+    document.getElementById('notaModal').classList.add('hidden');
+    /* se a nota é de outro mês, o período do painel se ajusta sozinho */
+    if(doc.mes<mk.de) document.getElementById('mkDe').value=doc.mes;
+    if(doc.mes>mk.ate) document.getElementById('mkAte').value=doc.mes;
+    carregarMercado();
+  }catch(ex){
+    console.error('salvar nota:',ex);
+    toast('Não consegui salvar a nota. Tente de novo.');
+  }
+  btn.disabled=false; btn.textContent='Salvar nota';
+};
+
+/* --- OCR da foto (roda no próprio aparelho, a imagem não sai daqui) --- */
+let tessPromise=null;
+function loadTesseract(){
+  if(tessPromise) return tessPromise;
+  tessPromise=new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+    s.onload=()=>res(window.Tesseract);
+    s.onerror=()=>{ tessPromise=null; rej(new Error('Falha ao carregar o leitor de imagem — confira a internet')); };
+    document.head.appendChild(s);
+  });
+  return tessPromise;
+}
+/* nota térmica sai lavada na foto: reduz, tira a cor e força o contraste antes do OCR */
+function prepararImagem(file){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.onload=()=>{
+      const escala=Math.min(1, 1600/Math.max(img.width,1));
+      const c=document.createElement('canvas');
+      c.width=Math.round(img.width*escala); c.height=Math.round(img.height*escala);
+      const ctx=c.getContext('2d');
+      ctx.drawImage(img,0,0,c.width,c.height);
+      const d=ctx.getImageData(0,0,c.width,c.height), p=d.data;
+      for(let i=0;i<p.length;i+=4){
+        let g=p[i]*.299+p[i+1]*.587+p[i+2]*.114;
+        g=(g-128)*1.7+130;
+        p[i]=p[i+1]=p[i+2]= g<0?0 : g>255?255 : g;
+      }
+      ctx.putImageData(d,0,0);
+      URL.revokeObjectURL(img.src);
+      res(c);
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(img.src); rej(new Error('Não consegui abrir esta imagem')); };
+    img.src=URL.createObjectURL(file);
+  });
+}
+async function ocrLinhas(file, onProg){
+  const T=await loadTesseract();
+  const canvas=await prepararImagem(file);
+  const worker=await T.createWorker('por', 1, {
+    logger:m=>{ if(m.status==='recognizing text') onProg(m.progress); },
+  });
+  try{
+    const {data}=await worker.recognize(canvas);
+    return String(data.text||'').split('\n').map(l=>l.replace(/\s+/g,' ').trim()).filter(Boolean);
+  }finally{ try{ await worker.terminate(); }catch(_){ } }
+}
+
+async function lerNota(file){
+  const prog=document.getElementById('notaProg');
+  const bar=document.getElementById('notaBar');
+  const txt=document.getElementById('notaProgTxt');
+  const setP=(p,t)=>{ bar.style.width=Math.round(p*100)+'%'; txt.textContent=t; };
+  prog.classList.remove('hidden'); setP(.04,'Abrindo o arquivo…');
+  const ehPdf=/pdf/i.test(file.type)||/\.pdf$/i.test(file.name);
+  try{
+    let linhas;
+    if(ehPdf){
+      nota.origem='pdf';
+      setP(.35,'Lendo o PDF da nota…');
+      linhas=await pdfParaLinhas(file);
+      setP(1,'Pronto!');
+    }else{
+      nota.origem='foto';
+      setP(.06,'Carregando o leitor de imagem (só na primeira vez)…');
+      linhas=await ocrLinhas(file, p=>setP(.1+p*.88,'Lendo a nota… '+Math.round(p*100)+'%'));
+    }
+    abrirNotaEdicao(parseNota(linhas));
+  }catch(ex){
+    console.error('ler nota:',ex);
+    toast(ex.message||'Não consegui ler esta nota');
+  }finally{ prog.classList.add('hidden'); }
+}
+
+/* --- Leitura do cupom: transforma as linhas em itens --- */
+const RE_DINHEIRO=/\d{1,3}(?:\.\d{3})+,\d{2}|\d+[.,]\d{2,3}/g;
+const UN_TOKENS='UNIDADE|UNID|UND|UN|PCS|PECA|PC|KGS|KILO|KG|GRAMA|GR|G|LTS|LT|LITRO|L|ML|PCT|PT|CX|DZ|FD|BDJ|MT|M';
+const RE_ITEM_UN=new RegExp('(\\d{1,4}(?:[.,]\\d{1,3})?)\\s*('+UN_TOKENS+')\\b\\s*[Xx*]?\\s*(\\d{1,3}(?:\\.\\d{3})*[.,]\\d{2,3})','i');
+const RE_ITEM_X=/(\d{1,4}(?:[.,]\d{1,3})?)\s*[Xx*]\s*(\d{1,3}(?:\.\d{3})*[.,]\d{2,3})/;
+const RE_IGNORA=/(TOTAL|TROCO|DINHEIRO|CART[AÃ]O|CR[EÉ]DITO|D[EÉ]BITO|VISA|MASTER|ELO|PIX|VALOR PAGO|VALOR RECEBIDO|DESCONTO|ACR[EÉ]SCIMO|TRIBUT|IMPOSTO|CHAVE DE ACESSO|PROTOCOLO|CONSUMIDOR|CPF|CNPJ|EMISS|AUTORIZ|SAT |ECF|COO|OPERADOR|CAIXA|CUPOM|DANFE|NFC|SEFAZ|WWW\.|HTTP|ITENS|TROQUE|OBRIGAD)/i;
+
+function limparNomeItem(s){
+  return String(s||'')
+    .replace(/^\s*\d{1,3}\s*[-.)]?\s+/,'')   // número de ordem do item
+    .replace(/\b\d{6,14}\b/g,' ')            // código de barras / código interno
+    .replace(/[|_•·"']+/g,' ')
+    .replace(/\s+/g,' ').trim();
+}
+function tituloBR(s){
+  return String(s).toLowerCase()
+    .replace(/(^|[\s\-/(])([a-zà-ÿ])/g,(m,a,b)=>a+b.toUpperCase())
+    .replace(/(\d)\s?(kg|g|ml|l|un|lt|cx|pct|mg)\b/gi,(m,d,u)=>d+u.toUpperCase());
+}
+function parseItemLinha(l, pendente){
+  let m=l.match(RE_ITEM_UN), qtd, un, unit;
+  if(m){ qtd=numBR(m[1]); un=normUn(m[2]); unit=centsBR(m[3]); }
+  else{
+    m=l.match(RE_ITEM_X);
+    if(!m) return null;
+    qtd=numBR(m[1]); un='UN'; unit=centsBR(m[2]);
+  }
+  if(!(qtd>0) || !(unit>0)) return null;
+  const calc=Math.round(qtd*unit);
+  const depois=l.slice(m.index+m[0].length).match(RE_DINHEIRO);
+  let total=depois? centsBR(depois[depois.length-1]) : 0;
+  /* OCR troca dígito com facilidade: total fora de escala volta para qtd × unit */
+  if(!total || total>calc*3 || total*3<calc) total=calc;
+  let nome=limparNomeItem(l.slice(0, m.index));
+  if(nome.replace(/[^A-Za-zÀ-ÿ]/g,'').length<3) nome=pendente||'';
+  if(nome.replace(/[^A-Za-zÀ-ÿ]/g,'').length<3) return null;
+  return {nome:tituloBR(nome).slice(0,80), qtd, un, unit, desconto:0, total, peso:0};
+}
+function parseNota(linhas){
+  const out={mercado:'', data:'', itens:[], desconto:0, total:0};
+
+  for(const l of linhas.slice(0,10)){
+    const t=l.replace(/[^\wÀ-ÿ&. -]/g,' ').replace(/\s+/g,' ').trim();
+    if(t.length<5) continue;
+    if(/CNPJ|CPF|I\.?E\.?[: ]|INSCR|RUA|AVENIDA|AV\.|ROD\.|CEP|BAIRRO|TEL|DANFE|CUPOM|NFC|DOCUMENTO|EXTRATO/i.test(t)) continue;
+    if(!/[A-Za-zÀ-ÿ]{4}/.test(t)) continue;
+    out.mercado=tituloBR(t).slice(0,60); break;
+  }
+  for(const l of linhas){
+    const m=l.match(/(\d{2})[\/.\-](\d{2})[\/.\-](\d{2,4})/);
+    if(!m) continue;
+    const d=+m[1], mo=+m[2]; let y=+m[3];
+    if(d<1||d>31||mo<1||mo>12) continue;
+    if(y<100) y+=2000;
+    if(y<2015||y>2100) continue;
+    out.data=`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    break;
+  }
+  let pagar=0, bruto=0;
+  linhas.forEach(l=>{
+    const money=l.match(RE_DINHEIRO);
+    if(!money) return;
+    const ultimo=centsBR(money[money.length-1]);
+    /* "valor a pagar" manda: já vem com o desconto tirado */
+    if(/(VALOR|TOTAL)\s*A\s*PAGAR/i.test(l)) pagar=ultimo;
+    else if(/(VALOR\s*TOTAL|TOTAL\s*(R\$|GERAL)|^TOTAL\b)/i.test(l) && ultimo>bruto) bruto=ultimo;
+    if(/DESCONTO/i.test(l) && !out.desconto) out.desconto=ultimo;
+  });
+  out.total = pagar || bruto;
+  let pendente='';
+  linhas.forEach(l=>{
+    if(RE_IGNORA.test(l)){ pendente=''; return; }
+    const it=parseItemLinha(l, pendente);
+    if(it){ out.itens.push(it); pendente=''; }
+    else if(/[A-Za-zÀ-ÿ]{4}/.test(l) && !l.match(RE_DINHEIRO)) pendente=limparNomeItem(l);
+  });
+  return out;
 }
 
 /* ---------------- Metas do dia (rotinas programáveis) ---------------- */
@@ -2102,7 +2983,7 @@ document.getElementById('senhaForm').addEventListener('submit', async e=>{
 });
 
 /* ---------------- Meus dados: exportação e exclusão (LGPD) ---------------- */
-const COLECOES_USUARIO=['perfil','tx','orcamentos','assinaturas','rotinas','metasStatus','inventario','camposCustom','catMap','config'];
+const COLECOES_USUARIO=['perfil','tx','compras','orcamentos','assinaturas','rotinas','metasStatus','inventario','camposCustom','catMap','config'];
 
 function converterTimestamps(v){
   if(v && typeof v.toDate==='function') return v.toDate().toISOString();
@@ -2775,6 +3656,15 @@ const GUIA_PASSOS=[
       <li><b>Diário</b>: veja o movimento dia a dia dentro de um mês.</li>
       <li>Três gráficos de uma vez: evolução no tempo, distribuição por categoria e linhas categoria a categoria.</li>
       <li>Os filtros do topo (período e categoria) valem para <b>todos os gráficos e tabelas</b> ao mesmo tempo.</li>
+    </ul>`},
+  {e:'🛒',t:'Mercado',c:`
+    <p>Fotografe a nota fiscal do mercado e o app monta o histórico de preço de cada produto que você compra.</p>
+    <ul>
+      <li><b>📷 Escanear nota</b>: tire a foto (ou anexe o PDF da nota eletrônica). A leitura acontece <b>dentro do seu aparelho</b> — a foto não é enviada para lugar nenhum.</li>
+      <li>Antes de salvar você <b>confere item por item</b>: quantidade, unidade, valor unitário, desconto, total e o peso (para calcular o R$/kg).</li>
+      <li>Escolha um produto e veja o <b>preço ao longo do tempo</b>, uma linha para cada mercado — dá para saber onde compensa comprar.</li>
+      <li>A tabela <b>Meus produtos</b> mostra menor preço, maior preço, preço médio, R$/kg e a variação desde a primeira compra.</li>
+      <li>Toque numa nota salva para corrigir qualquer coisa, e no ✎ de um produto para renomeá-lo em todas as notas.</li>
     </ul>`},
   {e:'✅',t:'Metas do dia',c:`
     <p>Transforme tarefas em rotina — e ganhe recompensas por cumprir.</p>
