@@ -146,3 +146,17 @@ duzentos e trinta e quatro reais, `"12.99"` é doze e noventa e nove, e
   SEFAZ, onde os itens estão estruturados. Ler dali seria mais exato que OCR —
   fica como próximo passo natural; o campo `receipts.access_key` já existe e é
   `UNIQUE`, o que também impede importar a mesma nota duas vezes.
+
+## `public/calendario.html`
+
+Página estática à parte (HTML/JS puro, sem build, com Firebase Auth +
+Firestore direto no cliente) — um calendário de tarefas por equipe, servido
+em `/calendario.html`. Não integra com o app Next.js/SQLite acima; é mantida
+neste repositório apenas por conveniência de deploy.
+
+No modo admin (aba **Configurações** → **📥 Importar tarefas via Excel**), dá
+para subir uma planilha (.xlsx/.xls/.csv), mapear cada coluna para um campo
+do calendário — inclusive para a coluna especial "Aba", que decide em qual
+aba a tarefa aparece — e gravar tudo em lote no Firestore. Campos com mais de
+um valor na célula usam `;` como separador, igual ao resto do app (tags,
+abas, campos de múltipla escolha).

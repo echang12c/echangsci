@@ -1,0 +1,3166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendário Etapa (Comunicação)</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%85%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f7f6f3;--surface:#fff;--border:#e5e3de;--border2:#d0cdc6;--text:#1a1917;--text2:#6b6760;--text3:#a09d98;--accent:#378ADD;--radius:10px;--radius-lg:14px;--drawer-w:300px}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:1.5rem 2rem}
+.page{max-width:1100px;margin:0 auto}
+/* topbar */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap}
+.brand{font-size:19px;font-weight:600;letter-spacing:-.3px}
+.brand span{color:var(--text3);font-weight:400}
+.top-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.status-pill{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface);font-size:12px;color:var(--text2)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0}
+.dot.ok{background:#4caf7d}.dot.err{background:#e24b4a}.dot.spin{background:#f59e0b;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+/* tabs */
+.tab-bar{display:flex;gap:0;margin-bottom:1.5rem;border-bottom:2px solid var(--border)}
+.tab-btn{padding:9px 20px;border:none;background:none;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:6px}
+.tab-btn:hover{color:var(--text2)}
+.tab-btn.active{color:var(--text);border-bottom-color:var(--text)}
+.tab-content{display:none}.tab-content.active{display:block}
+/* panels */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1rem}
+.panel-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.panel-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;color:var(--text)}
+.panel-arrow{font-size:13px;color:var(--text3);transition:transform .2s}
+.panel-body{margin-top:1rem}
+.panel.collapsed .panel-body{display:none}
+.panel.collapsed .panel-arrow{transform:rotate(-90deg)}
+.setup-sub{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:.85rem}
+/* form elements */
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.inp{flex:1;border:1px solid var(--border2);border-radius:var(--radius);padding:8px 12px;font-size:13px;color:var(--text);background:var(--surface);transition:border .15s;font-family:'DM Sans',sans-serif;min-width:0}
+.inp:focus{outline:none;border-color:var(--accent)}
+.inp::placeholder{color:var(--text3)}
+.inp.mono{font-family:'DM Mono',monospace}
+.sel{border:1px solid var(--border2);border-radius:var(--radius);padding:7px 10px;font-size:13px;color:var(--text);background:var(--surface);font-family:'DM Sans',sans-serif;cursor:pointer}
+.sel:focus{outline:none;border-color:var(--accent)}
+.btn-p{padding:8px 18px;border:none;border-radius:var(--radius);background:var(--text);color:#fff;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;transition:opacity .15s}
+.btn-p:hover{opacity:.85}
+.btn-g{padding:7px 14px;border:1px solid var(--border2);border-radius:var(--radius);background:none;font-size:13px;cursor:pointer;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .15s}
+.btn-g:hover{background:var(--bg);color:var(--text)}
+.btn-danger{padding:7px 14px;border:1px solid #e24b4a44;border-radius:var(--radius);background:none;font-size:13px;cursor:pointer;color:#e24b4a;font-family:'DM Sans',sans-serif;transition:all .15s}
+.btn-danger:hover{background:#e24b4a11}
+.del-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:17px;line-height:1;flex-shrink:0}
+.del-btn:hover{color:#e24b4a}
+/* col mapper */
+.col-map-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1rem}
+@media(max-width:600px){.col-map-grid{grid-template-columns:1fr}}
+.col-map-row{display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px}
+.col-map-label{font-size:12px;font-weight:600;color:var(--text);min-width:90px;flex-shrink:0}
+.col-map-desc{font-size:10px;color:var(--text3);display:block;margin-top:1px;font-weight:400}
+.col-map-row .sel{flex:1;min-width:0;font-size:12px;padding:5px 8px}
+.req-badge{font-size:10px;color:#e24b4a;font-weight:600;flex-shrink:0}
+.opt-badge{font-size:10px;color:var(--text3);flex-shrink:0}
+/* tag-color */
+.tag-map-list{display:flex;flex-direction:column;gap:5px;margin-bottom:.75rem}
+.tmrow{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px}
+.tm-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.tm-name{flex:1;font-size:13px;font-weight:500;color:var(--text)}
+.tm-name-inp{flex:1;min-width:0;font-size:13px;font-weight:500;color:var(--text);background:transparent;border:1px solid transparent;border-radius:6px;padding:4px 6px;font-family:'DM Sans',sans-serif;cursor:text}
+.tm-name-inp:hover{border-color:var(--border2)}
+.tm-name-inp:focus{outline:none;border-color:var(--accent);background:var(--surface)}
+.tm-inp{width:82px;border:1px solid var(--border2);border-radius:6px;padding:4px 6px;font-size:12px;font-family:'DM Mono',monospace;color:var(--text);background:var(--surface)}
+.tm-inp:focus{outline:none;border-color:var(--accent)}
+.palette{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.swatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .1s,border-color .1s;flex-shrink:0}
+.swatch:hover{transform:scale(1.15)}.swatch.sel{border-color:var(--text)}
+.picker-wrap{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.85rem;margin-top:.6rem;display:none}
+.picker-label{font-size:12px;color:var(--text2);margin-bottom:6px}
+/* drawer */
+.drawer-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:300;opacity:0;pointer-events:none;transition:opacity .25s}
+.drawer-backdrop.open{opacity:1;pointer-events:all}
+.drawer{position:fixed;top:0;right:0;height:100vh;width:var(--drawer-w);background:var(--surface);border-left:1px solid var(--border);z-index:301;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.08)}
+.drawer.open{transform:translateX(0)}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.1rem;border-bottom:1px solid var(--border);flex-shrink:0}
+.drawer-head-left{display:flex;align-items:center;gap:8px}
+.drawer-title{font-size:14px;font-weight:600;color:var(--text)}
+.drawer-badge{font-size:11px;background:var(--accent);color:#fff;border-radius:20px;padding:1px 7px;font-weight:600}
+.drawer-close{background:none;border:none;cursor:pointer;color:var(--text3);font-size:20px;line-height:1}
+.drawer-close:hover{color:var(--text)}
+.drawer-body{flex:1;overflow-y:auto;padding:.85rem 1.1rem;display:flex;flex-direction:column;gap:1rem}
+.drawer-section{display:flex;flex-direction:column;gap:.5rem}
+.drawer-section-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+.drawer-foot{padding:.75rem 1.1rem;border-top:1px solid var(--border);flex-shrink:0}
+.f-divider{border:none;border-top:1px solid var(--border);margin:0}
+/* chips */
+.chip-group{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px}
+.chip{padding:4px 11px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text2);transition:all .15s;white-space:nowrap;user-select:none}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.val-chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px}
+.val-chip{padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid transparent;transition:all .15s;white-space:nowrap;user-select:none}
+.val-chip:not(.active){opacity:.42;filter:grayscale(.35)}.val-chip.active{opacity:1}
+.plain-chip{padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text2);transition:all .15s;white-space:nowrap;user-select:none}
+.plain-chip:hover{border-color:var(--accent);color:var(--accent)}
+.plain-chip.active{background:var(--accent)22;border-color:var(--accent);color:var(--accent);font-weight:600}
+.plain-chip.excl{background:#e24b4a11;border-color:#e24b4a44;color:#e24b4a;text-decoration:line-through}
+.date-input-row{display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap}
+.date-input-row .inp{font-size:12px;padding:5px 8px}
+.ff-list{display:flex;flex-direction:column;gap:6px}
+.ff-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ff-row .sel{font-size:11px;padding:4px 6px}
+.ff-row .inp{font-size:11px;padding:4px 8px}
+/* active bar */
+.active-bar{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:.75rem;min-height:0}
+.af-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 8px 3px 10px;border-radius:20px;background:var(--bg);border:1px solid var(--border2);font-size:11px;color:var(--text2);white-space:nowrap}
+.af-x{cursor:pointer;font-size:14px;color:var(--text3);line-height:1}
+.af-x:hover{color:#e24b4a}
+/* FAB */
+.fab-filter{position:fixed;bottom:2rem;right:2rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.18);z-index:299;transition:all .15s}
+.fab-filter:hover{opacity:.88;transform:scale(1.05)}
+.fab-filter-badge{position:absolute;top:-3px;right:-3px;background:var(--accent);color:#fff;border-radius:20px;font-size:10px;font-weight:700;padding:1px 5px;min-width:16px;text-align:center;line-height:16px;display:none}
+/* calendar */
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
+/* Abas de calendário (estilo Excel) */
+.cal-tabs-bar{display:flex;align-items:center;gap:2px;margin-bottom:1rem;border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:0}
+.cal-tab{display:flex;align-items:center;gap:6px;padding:8px 14px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;position:relative;flex-shrink:0}
+.cal-tab:hover{color:var(--text);background:var(--bg)}
+.cal-tab.active{color:var(--text);font-weight:600;border-bottom-color:var(--accent)}
+.cal-tab .tab-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.cal-tab .tab-close{font-size:14px;color:var(--text3);opacity:0;transition:opacity .15s;padding:0 2px;border-radius:3px}
+.cal-tab:hover .tab-close{opacity:1}
+.cal-tab .tab-close:hover{color:#e24b4a;background:#e24b4a18}
+.cal-tab-add{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;color:var(--text3);cursor:pointer;flex-shrink:0;transition:all .15s}
+.cal-tab-add:hover{background:var(--bg);color:var(--accent)}
+.cal-tab-edit-input{font-size:13px;font-weight:600;border:1px solid var(--accent);border-radius:5px;padding:2px 6px;width:120px;font-family:'DM Sans',sans-serif}
+.cal-nav{display:flex;align-items:center;gap:8px}
+.cal-title{font-size:21px;font-weight:600;letter-spacing:-.3px}
+.nav-btn{width:32px;height:32px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:18px;transition:all .15s}
+.nav-btn:hover{background:var(--bg);color:var(--text)}
+.hbtn{padding:6px 12px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);font-size:12px;font-weight:500;cursor:pointer;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .15s;display:flex;align-items:center;gap:5px}
+.hbtn:hover{background:var(--bg);color:var(--text)}
+.hbtn.spinning svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.day-label-cell{text-align:center;font-size:11px;font-weight:600;color:var(--text3);padding:8px 0;letter-spacing:.5px;text-transform:uppercase;background:var(--bg);border-bottom:1px solid var(--border)}
+.day-label-cell.today-col{color:var(--accent);font-weight:700}
+.cal-wrapper{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(130px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;min-width:700px}
+.cell{background:var(--surface);min-height:96px;padding:6px;transition:background .1s}
+.cell.other{background:var(--bg)}
+.cell.dimmed{opacity:.3}
+.cell.today .day-num{background:var(--text);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.day-num{font-size:12px;font-weight:500;color:var(--text);margin-bottom:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.cell.other .day-num{color:var(--text3)}
+.pill{font-size:10px;font-weight:500;padding:2px 6px;border-radius:4px;margin-bottom:2px;overflow:hidden;cursor:pointer;transition:opacity .1s;min-width:0}
+.pill span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.pill:hover{opacity:.8}
+.more{font-size:10px;color:var(--accent);font-weight:600;padding:2px 6px;cursor:pointer;border-radius:4px;background:var(--accent)11;margin-top:1px;transition:background .15s}
+.more:hover{background:var(--accent)22}
+.day-modal-task{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:var(--radius);background:var(--bg);border:1px solid var(--border);margin-bottom:6px;cursor:pointer;transition:border-color .15s}
+.day-modal-task:hover{border-color:var(--accent)}
+/* admin mode */
+.admin-badge{background:#e24b4a;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;margin-left:4px}
+.cell.admin-mode{cursor:pointer}
+.cell.admin-mode:hover{background:#378ADD08}
+.add-hint{font-size:9px;color:var(--text3);text-align:center;margin-top:2px;display:none}
+.cell.admin-mode:hover .add-hint{display:block}
+/* legend */
+.legend-section{margin-top:1.25rem;padding:1rem 1.25rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg)}
+.legend-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.65rem}
+.legend-grid{display:flex;flex-wrap:wrap;gap:.5rem}
+.legend-card{display:flex;align-items:center;gap:7px;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);font-size:12px;color:var(--text2)}
+.legend-swatch{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:400;opacity:0;pointer-events:none;transition:opacity .2s}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);width:480px;max-width:96vw;max-height:90vh;overflow-y:auto;padding:1.5rem;transform:translateY(8px);transition:transform .2s}
+.overlay.open .modal{transform:translateY(0)}
+.modal-bar{height:4px;border-radius:2px;margin-bottom:1rem}
+.modal-title{font-size:17px;font-weight:600;margin-bottom:1rem;line-height:1.3}
+.dg{display:flex;flex-direction:column;gap:8px;margin-bottom:1rem}
+.dr{display:flex;gap:10px;font-size:13px}
+.dl{color:var(--text3);min-width:80px;flex-shrink:0;font-size:12px;padding-top:1px}
+.dv{color:var(--text);flex:1;line-height:1.5}
+.tag-row{display:flex;flex-wrap:wrap;gap:5px}
+.tag{font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid var(--border2);color:var(--text2)}
+.tag.c{border:none;font-weight:500}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:1rem}
+.btn-close{padding:7px 16px;border:1px solid var(--border2);border-radius:var(--radius);background:none;font-size:13px;cursor:pointer;color:var(--text2);font-family:'DM Sans',sans-serif}
+.btn-close:hover{background:var(--bg)}
+/* admin form */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
+@media(max-width:540px){.form-grid{grid-template-columns:1fr}}
+.form-field{display:flex;flex-direction:column;gap:4px}
+.form-field.full{grid-column:1/-1}
+.form-field label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.3px}
+.form-field input,.form-field textarea,.form-field select{border:1px solid var(--border2);border-radius:var(--radius);padding:7px 10px;font-size:13px;color:var(--text);background:var(--surface);font-family:'DM Sans',sans-serif;transition:border .15s}
+.form-field input:focus,.form-field textarea:focus,.form-field select:focus{outline:none;border-color:var(--accent)}
+.form-field textarea{resize:vertical;min-height:60px}
+.form-field input[type=checkbox]{width:18px;height:18px;cursor:pointer;accent-color:var(--accent)}
+.req{color:#e24b4a}
+.cfg-label{font-size:11px;font-weight:600;color:var(--text3);margin-bottom:4px;display:block}
+/* login screen */
+#loginScreen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:1000}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2.5rem 2rem;width:360px;max-width:94vw;box-shadow:0 8px 32px rgba(0,0,0,.08)}
+.login-logo{font-size:36px;text-align:center;margin-bottom:.75rem}
+.login-title{font-size:20px;font-weight:600;text-align:center;margin-bottom:.35rem;letter-spacing:-.3px}
+.login-sub{font-size:13px;color:var(--text2);text-align:center;margin-bottom:1.5rem;line-height:1.5}
+.login-field{display:flex;flex-direction:column;gap:4px;margin-bottom:.75rem}
+.login-field label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.3px}
+.login-field input{border:1px solid var(--border2);border-radius:var(--radius);padding:9px 12px;font-size:14px;color:var(--text);background:var(--surface);font-family:'DM Sans',sans-serif;transition:border .15s;width:100%}
+.login-field input:focus{outline:none;border-color:var(--accent)}
+.login-err{font-size:12px;color:#e24b4a;margin-top:.5rem;display:none;text-align:center}
+.btn-login{width:100%;padding:11px;border:none;border-radius:var(--radius);background:var(--text);color:#fff;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:.25rem;transition:opacity .15s}
+.btn-login:hover{opacity:.85}
+/* user pill */
+.user-pill{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--surface);font-size:12px;color:var(--text2);cursor:pointer}
+.user-pill:hover{border-color:#e24b4a;color:#e24b4a}
+.cfg-textarea{width:100%;min-height:130px;border:1px solid var(--border2);border-radius:var(--radius);padding:8px 10px;font-size:11px;font-family:'DM Mono',monospace;color:var(--text);background:var(--surface);resize:vertical}
+.cfg-textarea:focus{outline:none;border-color:var(--accent)}
+.pill-cfg-slots{display:flex;flex-direction:column;gap:.5rem}
+.pill-slot{display:flex;align-items:center;gap:8px}
+.pill-slot-label{color:var(--text3);min-width:56px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;flex-shrink:0}
+.pill-slot select{flex:1;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;font-size:12px;color:var(--text);background:var(--surface);font-family:'DM Sans',sans-serif}
+.pill-slot select:focus{outline:none;border-color:var(--accent)}
+.type-cfg-block{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.85rem 1rem;margin-bottom:.6rem}
+.type-cfg-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem}
+.type-cfg-name{font-size:13px;font-weight:600;color:var(--text)}
+.type-cfg-fields{display:flex;flex-wrap:wrap;gap:.35rem}
+.type-field-toggle{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);cursor:pointer;font-size:12px;color:var(--text2);transition:all .15s;user-select:none}
+.type-field-toggle:hover{border-color:var(--accent);color:var(--accent)}
+.type-field-toggle.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.section-div{border:none;border-top:1px solid var(--border);margin:.85rem 0}
+.alert-warn{font-size:12px;padding:8px 12px;border-radius:var(--radius);background:#fff8e6;border:1px solid #f0c060;color:#7a5000;display:none;margin-bottom:.75rem}
+.empty-msg{grid-column:1/-1;text-align:center;padding:3rem;color:var(--text3);font-size:13px}
+/* tooltip de tarefa (hover, modo leitura) */
+.task-tip{position:fixed;z-index:500;background:var(--surface);border:1px solid var(--border2);border-left:3px solid var(--accent);border-radius:10px;padding:10px 12px;max-width:280px;box-shadow:0 8px 24px rgba(0,0,0,.14);font-size:12px;display:none;pointer-events:none}
+.task-tip.show{display:block}
+.tip-title{font-weight:600;font-size:13px;margin-bottom:6px;line-height:1.3}
+.tip-row{display:flex;gap:8px;margin-top:3px}
+.tip-l{color:var(--text3);min-width:70px;flex-shrink:0;font-size:11px}
+.tip-v{color:var(--text);flex:1;line-height:1.4;word-break:break-word}
+/* formulário somente leitura */
+#modal input:disabled,#modal select:disabled,#modal textarea:disabled{background:var(--bg);color:var(--text);opacity:1;cursor:default;-webkit-text-fill-color:var(--text)}
+#modal input[type=checkbox]:disabled{cursor:default}
+/* tabela de tarefas */
+.table-section{margin-top:1.25rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem}
+.table-head-row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:.75rem}
+.table-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.table-wrapper{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.task-table{width:100%;border-collapse:collapse;font-size:12px;min-width:600px}
+.task-table th{text-align:left;padding:8px 10px;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none}
+.task-table th:hover{color:var(--text)}
+.task-table th .sort-arrow{font-size:9px;margin-left:3px}
+.task-table td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:top;max-width:260px;overflow:hidden;text-overflow:ellipsis}
+.task-table tbody tr{cursor:pointer;transition:background .1s}
+.task-table tbody tr:hover{background:var(--bg)}
+.table-empty{text-align:center;padding:2rem;color:var(--text3);font-size:13px}
+.tablecols-cfg{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.85rem 1rem;margin-bottom:.75rem;display:none}
+.tablecols-cfg.open{display:block}
+.tablecols-cfg .cfg-hint{font-size:12px;color:var(--text2);margin-bottom:.6rem;line-height:1.5}
+.col-order-list{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:.75rem}
+.col-order-chip{display:inline-flex;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:3px 4px;font-size:12px;color:var(--text)}
+.col-order-chip .col-name{padding:0 4px;font-weight:500}
+.col-order-btn{cursor:pointer;color:var(--text3);font-size:11px;padding:2px 4px;border-radius:4px;user-select:none;line-height:1}
+.col-order-btn:hover{color:var(--accent);background:var(--bg)}
+.col-order-btn.disabled{opacity:.25;pointer-events:none}
+/* filtros por coluna (estilo Excel) */
+.th-inner{display:flex;align-items:center;gap:4px;justify-content:space-between}
+.th-label{cursor:pointer;flex:1;white-space:nowrap}
+.th-label:hover{color:var(--text)}
+.th-filter{cursor:pointer;color:var(--text3);display:inline-flex;align-items:center;padding:2px;border-radius:4px;flex-shrink:0}
+.th-filter:hover{color:var(--accent);background:var(--bg)}
+.th-filter.on{color:var(--accent)}
+.col-filter-menu{position:fixed;z-index:450;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);box-shadow:0 8px 28px rgba(0,0,0,.16);width:262px;max-width:92vw;display:none;flex-direction:column;overflow:hidden}
+.col-filter-menu.open{display:flex}
+.cfm-head{padding:.6rem .7rem;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:6px}
+.cfm-sort{display:flex;gap:6px}
+.cfm-sort button{flex:1;font-size:11px;padding:4px 6px;border:1px solid var(--border2);background:var(--surface);border-radius:6px;cursor:pointer;color:var(--text2);font-family:'DM Sans',sans-serif}
+.cfm-sort button:hover{background:var(--bg);color:var(--text)}
+.cfm-search{width:100%;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--surface)}
+.cfm-search:focus{outline:none;border-color:var(--accent)}
+.cfm-selall{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text);cursor:pointer;padding:0 .1rem}
+.cfm-selall input{accent-color:var(--accent);width:14px;height:14px;cursor:pointer}
+.cfm-list{max-height:236px;overflow-y:auto;padding:.35rem .3rem;display:flex;flex-direction:column;gap:1px}
+.cfm-item{display:flex;align-items:center;gap:6px;font-size:12px;padding:3px 6px;border-radius:5px;cursor:pointer;color:var(--text);white-space:nowrap;overflow:hidden}
+.cfm-item:hover{background:var(--bg)}
+.cfm-item input{accent-color:var(--accent);flex-shrink:0;cursor:pointer;width:14px;height:14px}
+.cfm-txt{overflow:hidden;text-overflow:ellipsis}
+.cfm-item.lvl1{padding-left:18px}
+.cfm-item.lvl2{padding-left:36px}
+.cfm-exp{cursor:pointer;color:var(--text3);font-size:9px;width:11px;flex-shrink:0;user-select:none;text-align:center}
+.cfm-exp:hover{color:var(--accent)}
+.cfm-exp.blank{cursor:default;pointer-events:none}
+.cfm-empty{font-size:12px;color:var(--text3);padding:.7rem;text-align:center}
+.cfm-foot{padding:.5rem .7rem;border-top:1px solid var(--border);display:flex;gap:6px}
+.cfm-foot button{flex:1;font-size:12px;padding:5px 8px;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.cfm-clear{border:1px solid var(--border2);background:var(--surface);color:var(--text2)}
+.cfm-clear:hover{background:var(--bg);color:var(--text)}
+.cfm-apply{border:none;background:var(--text);color:#fff;font-weight:500}
+.cfm-apply:hover{opacity:.85}
+
+
+</style>
+</head>
+<body>
+<!-- Tela de login -->
+<div id="loginScreen" style="display:none">
+  <div class="login-box">
+    <div class="login-logo">📅</div>
+    <div class="login-title">Calendário</div>
+    <div class="login-sub">Entre com seu e-mail e senha para acessar.</div>
+    <div class="login-field">
+      <label>E-mail</label>
+      <input type="email" id="loginEmail" placeholder="seu@email.com" onkeydown="if(event.key==='Enter')fazerLogin()">
+    </div>
+    <div class="login-field">
+      <label>Senha</label>
+      <input type="password" id="loginSenha" placeholder="••••••••" onkeydown="if(event.key==='Enter')fazerLogin()">
+    </div>
+    <div class="login-err" id="loginErr"></div>
+    <button class="btn-login" id="btnLogin" onclick="fazerLogin()">Entrar</button>
+    <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:1rem;line-height:1.6">
+      Conta criada pelo administrador no Firebase Console.<br>Esqueceu a senha? Fale com o admin.
+    </div>
+  </div>
+</div>
+
+<div class="page">
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="brand">Calendário <span>· Firebase</span></div>
+  <div class="top-right">
+    <div class="status-pill"><div class="dot" id="sDot"></div><span id="sTxt">Não conectado</span></div>
+    <div class="user-pill" id="userPill" style="display:none" onclick="fazerLogout()" title="Clique para sair">
+      <span id="userEmail"></span>
+      <span style="font-size:10px;color:var(--text3)">sair</span>
+    </div>
+
+    <button class="hbtn" id="adminBtn" onclick="toggleAdminMode()" style="display:none">
+      🔐 Modo Admin
+    </button>
+    <button class="hbtn" id="syncBtn" style="display:none" onclick="sincronizar()" title="Recarregar">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+      Sincronizar
+    </button>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('cal')" id="tabCal">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Calendário
+  </button>
+  <button class="tab-btn" onclick="switchTab('cfg')" id="tabCfg" style="display:none">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    Configurações
+  </button>
+</div>
+
+<!-- ══ ABA CALENDÁRIO ══ -->
+<div class="tab-content active" id="tabContentCal">
+  <div class="active-bar" id="activePillsWrap"></div>
+
+  <!-- Abas de calendário (estilo Excel) -->
+  <div class="cal-tabs-bar" id="calTabsBar"></div>
+
+  <div class="cal-header">
+    <div class="cal-nav">
+      <button class="nav-btn" onclick="prevM()">&#8249;</button>
+      <span class="cal-title" id="calTitle"></span>
+      <button class="nav-btn" onclick="nextM()">&#8250;</button>
+      <button class="hbtn" onclick="goToday()">Hoje</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:12px;color:var(--text3)" id="calResultCount"></span>
+      <button class="btn-p" id="btnAddTask" style="display:none;align-items:center;gap:5px;padding:7px 14px;font-size:13px" onclick="openAddModal('')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nova tarefa
+      </button>
+    </div>
+  </div>
+  <div class="cal-wrapper">
+  <div class="cal-grid" id="calGrid"></div>
+  </div>
+
+  <!-- Legenda de cores -->
+  <div class="legend-section" id="legendSection" style="display:none">
+    <div class="legend-title">Legenda</div>
+    <div class="legend-grid" id="legendGrid"></div>
+  </div>
+
+  <!-- Tabela de tarefas (espelha a aba ativa + filtros) -->
+  <div class="table-section" id="tableSection">
+    <div class="table-head-row">
+      <div class="legend-title" style="margin-bottom:0">📋 Tabela de tarefas <span id="tableCount" style="font-weight:400;text-transform:none;letter-spacing:0"></span></div>
+      <div class="table-actions">
+        <button class="hbtn" id="btnClearTableFilters" style="display:none" onclick="limparFiltrosTabela()" title="Limpar todos os filtros de coluna">✕ Limpar filtros</button>
+        <button class="hbtn" id="btnTableCols" style="display:none" onclick="toggleTableColsCfg()" title="Configurar colunas desta aba">⚙️ Colunas</button>
+        <button class="hbtn" onclick="exportTableXLSX()" title="Baixar como planilha Excel">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Excel (.xlsx)
+        </button>
+        <button class="hbtn" onclick="exportTableCSV()" title="Baixar CSV — importe no Google Planilhas">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          CSV (Google Planilhas)
+        </button>
+      </div>
+    </div>
+    <div id="tableAbaHint" style="font-size:11px;color:var(--text3);margin:-.25rem 0 .6rem;display:none"></div>
+    <div class="tablecols-cfg" id="tableColsCfg"></div>
+    <div class="table-wrapper" id="taskTableWrap"></div>
+  </div>
+</div>
+
+<!-- ══ ABA CONFIGURAÇÕES ══ -->
+<div class="tab-content" id="tabContentCfg">
+
+  <!-- Firebase setup -->
+  <div class="panel" id="pFirebase">
+    <div class="panel-header" onclick="toggle('pFirebase')">
+      <div class="panel-title">🔥 Conexão Firebase</div>
+      <span class="panel-arrow">▾</span>
+    </div>
+    <div class="panel-body">
+      <p class="setup-sub">Cole o objeto <code>firebaseConfig</code> do seu projeto Firebase. Esta configuração é salva no navegador.</p>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.75rem 1rem;font-size:12px;color:var(--text2);line-height:1.8;margin-bottom:.85rem">
+        1. Acesse <a href="https://console.firebase.google.com" target="_blank" style="color:var(--accent)">console.firebase.google.com</a> → crie um projeto<br>
+        2. <strong>Firestore Database</strong> → Criar banco de dados → Modo de produção<br>
+        3. <strong>Regras</strong> → cole: <code style="background:var(--border);padding:1px 4px;border-radius:3px">allow read, write: if true;</code> → Publicar<br>
+        4. Configurações do projeto → Seus apps → Adicionar app Web → copie o <code>firebaseConfig</code>
+      </div>
+      <label class="cfg-label">firebaseConfig (cole o objeto JSON)</label>
+      <textarea class="cfg-textarea" id="firebaseCfgInput" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}'></textarea>
+      <div style="display:flex;gap:8px;margin-top:.75rem;align-items:center">
+        <button class="btn-p" onclick="conectarFirebase()">Conectar</button>
+        <span id="fbConnStatus" style="font-size:12px;color:var(--text3)"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Senha admin -->
+  <div class="panel collapsed" id="pAdmin">
+    <div class="panel-header" onclick="toggle('pAdmin')">
+      <div class="panel-title">🔐 Senha de administrador</div>
+      <span class="panel-arrow">▾</span>
+    </div>
+    <div class="panel-body">
+      <p class="setup-sub">A senha admin permite adicionar e editar tarefas diretamente no calendário. Compartilhe o link com a equipe — só quem souber a senha entra no modo admin.</p>
+      <div class="row">
+        <input class="inp" type="password" id="adminPwInput" placeholder="Digite a senha de admin">
+        <button class="btn-p" onclick="salvarSenhaAdmin()">Salvar</button>
+      </div>
+      <p style="font-size:11px;color:var(--text3);margin-top:.5rem">Depois de salvar, esta senha é exigida toda vez que alguém quiser entrar no modo admin.</p>
+    </div>
+  </div>
+
+  <!-- Aba inicial -->
+  <div class="panel collapsed" id="pAbaInicial">
+    <div class="panel-header" onclick="toggle('pAbaInicial')">
+      <div class="panel-title">🏠 Aba que abre por padrão</div>
+      <span class="panel-arrow">▾</span>
+    </div>
+    <div class="panel-body">
+      <p class="setup-sub">Escolha em qual aba o site abre para todos os usuários. A aba geral reúne as tarefas de todas as abas e tem configuração de colunas própria — se você configurou as colunas de uma aba específica, escolha essa aba aqui para que todos a vejam ao entrar.</p>
+      <div class="row">
+        <select class="sel" id="abaInicialSel" style="flex:1" onchange="setAbaInicial(this.value)"></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cores por Tag -->
+  <div class="panel collapsed" id="pTags">
+    <div class="panel-header" onclick="toggle('pTags')">
+      <div class="panel-title">🎨 Cores por Tag</div>
+      <span class="panel-arrow">▾</span>
+    </div>
+    <div class="panel-body">
+      <p class="setup-sub">A primeira tag de uma tarefa determina a cor no calendário. Clique no nome de uma tag para editá-lo — as tarefas existentes são atualizadas automaticamente.</p>
+      <div class="tag-map-list" id="tagList"></div>
+      <button class="btn-p" style="width:100%;margin-bottom:1rem;font-size:12px" onclick="salvarTagsAgoraMesmo()">💾 Salvar alterações</button>
+      <div class="row">
+        <input class="inp" type="text" id="newTag" placeholder="Nome da tag...">
+        <button class="btn-g" onclick="openPicker()">+ Adicionar</button>
+      </div>
+      <div class="picker-wrap" id="pickerWrap">
+        <div class="picker-label">Cor para "<strong id="pickerTagName"></strong>"</div>
+        <div class="palette" id="palette"></div>
+        <div class="row" style="margin-top:8px">
+          <input class="inp mono" style="max-width:100px" type="text" id="customHex" placeholder="#hex">
+          <button class="btn-p" style="padding:7px 14px;font-size:12px" onclick="confirmTag()">Confirmar</button>
+          <button class="btn-g" style="padding:7px 12px;font-size:12px" onclick="closePicker()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Campos extras -->
+  <div class="panel collapsed" id="pExtra">
+    <div class="panel-header" onclick="toggle('pExtra')">
+      <div class="panel-title">➕ Campos extras das tarefas</div>
+      <span class="panel-arrow">▾</span>
+    </div>
+    <div class="panel-body">
+      <p class="setup-sub">Adicione campos personalizados que aparecerão no formulário de criação e no detalhe da tarefa.</p>
+      <button class="btn-g" style="font-size:12px;margin-bottom:.75rem;display:flex;align-items:center;gap:6px" onclick="autoDetectarCampos()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Detectar campos das tarefas automaticamente
+      </button>
+      <div id="extraColsList" style="display:flex;flex-direction:column;gap:5px;margin-bottom:.75rem"></div>
+      <div class="row">
+        <input class="inp" type="text" id="newExtraCol" placeholder="Nome do campo (ex: Responsável, Projeto...)">
+        <button class="btn-g" onclick="addExtraCol()">+ Adicionar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pill display -->
+  <div class="panel collapsed" id="pPills">
+    <div class="panel-header" onclick="toggle('pPills')">
+      <div class="panel-title">📌 Informações nas tarefas do calendário</div>
+      <span class="panel-arrow">▾</span>
+    </div>
+    <div class="panel-body">
+      <p class="setup-sub">Escolha o que aparece em cada linha da tarefa no calendário.</p>
+      <div class="pill-cfg-slots" id="pillCfgSlots"></div>
+    </div>
+  </div>
+
+  <!-- Campos por tipo -->
+  <div class="panel collapsed" id="pSelectFields">
+    <div class="panel-header" onclick="toggle('pSelectFields')">
+      <div class="panel-title">🔽 Campos de seleção obrigatória</div>
+      <span class="panel-arrow">▾</span>
+    </div>
+    <div class="panel-body">
+      <p class="setup-sub">Campos que aparecem no topo do formulário como listas de opções. Marque como obrigatório para exigir preenchimento.</p>
+      <div id="selectFieldsList" style="display:flex;flex-direction:column;gap:.65rem;margin-bottom:.75rem"></div>
+      <div class="row" style="flex-wrap:wrap;gap:6px;margin-top:.5rem">
+        <input class="inp" type="text" id="newSelFieldName" placeholder="Nome do campo (ex: Tags, Produto...)" style="flex:1;min-width:160px">
+        <button class="btn-g" onclick="addSelectField()">+ Adicionar campo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Campos por Tag -->
+  <div class="panel collapsed" id="pTagFormFields">
+    <div class="panel-header" onclick="toggle('pTagFormFields')">
+      <div class="panel-title">🏷️ Campos dinâmicos por Tag</div>
+      <span class="panel-arrow">▾</span>
+    </div>
+    <div class="panel-body">
+      <p class="setup-sub">Escolha quais campos aparecem no formulário de nova tarefa para cada tag.</p>
+      <div id="tagFormFieldsConfig" style="display:flex;flex-direction:column;gap:.75rem"></div>
+    </div>
+  </div>
+
+  <!-- Importar tarefas via Excel -->
+  <div class="panel collapsed" id="pImport">
+    <div class="panel-header" onclick="toggle('pImport')">
+      <div class="panel-title">📥 Importar tarefas via Excel</div>
+      <span class="panel-arrow">▾</span>
+    </div>
+    <div class="panel-body">
+      <p class="setup-sub">Envie uma planilha (.xlsx, .xls ou .csv) com uma base de tarefas. Depois de carregada, mapeie cada coluna para um campo do calendário — inclusive em qual aba a tarefa deve aparecer. Campos com mais de um valor devem estar separados por <code>;</code> na célula (ex: <code>Financeiro;Suporte</code>).</p>
+      <div class="row">
+        <input class="inp" type="file" id="importFileInput" accept=".xlsx,.xls,.csv" onchange="handleImportFile(this)">
+      </div>
+      <div id="importMapperWrap" style="display:none;margin-top:1rem">
+        <label class="cfg-label">Mapeamento de colunas</label>
+        <div class="col-map-grid" id="importColMapGrid"></div>
+        <div id="importValidityMsg" style="font-size:12px;margin-bottom:.75rem"></div>
+
+        <label class="cfg-label">Aba padrão (usada quando a coluna "Aba" não indicar uma aba para a linha)</label>
+        <p class="setup-sub" style="margin-bottom:.5rem">Se nenhuma aba for marcada aqui e a coluna "Aba" também estiver vazia, a tarefa aparece só na aba geral.</p>
+        <div class="chip-group" id="importDefaultAbaChips" style="margin-bottom:.85rem"></div>
+
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);margin-bottom:.85rem;cursor:pointer">
+          <input type="checkbox" id="importCreateAbas"> Criar abas automaticamente quando o nome da planilha não existir ainda
+        </label>
+
+        <div id="importPreviewWrap" style="margin-bottom:.85rem"></div>
+
+        <div class="row">
+          <button class="btn-p" id="btnExecutarImportacao" onclick="executarImportacao()">Importar tarefas</button>
+          <span id="importStatus" style="font-size:12px;color:var(--text2)"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tabContentCfg -->
+
+</div><!-- /page -->
+
+<!-- Filter Drawer -->
+<div class="drawer-backdrop" id="drawerBackdrop" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div class="drawer-head-left">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      <span class="drawer-title">Filtros</span>
+      <span class="drawer-badge" id="drawerBadge" style="display:none">0</span>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">×</button>
+  </div>
+  <div class="drawer-body" id="drawerBody">
+    <div class="drawer-section">
+      <div class="drawer-section-label">📅 Data</div>
+      <div class="chip-group" id="datePresets">
+        <div class="chip" data-preset="today" onclick="setDatePreset(this)">Hoje</div>
+        <div class="chip" data-preset="tomorrow" onclick="setDatePreset(this)">Amanhã</div>
+        <div class="chip" data-preset="this_week" onclick="setDatePreset(this)">Esta semana</div>
+        <div class="chip" data-preset="next_week" onclick="setDatePreset(this)">Próx. semana</div>
+        <div class="chip" data-preset="this_month" onclick="setDatePreset(this)">Este mês</div>
+        <div class="chip" data-preset="next_month" onclick="setDatePreset(this)">Próx. mês</div>
+        <div class="chip" data-preset="this_quarter" onclick="setDatePreset(this)">Este trimestre</div>
+        <div class="chip" data-preset="this_semester" onclick="setDatePreset(this)">Este semestre</div>
+        <div class="chip" data-preset="this_year" onclick="setDatePreset(this)">Este ano</div>
+        <div class="chip" data-preset="overdue" onclick="setDatePreset(this)">Atrasadas</div>
+        <div class="chip" data-preset="exact" onclick="setDatePreset(this)">Data exata</div>
+        <div class="chip" data-preset="range" onclick="setDatePreset(this)">Intervalo</div>
+      </div>
+      <div class="date-input-row" id="dateInputRow" style="display:none">
+        <input class="inp" type="date" id="dateFrom" onchange="applyFilters()">
+        <span id="dateToLabel" style="display:none;font-size:12px;color:var(--text3)">até</span>
+        <input class="inp" type="date" id="dateTo" style="display:none" onchange="applyFilters()">
+      </div>
+    </div>
+    <hr class="f-divider">
+    <div class="drawer-section">
+      <div class="drawer-section-label">🏷️ Tags <span style="font-size:10px;text-transform:none;letter-spacing:0;color:var(--text3)">Alt+clique = excluir</span></div>
+      <div class="val-chips" id="tagChips"></div>
+      <div style="display:flex;gap:12px;margin-top:6px">
+        <label style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px;cursor:pointer"><input type="radio" name="tagLogic" value="or" checked onchange="applyFilters()"> OU</label>
+        <label style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px;cursor:pointer"><input type="radio" name="tagLogic" value="and" onchange="applyFilters()"> E (todas)</label>
+      </div>
+    </div>
+    <hr class="f-divider">
+    <div class="drawer-section">
+      <div class="drawer-section-label">📋 Filtros por coluna</div>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:.5rem">
+        <select class="sel" id="dynColSelector" style="flex:1;font-size:12px;padding:5px 8px"><option value="">— escolha um campo —</option></select>
+        <button class="btn-g" style="font-size:12px;padding:5px 10px;white-space:nowrap" onclick="addDynColFromSelector()">+ Adicionar</button>
+      </div>
+      <div id="dynColFilters"></div>
+    </div>
+    <hr class="f-divider">
+    <div class="drawer-section">
+      <div class="drawer-section-label">🔎 Busca por texto</div>
+      <input class="inp" type="text" id="textSearch" placeholder="Buscar no título ou notas..." oninput="applyFilters()" style="font-size:12px;padding:6px 10px">
+    </div>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn-g" style="width:100%;justify-content:center;font-size:12px" onclick="clearAllFilters()">Limpar filtros</button>
+  </div>
+</div>
+
+<!-- FAB -->
+<button class="fab-filter" onclick="openDrawer()" title="Filtros">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+  <span class="fab-filter-badge" id="fabBadge">0</span>
+</button>
+
+<!-- Modal -->
+<div class="overlay" id="overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal"></div>
+</div>
+
+<!-- Tooltip de tarefa (hover para não-admin) -->
+<div class="task-tip" id="taskTip"></div>
+
+<!-- Menu de filtro de coluna da tabela (estilo Excel) -->
+<div class="col-filter-menu" id="colFilterMenu"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+//  CONFIGURAÇÃO FIREBASE — preencha uma vez e reimplante no Netlify
+//  Cole seu firebaseConfig aqui (substitua o null pelo objeto):
+// ══════════════════════════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCNlFgwNjpLCJzH-i6MuX-jVoGtHpv6Aos",
+  authDomain: "calendario-dd7a8.firebaseapp.com",
+  projectId: "calendario-dd7a8",
+  storageBucket: "calendario-dd7a8.firebasestorage.app",
+  messagingSenderId: "539624903784",
+  appId: "1:539624903784:web:2fc16cac7202b2e3e4d7dd"
+};
+// Exemplo:
+// const FIREBASE_CONFIG = {
+//   apiKey: "AIza...",
+//   authDomain: "seuprojeto.firebaseapp.com",
+//   projectId: "seuprojeto",
+//   storageBucket: "seuprojeto.appspot.com",
+//   messagingSenderId: "123456789",
+//   appId: "1:123:web:abc"
+// };
+// ══════════════════════════════════════════════════════════════════
+// ══ Constantes ══════════════════════════════════════════════════════
+const MONTHS=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const DAYS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const PALETTE=['#378ADD','#7F77DD','#D85A30','#D4537E','#1D9E75','#BA7517','#4caf7d','#e24b4a','#f59e0b','#5F5E5A','#0891b2','#7c3aed','#be185d','#065f46','#c2410c','#92400e'];
+const PRIO_C={alta:'#e24b4a',high:'#e24b4a','média':'#f59e0b',media:'#f59e0b',mid:'#f59e0b',baixa:'#4caf7d',low:'#4caf7d'};
+const PRIO_L={alta:'Alta',high:'Alta','média':'Média',media:'Média',mid:'Média',baixa:'Baixa',low:'Baixa'};
+
+// Campos fixos de uma tarefa
+const TASK_FIELDS=[
+  {key:'titulo',    label:'Título',     type:'text',     req:true},
+  {key:'data',      label:'Data',       type:'date',     req:true},
+  {key:'horario',   label:'Horário',    type:'time',     req:false},
+  {key:'tipo',      label:'Tipo',       type:'text',     req:false},
+  {key:'tags',      label:'Tags',       type:'text',     req:false, hint:'Separe com ;'},
+  {key:'prioridade',label:'Prioridade', type:'select',   req:false, opts:['','alta','média','baixa']},
+  {key:'emoji',     label:'Emoji',      type:'text',     req:false, hint:'📞 ✉️ 📋'},
+  {key:'notas',     label:'Notas',      type:'textarea', req:false},
+];
+
+// ══ State ══════════════════════════════════════════════════════════
+const td=new Date();
+let yr=td.getFullYear(), mo=td.getMonth();
+let db=null, unsubscribe=null;
+let allTasks=[], filteredTasks=[];
+let calendarios=[{id:'default',nome:'Calendário',cor:'#378ADD'}];
+let currentCalId='default';
+var DEFAULT_CAL_ID='default'; // aba geral — sempre mostra todas as tarefas, não pode ser excluída
+let abaInicial='';            // aba em que o site abre para todos (definida pelo admin)
+let primeiraCargaConfig=true; // só a primeira leitura da config muda a aba ativa
+
+// Verifica se uma tarefa pertence a uma aba específica.
+// A aba padrão sempre "contém" todas as tarefas, independente do que foi selecionado.
+function taskInAba(t, abaId){
+  if(abaId===DEFAULT_CAL_ID) return true;
+  return (t.calendarioIds||[]).indexOf(abaId)!==-1;
+}
+let tagMap={}, extraCols=[], pillSlots=['titulo','none','none'];
+let tableCols={}; // {abaId: [col1, col2, ...]} — colunas da tabela por aba (config do admin, vale p/ todos)
+let tableColsCfgOpen=false, tableSortCol='', tableSortDir=1;
+// Filtros por coluna da tabela: {abaId:{coluna:[valores excluídos]}}
+// São filtros de visualização de cada usuário (ficam no navegador).
+let tableColFilters={};
+let typeFieldConfig={}, adminMode=false;
+let selectFields=[]; // [{name, required, options:[]}]
+let tagFormFields={}; // {tagName: [field1, field2, ...]}
+let removedTags=[]; // tags excluídas manualmente — autoTags não deve recriá-las
+let dynFilterCols=[], dynColFilters={};
+let activeDatePreset='', dateFrom='', dateTo='';
+let activeTags=new Set(), excludedTags=new Set();
+let fieldFilters=[], ffIdCounter=0;
+let editingTaskId=null;
+let modalIsForm=false; // formulário de nova/editar tarefa aberto — clicar fora não fecha
+
+// ══ Persist (localStorage) ═════════════════════════════════════════
+function saveLocal(){
+  try{
+    localStorage.setItem('fb_tagmap',    JSON.stringify(tagMap));
+    localStorage.setItem('fb_xcols',     JSON.stringify(extraCols));
+    localStorage.setItem('fb_pills',     JSON.stringify(pillSlots));
+    localStorage.setItem('fb_typecfg',   JSON.stringify(typeFieldConfig));
+    localStorage.setItem('fb_selfields', JSON.stringify(selectFields));
+    localStorage.setItem('fb_dyncols',   JSON.stringify(dynFilterCols));
+    localStorage.setItem('fb_tagformfields',JSON.stringify(tagFormFields));
+    localStorage.setItem('fb_removedtags',JSON.stringify(removedTags));
+    localStorage.setItem('fb_calendarios',JSON.stringify(calendarios));
+    localStorage.setItem('fb_currentcal', currentCalId);
+    localStorage.setItem('fb_tablecols', JSON.stringify(tableCols));
+    localStorage.setItem('fb_tablecolfilters', JSON.stringify(tableColFilters));
+    localStorage.setItem('fb_abainicial', abaInicial);
+  }catch(e){}
+}
+function loadLocal(){
+  try{tagMap        =JSON.parse(localStorage.getItem('fb_tagmap')    ||'{}');}catch(e){tagMap={};}
+  try{extraCols     =JSON.parse(localStorage.getItem('fb_xcols')     ||'[]');}catch(e){extraCols=[];}
+  try{pillSlots     =JSON.parse(localStorage.getItem('fb_pills')     ||'null')||['titulo','none','none'];}catch(e){pillSlots=['titulo','none','none'];}
+  try{typeFieldConfig=JSON.parse(localStorage.getItem('fb_typecfg')  ||'{}');}catch(e){typeFieldConfig={};}
+  try{selectFields  =JSON.parse(localStorage.getItem('fb_selfields') ||'[]');}catch(e){selectFields=[];}
+  try{dynFilterCols =JSON.parse(localStorage.getItem('fb_dyncols')   ||'[]');}catch(e){dynFilterCols=[];}
+  try{tagFormFields =JSON.parse(localStorage.getItem('fb_tagformfields')||'{}');}catch(e){tagFormFields={};}
+  try{removedTags   =JSON.parse(localStorage.getItem('fb_removedtags')||'[]');}catch(e){removedTags=[];}
+  try{calendarios   =JSON.parse(localStorage.getItem('fb_calendarios')||'null')||[{id:'default',nome:'Calendário',cor:'#378ADD'}];}catch(e){calendarios=[{id:'default',nome:'Calendário',cor:'#378ADD'}];}
+  currentCalId=localStorage.getItem('fb_currentcal')||'default';
+  try{tableCols     =JSON.parse(localStorage.getItem('fb_tablecols') ||'{}');}catch(e){tableCols={};}
+  try{tableColFilters=JSON.parse(localStorage.getItem('fb_tablecolfilters')||'{}');}catch(e){tableColFilters={};}
+  abaInicial=localStorage.getItem('fb_abainicial')||'';
+  dynFilterCols.forEach(c=>{if(!dynColFilters[c])dynColFilters[c]=new Set();});
+}
+
+// ══ UI helpers ══════════════════════════════════════════════════════
+function toggle(id){document.getElementById(id).classList.toggle('collapsed');}
+function setStatus(t,m){document.getElementById('sDot').className='dot '+t;document.getElementById('sTxt').textContent=m;}
+function switchTab(tab){
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
+  const n=tab.charAt(0).toUpperCase()+tab.slice(1);
+  document.getElementById('tabContent'+n).classList.add('active');
+  document.getElementById('tab'+n).classList.add('active');
+}
+function openDrawer(){document.getElementById('drawer').classList.add('open');document.getElementById('drawerBackdrop').classList.add('open');}
+function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('drawerBackdrop').classList.remove('open');}
+
+// ══ Firebase ════════════════════════════════════════════════════════
+function conectarFirebase(){
+  const raw=(document.getElementById('firebaseCfgInput').value||'').trim();
+  let cfg={};
+  try{
+    const cleaned=raw.replace(/^[^{]*/,'').replace(/[^}]*$/,'');
+    cfg=JSON.parse(cleaned);
+  }catch(e){
+    document.getElementById('fbConnStatus').textContent='❌ JSON inválido.';return;
+  }
+  if(!cfg.projectId){document.getElementById('fbConnStatus').textContent='❌ projectId não encontrado.';return;}
+  try{localStorage.setItem('fb_config',JSON.stringify(cfg));}catch(e){}
+  iniciarFirebase(cfg);
+}
+
+function iniciarFirebase(cfg){
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(cfg);
+    db=firebase.firestore();
+    document.getElementById('fbConnStatus').textContent='✅ Projeto: '+cfg.projectId;
+    document.getElementById('pFirebase').classList.add('collapsed');
+
+    // Verificar sessão existente
+    firebase.auth().onAuthStateChanged(function(user){
+      if(user){
+        mostrarCalendario(user);
+      } else {
+        document.getElementById('loginScreen').style.display='flex';
+        setTimeout(function(){
+          document.getElementById('loginEmail').focus();
+        }, 100);
+      }
+    });
+  }catch(e){
+    setStatus('err','Erro Firebase: '+e.message);
+    document.getElementById('fbConnStatus').textContent='❌ '+e.message;
+  }
+}
+
+function fazerLogin(){
+  const email=(document.getElementById('loginEmail').value||'').trim();
+  const senha=(document.getElementById('loginSenha').value||'').trim();
+  const errEl=document.getElementById('loginErr');
+  const btn=document.getElementById('btnLogin');
+  if(!email||!senha){errEl.textContent='Preencha e-mail e senha.';errEl.style.display='block';return;}
+  errEl.style.display='none';
+  btn.disabled=true;btn.textContent='Entrando...';
+  firebase.auth().signInWithEmailAndPassword(email,senha)
+    .catch(function(e){
+      btn.disabled=false;btn.textContent='Entrar';
+      const msgs={
+        'auth/user-not-found':'E-mail não encontrado.',
+        'auth/wrong-password':'Senha incorreta.',
+        'auth/invalid-email':'E-mail inválido.',
+        'auth/too-many-requests':'Muitas tentativas. Aguarde alguns minutos.',
+        'auth/invalid-credential':'E-mail ou senha incorretos.',
+      };
+      errEl.textContent=msgs[e.code]||'Erro: '+e.message;
+      errEl.style.display='block';
+    });
+}
+
+function fazerLogout(){
+  if(!confirm('Sair da conta?')) return;
+  firebase.auth().signOut().then(function(){
+    adminMode=false;
+    if(unsubscribe){unsubscribe();unsubscribe=null;}
+    allTasks=[];filteredTasks=[];
+    renderCal();renderTaskTable();
+    document.getElementById('adminBtn').style.display='none';
+    document.getElementById('syncBtn').style.display='none';
+    document.getElementById('userPill').style.display='none';
+    document.getElementById('adminBtn').innerHTML='🔐 Modo Admin';
+    document.getElementById('adminBtn').style.borderColor='';
+    setStatus('ok','Sessão encerrada.');
+  });
+}
+
+function mostrarCalendario(user){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('syncBtn').style.display='flex';
+  document.getElementById('adminBtn').style.display='flex';
+  document.getElementById('userEmail').textContent=user.email.split('@')[0];
+  document.getElementById('userPill').style.display='flex';
+  setStatus('spin','Carregando...');
+  // Config carrega PRIMEIRO, listener de tarefas só inicia após config pronta
+  sincronizarConfig(function(){ iniciarListener(); });
+}
+
+function sincronizarConfig(callback){
+  // onSnapshot = tempo real: quando admin muda algo, todos veem na hora
+  db.collection('config').doc('settings').onSnapshot(function(doc){
+    if(doc.exists){
+      const d=doc.data();
+      console.log('📥 Carregado do Firestore:', d);
+      if(d.tagMap)         { tagMap=d.tagMap; console.log('Tags carregadas:', Object.keys(tagMap)); renderTagList(); renderTagChips(); }
+      if(d.extraCols)      { extraCols=d.extraCols; renderExtraColsList(); }
+      if(d.pillSlots)      { pillSlots=d.pillSlots; renderPillCfg(); }
+      if(d.typeFieldConfig){ typeFieldConfig=d.typeFieldConfig; }
+      if(d.selectFields)   { selectFields=d.selectFields; renderSelectFieldsList(); }
+      if(d.tagFormFields)  { tagFormFields=d.tagFormFields; console.log('tagFormFields carregado:', d.tagFormFields); renderTagFormFieldsConfig(); }
+      if(d.removedTags)    { removedTags=d.removedTags; }
+      if(d.tableCols)      { tableCols=d.tableCols; }
+      if(d.abaInicial!==undefined){ abaInicial=d.abaInicial||''; }
+      if(d.calendarios&&d.calendarios.length) calendarios=d.calendarios;
+      // Ao abrir a página, todos entram na aba definida pelo admin
+      if(primeiraCargaConfig&&abaInicial&&calendarios.find(function(c){return c.id===abaInicial;})){
+        currentCalId=abaInicial;
+      }
+      primeiraCargaConfig=false;
+      if(!calendarios.find(function(c){return c.id===currentCalId;})) currentCalId=calendarios[0].id;
+      renderCalTabs();renderAbaInicialCfg();renderImportDefaultAbaChips();
+      saveLocal();
+      // applyFilters recalcula as tarefas da aba ativa e redesenha calendário e tabela
+      // (renderTaskTable sozinho usaria a lista da aba anterior)
+      if(allTasks.length){ applyFilters(); renderLegend(); }
+      else renderTaskTable();
+    }
+    // Callback só na primeira leitura — inicia o listener de tarefas
+    if(callback){ callback(); callback=null; }
+  }, function(){
+    if(callback){ callback(); callback=null; }
+  });
+}
+// Sanitiza nomes de campo para o Firestore — remove caracteres inválidos: ~ * / [ ]
+function sanitizeFirestoreKey(k){
+  return String(k).replace(/[~*/\[\]]/g,'_').trim();
+}
+
+function getFirestoreField(d, fieldName){
+  if(d[fieldName]!==undefined) return (d[fieldName]||'').toString();
+  const key=Object.keys(d).find(function(k){return k.toLowerCase()===fieldName.toLowerCase();});
+  return key?(d[key]||'').toString():'';
+}
+
+function iniciarListener(){
+  if(unsubscribe) unsubscribe();
+  unsubscribe=db.collection('tarefas').onSnapshot(function(snap){
+    allTasks=snap.docs.map(function(doc){
+      const d=doc.data();
+      return {
+        id:doc.id, _raw:d,
+        titulo: getFirestoreField(d,'titulo'),
+        title:  getFirestoreField(d,'titulo'),
+        date:   parseDt(getFirestoreField(d,'data')),
+        time:   getFirestoreField(d,'horario'),
+        tags:   getFirestoreField(d,'tags'),
+        tipo:   getFirestoreField(d,'tipo'),
+        priority:getFirestoreField(d,'prioridade'),
+        notes:  getFirestoreField(d,'notas'),
+        emoji:  getFirestoreField(d,'emoji'),
+        calendarioIds: (function(){
+          var raw=getFirestoreField(d,'calendarioIds');
+          var arr=raw?raw.split(';').map(function(x){return x.trim();}).filter(Boolean):[];
+          // Compatibilidade com tarefas antigas que usavam o campo singular "calendarioId"
+          var old=d.calendarioId;
+          if(old&&old!==DEFAULT_CAL_ID&&arr.indexOf(old)===-1) arr.push(old);
+          return arr;
+        })(),
+      };
+    }).filter(function(t){return t.titulo&&t.date;});
+    autoTags();
+    var h=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    setStatus('ok',allTasks.length+' tarefa(s) · '+h);
+    renderTagChips();renderTagList();renderDynColSelector();renderCalTabs();
+    applyFilters();renderLegend();
+  },function(err){
+    setStatus('err','Erro Firestore: '+err.message);
+  });
+}
+
+
+function salvarConfigFirestore(){
+  saveLocal();
+  if(!db) return;
+  var cfg={
+    tagMap:tagMap, extraCols:extraCols,
+    pillSlots:pillSlots, typeFieldConfig:typeFieldConfig,
+    selectFields:selectFields, tagFormFields:tagFormFields, calendarios:calendarios,
+    removedTags:removedTags, tableCols:tableCols, abaInicial:abaInicial
+  };
+  var ref=db.collection('config').doc('settings');
+  // update() substitui cada campo por inteiro — chaves removidas de tagMap/tagFormFields
+  // somem do servidor. set({merge:true}) faria merge profundo e manteria tags excluídas.
+  ref.update(cfg).catch(function(){
+    // Documento ainda não existe (primeira gravação) — cria sem apagar outros campos (ex.: adminPassword)
+    ref.set(cfg,{merge:true}).catch(function(e){console.error('Erro ao salvar config:',e);});
+  });
+}
+
+function sincronizar(){
+  if(!db){setStatus('err','Conecte o Firebase primeiro.');return;}
+  setStatus('spin','Sincronizando...');
+  iniciarListener();
+}
+
+// ══ Admin mode ══════════════════════════════════════════════════════
+function toggleAdminMode(){
+  if(adminMode){
+    adminMode=false;
+    document.getElementById('adminBtn').innerHTML='🔐 Modo Admin';
+    document.getElementById('adminBtn').style.borderColor='';
+    document.getElementById('tabCfg').style.display='none';
+    document.getElementById('btnAddTask').style.display='none';
+    switchTab('cal');
+    tableColsCfgOpen=false;
+    renderCal();renderCalTabs();renderTaskTable();
+    return;
+  }
+  const pw=prompt('Senha de administrador:');
+  if(!pw) return;
+  if(!db){alert('Conecte o Firebase primeiro.');return;}
+  db.collection('config').doc('settings').get().then(function(doc){
+    const stored=doc.exists?doc.data().adminPassword:'';
+    if(!stored){
+      // Primeiro acesso — pedir para definir a senha
+      const novaSenha=prompt('Primeiro acesso! Defina a senha de administrador:');
+      if(!novaSenha){return;}
+      const confirma=prompt('Confirme a senha:');
+      if(novaSenha!==confirma){alert('As senhas não coincidem.');return;}
+      db.collection('config').doc('settings').set({adminPassword:novaSenha},{merge:true}).then(function(){
+        adminMode=true;
+        document.getElementById('adminBtn').innerHTML='🔐 Admin <span class="admin-badge">ATIVO</span>';
+        document.getElementById('adminBtn').style.borderColor='#e24b4a';
+        document.getElementById('tabCfg').style.display='flex';
+        document.getElementById('btnAddTask').style.display='flex';
+        switchTab('cfg');
+        renderCal();renderCalTabs();renderTaskTable();
+        alert('Senha definida com sucesso!');
+      });
+      return;
+    }
+    if(pw===stored){
+      adminMode=true;
+      document.getElementById('adminBtn').innerHTML='🔐 Admin <span class="admin-badge">ATIVO</span>';
+      document.getElementById('adminBtn').style.borderColor='#e24b4a';
+      document.getElementById('tabCfg').style.display='flex';
+      document.getElementById('btnAddTask').style.display='flex';
+      switchTab('cfg');
+      renderCal();renderCalTabs();renderTaskTable();
+    } else {
+      alert('Senha incorreta.');
+    }
+  }).catch(function(){alert('Erro ao verificar senha.');});
+}
+
+function salvarSenhaAdmin(){
+  const pw=(document.getElementById('adminPwInput').value||'').trim();
+  if(!pw){alert('Digite uma senha.');return;}
+  if(!db){alert('Conecte o Firebase primeiro.');return;}
+  db.collection('config').doc('settings').set({adminPassword:pw},{merge:true}).then(function(){
+    alert('Senha salva com sucesso!');
+    document.getElementById('adminPwInput').value='';
+  }).catch(function(e){alert('Erro: '+e.message);});
+}
+
+// ══ Campos de seleção obrigatória ═══════════════════════════════════
+
+function addSelectField(){
+  var name=(document.getElementById('newSelFieldName').value||'').trim();
+  if(!name) return;
+  if(selectFields.find(function(f){return f.name.toLowerCase()===name.toLowerCase();})){
+    alert('Campo já existe.');return;
+  }
+  // Auto-detectar opções das tarefas existentes
+  var options=detectOptionsForField(name);
+  selectFields.push({name:name, required:true, options:options});
+  salvarConfigFirestore();
+  renderSelectFieldsList();
+  document.getElementById('newSelFieldName').value='';
+}
+
+function detectOptionsForField(fieldName){
+  var vals=new Set();
+  var isTag=fieldName.toLowerCase()==='tags';
+  allTasks.forEach(function(t){
+    var v=getExtraVal(t._raw, fieldName)||getFirestoreField(t._raw, fieldName);
+    if(!v) return;
+    if(isTag){
+      v.split(';').forEach(function(x){var s=x.trim();if(s)vals.add(s);});
+    } else {
+      vals.add(v.trim());
+    }
+  });
+  return [...vals].filter(Boolean).sort();
+}
+
+function removeSelectField(idx){
+  selectFields.splice(idx,1);
+  salvarConfigFirestore();
+  renderSelectFieldsList();
+}
+
+function toggleSelectRequired(idx){
+  selectFields[idx].required=!selectFields[idx].required;
+  salvarConfigFirestore();
+  renderSelectFieldsList();
+}
+
+function addOptionToSelectField(idx){
+  var opt=(prompt('Nova opção:')||'').trim();
+  if(!opt) return;
+  if(!selectFields[idx].options.includes(opt)) selectFields[idx].options.push(opt);
+  salvarConfigFirestore();
+  renderSelectFieldsList();
+}
+
+function removeOptionFromSelectField(idx, optIdx){
+  selectFields[idx].options.splice(optIdx,1);
+  salvarConfigFirestore();
+  renderSelectFieldsList();
+}
+
+function detectAndRefreshOptions(idx){
+  var name=selectFields[idx].name;
+  var detected=detectOptionsForField(name);
+  // Merge sem duplicar
+  detected.forEach(function(o){
+    if(!selectFields[idx].options.includes(o)) selectFields[idx].options.push(o);
+  });
+  selectFields[idx].options.sort();
+  salvarConfigFirestore();
+  renderSelectFieldsList();
+  alert('✅ '+selectFields[idx].options.length+' opções para "'+name+'"');
+}
+
+function toggleSelectMultiple(idx){
+  selectFields[idx].multiple=!selectFields[idx].multiple;
+  salvarConfigFirestore();
+  renderSelectFieldsList();
+}
+
+function renderSelectFieldsList(){
+  var el=document.getElementById('selectFieldsList');
+  if(!el) return;
+  if(!selectFields.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--text3)">Nenhum campo configurado ainda. Adicione um campo acima.</div>';
+    return;
+  }
+  el.innerHTML=selectFields.map(function(f,idx){
+    var optHtml=f.options.map(function(o,oi){
+      return '<span style="display:inline-flex;align-items:center;gap:3px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px 8px;font-size:11px">'+
+        o+'<button onclick="removeOptionFromSelectField('+idx+','+oi+')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;padding:0 0 0 2px">×</button></span>';
+    }).join('');
+    return '<div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.75rem 1rem">'+
+      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:.5rem;flex-wrap:wrap">'+
+        '<span style="font-size:13px;font-weight:600;flex:1">🔽 '+f.name+'</span>'+
+        '<label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer" title="Permite selecionar várias opções">'+
+          '<input type="checkbox" '+(f.multiple?'checked':'')+' onchange="toggleSelectMultiple('+idx+')"> Múltipla escolha</label>'+
+        '<label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer">'+
+          '<input type="checkbox" '+(f.required?'checked':'')+' onchange="toggleSelectRequired('+idx+')"> Obrigatório</label>'+
+        '<button class="btn-g" style="font-size:11px;padding:3px 8px" onclick="detectAndRefreshOptions('+idx+')">🔍 Detectar</button>'+
+        '<button class="del-btn" onclick="removeSelectField('+idx+')">×</button>'+
+      '</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:.5rem">'+optHtml+'</div>'+
+      '<button class="btn-g" style="font-size:11px;padding:3px 10px" onclick="addOptionToSelectField('+idx+')">+ Opção manual</button>'+
+    '</div>';
+  }).join('');
+}
+
+function renderTagFormFieldsConfig(){
+  var el=document.getElementById('tagFormFieldsConfig');
+  if(!el) return;
+  var allTags=Object.keys(tagMap).sort();
+  if(!allTags.length){el.innerHTML='<div style="font-size:12px;color:var(--text3)">Nenhuma tag configurada ainda.</div>';return;}
+  
+  // Mesmos campos que o formulário renderiza: fixos + extras (sem duplicados
+  // e sem campos internos como calendarioId/calendarioIds)
+  var allFields=allDynFormFields().slice(1).map(function(f){return f.key;});
+  
+  el.innerHTML=allTags.map(function(tag){
+    var checked=tagFormFields[tag]||[];
+    return '<div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.75rem 1rem;margin-bottom:.5rem">'+
+      '<div style="font-size:13px;font-weight:600;margin-bottom:.6rem">🏷️ '+tag+'</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:8px">'+
+        allFields.map(function(f){
+          return '<label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer">'+
+            '<input type="checkbox" '+(checked.includes(f)?'checked':'')+' onchange="toggleTagField(\''+tag+'\',\''+f+'\',this.checked)"> '+f+
+          '</label>';
+        }).join('')+
+      '</div></div>';
+  }).join('');
+}
+
+function toggleTagField(tag,field,checked){
+  if(!tagFormFields[tag]) tagFormFields[tag]=[];
+  if(checked){
+    if(!tagFormFields[tag].includes(field)) tagFormFields[tag].push(field);
+  }else{
+    tagFormFields[tag]=tagFormFields[tag].filter(f=>f!==field);
+  }
+  saveLocal();salvarConfigFirestore();
+}
+
+// Busca valor de forma case-insensitive num objeto (para edição)
+function rawVal(data, key){
+  if(!data) return '';
+  if(data[key]!==undefined) return String(data[key]||'');
+  const k=Object.keys(data).find(function(k){return k.toLowerCase()===key.toLowerCase();});
+  return k?String(data[k]||''):'';
+}
+
+// Escapa HTML para evitar problemas nos value dos inputs
+function escVal(s){ return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Campos do formulário de tarefa, na ordem exata solicitada.
+// 'key' deve corresponder ao nome do campo no Firestore (case-insensitive na busca).
+// extra:true = oculto por padrão; só aparece se a tag selecionada o incluir em "Campos por tag".
+var TASK_FORM_FIELDS=[
+  {key:'tags',          label:'Tags',          required:false},
+  {key:'Modalidade',    label:'Modalidade',    required:false},
+  {key:'Unidade',       label:'Unidade',       required:false},
+  {key:'Canal',         label:'Canal',         required:false},
+  {key:'Id do evento',  label:'Id do evento',  required:false, extra:true},
+  {key:'Msg WA',        label:'Msg WA',        required:false, extra:true},
+  {key:'Fluxo',         label:'Fluxo',         required:false, extra:true},
+];
+
+// Campos extras (colunas extras) que podem aparecer no formulário quando a tag
+// selecionada os incluir na configuração "Campos por tag". Ficam ocultos por padrão.
+function extraFormFields(){
+  return extraCols
+    .filter(function(c){
+      var lc=c.toLowerCase();
+      if(lc==='calendarioid'||lc==='calendarioids') return false; // gerenciados pelo campo "Aba"
+      return !TASK_FORM_FIELDS.some(function(f){return f.key.toLowerCase()===lc;});
+    })
+    .map(function(c){return {key:c,label:c,required:false,extra:true};});
+}
+
+// Todos os campos dinâmicos que o formulário renderiza (fixos + extras)
+function allDynFormFields(){
+  return TASK_FORM_FIELDS.concat(extraFormFields());
+}
+
+function salvarTarefa(){
+  if(!db)       { alert('Firebase não conectado.'); return; }
+  if(!adminMode){ alert('Entre no modo admin primeiro.'); return; }
+
+  var tituloEl=document.getElementById('af_titulo');
+  var dataEl=document.getElementById('af_data');
+  if(!tituloEl||!dataEl){ alert('Erro: formulário não encontrado.'); return; }
+
+  // Ler e validar os campos dinâmicos (Tags, Modalidade, Unidade, Canal, etc.)
+  var camposFaltando=[];
+  var dynValues={};
+  allDynFormFields().forEach(function(f){
+    var fieldId='af_field_'+sanitize(f.key);
+    var selCfg=selectFields.find(function(s){return s.name.toLowerCase()===f.key.toLowerCase();});
+    var val='';
+    
+    // Tratamento especial para Tags - sempre é um select
+    if(f.key.toLowerCase()==='tags'){
+      var el=document.getElementById(fieldId);
+      val=el?el.value||'':'';
+    } else if(selCfg&&selCfg.multiple){
+      var group=document.getElementById(fieldId);
+      if(group) val=[].slice.call(group.querySelectorAll('input[type=checkbox]:checked')).map(function(cb){return cb.value;}).join(';');
+    } else {
+      var el=document.getElementById(fieldId);
+      val=el?el.value||'':'';
+    }
+    dynValues[f.key]=val;
+    // Campo oculto pela configuração "Campos por tag" não conta como obrigatório
+    var wrap=document.querySelector('#modal [data-field-key="'+sanitize(f.key)+'"]');
+    var oculto=wrap&&wrap.style.display==='none';
+    if(f.required&&!val&&!oculto) camposFaltando.push(f.label);
+  });
+  // Campo "Aba" — multi-seleção dinâmica das abas existentes (exceto a padrão)
+  var abasDisponiveis=calendarios.filter(function(c){return c.id!==DEFAULT_CAL_ID;});
+  var abaGroupEl=document.getElementById('af_field_aba');
+  var abasSelecionadas=[];
+  if(abaGroupEl){
+    abasSelecionadas=[].slice.call(abaGroupEl.querySelectorAll('input[type=checkbox]:checked')).map(function(cb){return cb.value;});
+  }
+  if(camposFaltando.length){
+    alert('Preencha os campos obrigatórios: '+camposFaltando.join(', '));
+    return;
+  }
+
+  var titulo=tituloEl.value.trim();
+  var data=dataEl.value.trim();
+  if(!titulo||!data){ alert('Título e data são obrigatórios.'); return; }
+
+  var obj={
+    titulo:  titulo,
+    data:    data,
+    horario: (document.getElementById('af_horario')||{}).value||'',
+    calendarioIds: abasSelecionadas.join(';'),
+  };
+
+  // originalRaw — dados originais no Firestore (preserva a grafia original do nome do campo,
+  // e preserva campos antigos não presentes neste formulário simplificado, já que usamos update())
+  var originalRaw=editingTaskId
+    ? ((allTasks.find(function(t){return t.id===editingTaskId;})||{})._raw||{})
+    : {};
+
+  allDynFormFields().forEach(function(f){
+    var originalKey=Object.keys(originalRaw).find(function(k){return k.toLowerCase()===f.key.toLowerCase();});
+    var saveKey=sanitizeFirestoreKey(originalKey||f.key);
+    obj[saveKey]=dynValues[f.key];
+    if(f.key.toLowerCase()==='tags') obj['tags']=dynValues[f.key];
+  });
+
+  var btn=document.getElementById('afSaveBtn');
+  if(btn){ btn.disabled=true; btn.textContent='Salvando...'; }
+
+  var p=editingTaskId
+    ? db.collection('tarefas').doc(editingTaskId).update(obj)
+    : db.collection('tarefas').add(obj);
+
+  p.then(function(){
+    closeModal();
+  }).catch(function(e){
+    alert('Erro ao salvar: '+e.message);
+    if(btn){ btn.disabled=false; btn.textContent='💾 Salvar'; }
+  });
+}
+
+function deletarTarefa(id){
+  if(!db||!adminMode) return;
+  if(!confirm('Excluir esta tarefa permanentemente?')) return;
+  db.collection('tarefas').doc(id).delete()
+    .then(function(){closeModal();})
+    .catch(function(e){alert('Erro ao excluir: '+e.message);});
+}
+
+function openAddModal(dateStr){
+  if(!adminMode||!db) return;
+  editingTaskId=null;
+  modalIsForm=true;
+  renderTaskForm({data:dateStr||dk(yr,mo,td.getDate())}, false);
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(function(){ document.getElementById('af_titulo')&&document.getElementById('af_titulo').focus(); },100);
+}
+
+function openEditModal(id){
+  if(!adminMode||!db) return;
+  const t=allTasks.find(function(x){return x.id===id;});
+  if(!t) return;
+  editingTaskId=id;
+  modalIsForm=true;
+  renderTaskForm(t._raw, true);
+  document.getElementById('overlay').classList.add('open');
+}
+
+// Visualização para não-admin: mesmo formulário da tarefa, com todos os campos bloqueados
+function openReadOnlyModal(id){
+  const t=allTasks.find(function(x){return x.id===id;});
+  if(!t) return;
+  hideTaskTip();
+  editingTaskId=null;
+  modalIsForm=false; // nada a perder — clicar fora pode fechar
+  renderTaskForm(t._raw, false, true);
+  document.getElementById('overlay').classList.add('open');
+}
+
+// ══ Tooltip de tarefa (hover para não-admin) ════════════════════════
+function taskTipHtml(t){
+  var rows=[];
+  function add(label,val){
+    if(!val) return;
+    rows.push('<div class="tip-row"><span class="tip-l">'+escVal(label)+'</span><span class="tip-v">'+val+'</span></div>');
+  }
+  add('Data', fmtDate(t.date)+(t.time?' · '+t.time:''));
+  var tags=(t.tags||'').split(';').map(function(x){return x.trim();}).filter(Boolean);
+  add('Tags', tags.map(escVal).join(', '));
+  // Demais campos preenchidos pelo admin (exclui internos e os já mostrados acima)
+  var skip=['titulo','data','horario','tags','concluida','calendarioid','calendarioids','emoji'];
+  Object.keys(t._raw||{}).forEach(function(k){
+    if(skip.indexOf(k.toLowerCase())!==-1) return;
+    var v=cleanVal((t._raw[k]||'').toString().trim());
+    if(v) add(k, escVal(v));
+  });
+  return '<div class="tip-title">'+(t.emoji?t.emoji+' ':'')+escVal(t.titulo)+'</div>'+rows.join('');
+}
+function showTaskTip(e,id){
+  if(adminMode) return;
+  var t=allTasks.find(function(x){return x.id===id;});
+  if(!t) return;
+  var tip=document.getElementById('taskTip');
+  tip.innerHTML=taskTipHtml(t);
+  tip.style.borderLeftColor=colorFor(t);
+  tip.classList.add('show');
+  moveTaskTip(e);
+}
+function moveTaskTip(e){
+  var tip=document.getElementById('taskTip');
+  if(!tip.classList.contains('show')) return;
+  var x=e.clientX+14, y=e.clientY+16;
+  var r=tip.getBoundingClientRect();
+  if(x+r.width>window.innerWidth-8)  x=Math.max(8, e.clientX-r.width-10);
+  if(y+r.height>window.innerHeight-8) y=Math.max(8, e.clientY-r.height-10);
+  tip.style.left=x+'px';
+  tip.style.top=y+'px';
+}
+function hideTaskTip(){
+  document.getElementById('taskTip').classList.remove('show');
+}
+
+function renderTaskForm(data, isEdit, readOnly){
+  data=data||{};
+
+  function rv(k){ return rawVal(data,k); }
+  function vAttr(k){ return rv(k).replace(/"/g,'&quot;'); }
+  // Data sempre formatada para YYYY-MM-DD (exigido pelo input type=date)
+  function vDate(){ return parseDt(rv('data')); }
+
+  // Renderiza cada campo dinâmico (Tags, Modalidade, Unidade, Canal...)
+  // Se o campo tiver um selectField configurado (dropdown/múltipla escolha), usa essa UI.
+  // Caso contrário, vira um input de texto simples.
+  function renderDynField(f){
+    var fieldId='af_field_'+sanitize(f.key);
+    var selCfg=selectFields.find(function(s){return s.name.toLowerCase()===f.key.toLowerCase();});
+    var currentVal=getExtraVal(data,f.key)||rv(f.key);
+    var inputHtml;
+    
+    // Tratamento especial para Tags - sempre renderiza como dropdown com as tags disponíveis
+    if(f.key.toLowerCase()==='tags'){
+      var tagOptions=Object.keys(tagMap).sort();
+      // Pré-seleciona a tag atual ignorando maiúsculas/minúsculas (dados antigos podem diferir)
+      var curTag=(currentVal||'').split(';')[0].trim().toLowerCase();
+      var opts='<option value="">— Selecione —</option>'+
+        tagOptions.map(function(t){
+          return '<option value="'+t.replace(/"/g,'&quot;')+'"'+(curTag&&t.toLowerCase()===curTag?' selected':'')+'>'+t+'</option>';
+        }).join('');
+      inputHtml='<select id="'+fieldId+'">'+opts+'</select>';
+    } else if(selCfg){
+      var currentVals=currentVal.split(';').map(function(x){return x.trim();}).filter(Boolean);
+      if(selCfg.multiple){
+        inputHtml='<div class="multi-check-group" id="'+fieldId+'" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">'+
+          selCfg.options.map(function(o){
+            var checked=currentVals.includes(o)?'checked':'';
+            return '<label style="display:inline-flex;align-items:center;gap:5px;background:var(--bg);border:1px solid var(--border2);border-radius:20px;padding:4px 10px;font-size:12px;cursor:pointer;transition:all .15s" '+
+              'onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'var(--border2)\'">'+
+              '<input type="checkbox" value="'+o.replace(/"/g,'&quot;')+'" '+checked+' style="accent-color:var(--accent)"> '+o+'</label>';
+          }).join('')+
+        '</div>';
+      } else {
+        var opts='<option value="">— Selecione —</option>'+
+          selCfg.options.map(function(o){
+            return '<option value="'+o.replace(/"/g,'&quot;')+'"'+(o===currentVal?' selected':'')+'>'+o+'</option>';
+          }).join('');
+        inputHtml='<select id="'+fieldId+'">'+opts+'</select>';
+      }
+    } else {
+      inputHtml='<input type="text" id="'+fieldId+'" value="'+currentVal.replace(/"/g,'&quot;')+'">';
+    }
+
+    return '<div class="form-field full" data-field-key="'+sanitize(f.key)+'"'+(f.extra?' data-extra-field="1" style="display:none"':'')+'>'+
+      '<label>'+f.label+(f.required?' <span class="req">*</span>':'')+(selCfg&&selCfg.multiple?' <span style="font-size:10px;color:var(--text3);font-weight:400">(múltipla escolha)</span>':'')+'</label>'+
+      inputHtml+
+    '</div>';
+  }
+
+  // Fixos + extras: os extras começam ocultos e só aparecem se a tag selecionada
+  // os incluir na configuração "Campos por tag" (applyTagFieldVisibility cuida disso)
+  var dynFieldsHtml=allDynFormFields().map(renderDynField).join('');
+
+  // Campo "Aba" — multi-seleção dinâmica conforme as abas de calendário existentes
+  // (a aba padrão não aparece como opção pois toda tarefa já está nela automaticamente)
+  var abasDisponiveis=calendarios.filter(function(c){return c.id!==DEFAULT_CAL_ID;});
+  var abaHtml='';
+  if(abasDisponiveis.length>0){
+    var existingAbaStr=rv('calendarioIds');
+    var existingAbaArr=existingAbaStr
+      ? existingAbaStr.split(';').map(function(x){return x.trim();}).filter(Boolean)
+      : (!isEdit&&currentCalId!==DEFAULT_CAL_ID?[currentCalId]:[]);
+    abaHtml='<div class="form-field full">'+
+      '<label>Aba <span style="font-size:10px;color:var(--text3);font-weight:400">(múltipla escolha)</span></label>'+
+      '<div class="multi-check-group" id="af_field_aba" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">'+
+        abasDisponiveis.map(function(c){
+          var checked=existingAbaArr.indexOf(c.id)!==-1?'checked':'';
+          return '<label style="display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border2);border-radius:20px;padding:4px 10px 4px 8px;font-size:12px;cursor:pointer;transition:all .15s" '+
+            'onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'var(--border2)\'">'+
+            '<input type="checkbox" value="'+c.id+'" '+checked+' style="accent-color:'+(c.cor||'var(--accent)')+'">'+
+            '<span style="width:7px;height:7px;border-radius:50%;background:'+(c.cor||'#378ADD')+';display:inline-block"></span> '+c.nome+'</label>';
+        }).join('')+
+      '</div>'+
+    '</div>';
+  }
+
+  try{
+    var barColor=readOnly?colorFor({tags:rv('tags')}):'';
+    document.getElementById('modal').innerHTML=
+      (readOnly?'<div class="modal-bar" style="background:'+barColor+'"></div>':'')+
+      '<div class="modal-title" style="margin-bottom:1rem">'+(readOnly?'👁 Detalhes da tarefa':(isEdit?'✏️ Editar tarefa':'➕ Nova tarefa'))+'</div>'+
+      '<div class="form-grid">'+
+        '<div class="form-field full"><label>Título <span class="req">*</span></label>'+
+          '<input type="text" id="af_titulo" value="'+vAttr('titulo')+'" placeholder="Nome da tarefa..."></div>'+
+        '<div class="form-field"><label>Data <span class="req">*</span></label>'+
+          '<input type="date" id="af_data" value="'+vDate()+'"></div>'+
+        '<div class="form-field"><label>Horário</label>'+
+          '<input type="time" id="af_horario" value="'+vAttr('horario')+'"></div>'+
+        abaHtml+
+        dynFieldsHtml+
+      '</div>'+
+      '<div class="modal-actions" style="margin-top:1rem">'+
+      (readOnly
+        ? '<button class="btn-close" onclick="closeModal()">Fechar</button>'
+        : (isEdit?'<button class="btn-danger" onclick="deletarTarefa(\''+editingTaskId+'\')">Excluir</button>':'')+
+          '<button class="btn-close" onclick="closeModal()">Cancelar</button>'+
+          '<button class="btn-p" id="afSaveBtn" onclick="salvarTarefa()">Salvar</button>'
+      )+
+      '</div>';
+
+    // Aplica visibilidade conforme a tag já preenchida (edição) e atualiza quando a tag muda
+    applyTagFieldVisibility();
+    var tagsField=document.getElementById('af_field_tags');
+    if(tagsField&&!readOnly) tagsField.addEventListener('change', applyTagFieldVisibility);
+    // Modo somente leitura: todos os campos visíveis, porém bloqueados
+    if(readOnly){
+      document.querySelectorAll('#modal input, #modal select, #modal textarea').forEach(function(el){el.disabled=true;});
+    }
+  }catch(e){
+    alert('Erro ao montar formulário: '+e.message);
+  }
+}
+
+// Mostra apenas os campos configurados para a tag selecionada (seção "Campos por tag").
+// Sem tag selecionada, ou sem configuração para a tag: campos fixos aparecem, extras ficam ocultos.
+function applyTagFieldVisibility(){
+  var sel=document.getElementById('af_field_tags');
+  if(!sel) return;
+  var tag=(sel.value||'').split(';')[0].trim();
+  // Busca a configuração da tag sem diferenciar maiúsculas/minúsculas
+  var cfgKey=tag?Object.keys(tagFormFields).find(function(k){return k.toLowerCase()===tag.toLowerCase();}):null;
+  var allowed=cfgKey?tagFormFields[cfgKey]:null;
+  var filter=!!(allowed&&allowed.length);
+  allDynFormFields().slice(1).forEach(function(f){
+    var el=document.querySelector('#modal [data-field-key="'+sanitize(f.key)+'"]');
+    if(!el) return;
+    var permitido=filter&&allowed.some(function(a){return String(a).toLowerCase()===f.key.toLowerCase();});
+    // Campo fixo: visível por padrão, oculto se a tag tiver filtro e ele não estiver na lista.
+    // Campo extra: oculto por padrão, visível apenas se a tag o incluir na configuração.
+    var show=f.extra?permitido:(!filter||permitido);
+    el.style.display=show?'':'none';
+  });
+  console.log('Campos do formulário atualizados para tag:', tag, 'Permitidos:', allowed||'(todos)');
+}
+
+// ══ Tag colors ══════════════════════════════════════════════════════
+function autoTags(){
+  let ci=Object.keys(tagMap).length, changed=false;
+  allTasks.forEach(function(t){
+    (t.tags||'').split(';').map(function(x){return x.trim();}).filter(Boolean).forEach(function(tag){
+      // Não recria tags excluídas manualmente pelo admin
+      if(removedTags.some(function(r){return r.toLowerCase()===tag.toLowerCase();})) return;
+      if(!Object.keys(tagMap).find(function(k){return k.toLowerCase()===tag.toLowerCase();})){
+        tagMap[tag]=PALETTE[ci%PALETTE.length]; ci++; changed=true;
+      }
+    });
+  });
+  // Salva no Firestore apenas se admin (não sobrescreve config do admin para outros usuários)
+  if(changed&&adminMode) salvarConfigFirestore();
+}
+function colorFor(t){
+  const tags=(t.tags||'').split(';').map(function(x){return x.trim();}).filter(Boolean);
+  for(var i=0;i<tags.length;i++){
+    const k=Object.keys(tagMap).find(function(k){return k.toLowerCase()===tags[i].toLowerCase();});
+    if(k) return tagMap[k];
+  }
+  return '#a09d98';
+}
+function renderTagList(){
+  const el=document.getElementById('tagList');
+  const ent=Object.entries(tagMap);
+  if(!ent.length){el.innerHTML='<div style="font-size:12px;color:var(--text3)">Nenhuma tag ainda.</div>';return;}
+  el.innerHTML=ent.map(function([tag,color]){
+    var js=tag.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return '<div class="tmrow"><div class="tm-dot" style="background:'+color+'"></div><input class="tm-name-inp" type="text" value="'+escVal(tag)+'" title="Clique para editar o nome da tag" onchange="renameTag(\''+js+'\',this.value)"><input class="tm-inp" type="text" value="'+color+'" onchange="updateColor(\''+js+'\',this.value)" oninput="syncDot(this)"><button class="del-btn" onclick="delTag(\''+js+'\')">×</button></div>';
+  }).join('');
+}
+function renameTag(oldTag,newTag){
+  newTag=(newTag||'').trim();
+  if(!newTag||newTag===oldTag){renderTagList();return;}
+  // Nome já usado por outra tag? (ignora maiúsculas/minúsculas; renomear só o case da própria tag é permitido)
+  var dup=Object.keys(tagMap).find(function(k){return k!==oldTag&&k.toLowerCase()===newTag.toLowerCase();});
+  if(dup){alert('Já existe uma tag chamada "'+dup+'".');renderTagList();return;}
+  // Recria o mapa preservando a ordem das tags
+  var newMap={};
+  Object.keys(tagMap).forEach(function(k){newMap[k===oldTag?newTag:k]=tagMap[k];});
+  tagMap=newMap;
+  // Move a configuração "Campos por tag" para o novo nome
+  var cfgKey=Object.keys(tagFormFields).find(function(k){return k===oldTag;});
+  if(cfgKey){tagFormFields[newTag]=tagFormFields[cfgKey];delete tagFormFields[cfgKey];}
+  // O novo nome deixa de contar como excluído; o antigo passa a contar,
+  // para o autoTags não recriá-lo enquanto as tarefas são atualizadas
+  removedTags=removedTags.filter(function(r){return r.toLowerCase()!==newTag.toLowerCase();});
+  if(oldTag.toLowerCase()!==newTag.toLowerCase()&&!removedTags.some(function(r){return r.toLowerCase()===oldTag.toLowerCase();})) removedTags.push(oldTag);
+  // Atualiza as tarefas existentes que usam a tag antiga
+  var affected=allTasks.filter(function(t){
+    return (t.tags||'').split(';').some(function(x){return x.trim().toLowerCase()===oldTag.toLowerCase();});
+  });
+  if(db&&adminMode&&affected.length){
+    var batch=db.batch();
+    affected.forEach(function(t){
+      var newTags=(t.tags||'').split(';').map(function(x){
+        var s=x.trim();
+        return s.toLowerCase()===oldTag.toLowerCase()?newTag:s;
+      }).filter(Boolean).join(';');
+      batch.update(db.collection('tarefas').doc(t.id),{tags:newTags});
+    });
+    batch.commit().catch(function(e){alert('Tag renomeada, mas houve erro ao atualizar as tarefas: '+e.message);});
+  }
+  salvarConfigFirestore();
+  renderTagList();renderTagChips();renderCal();renderLegend();renderTagFormFieldsConfig();
+}
+function syncDot(inp){const d=inp.closest('.tmrow').querySelector('.tm-dot');if(/^#[0-9a-fA-F]{3,6}$/.test(inp.value))d.style.background=inp.value;}
+function updateColor(tag,color){if(!/^#[0-9a-fA-F]{3,6}$/.test(color))return;tagMap[tag]=color;salvarConfigFirestore();renderCal();renderLegend();renderTagChips();}
+function delTag(tag){
+  console.log('Deletando tag:', tag);
+  delete tagMap[tag];
+  delete tagFormFields[tag];
+  // Marca como excluída para o autoTags não recriá-la a partir das tarefas existentes
+  if(!removedTags.some(function(r){return r.toLowerCase()===tag.toLowerCase();})) removedTags.push(tag);
+  console.log('Tags restantes:', Object.keys(tagMap));
+  salvarConfigFirestore();
+  renderTagList();renderCal();renderLegend();renderTagChips();renderTagFormFieldsConfig();
+}
+
+function salvarTagsAgoraMesmo(){
+  console.log('Salvando tags:', Object.keys(tagMap));
+  console.log('tagFormFields:', tagFormFields);
+  salvarConfigFirestore();
+  console.log('✓ Salvado em localStorage e Firestore');
+  setStatus('ok','✓ Tags salvas!');
+  setTimeout(function(){ setStatus('ok',''); }, 2000);
+}
+
+let pickerColor=PALETTE[0];
+function openPicker(){
+  const name=document.getElementById('newTag').value.trim();if(!name)return;
+  document.getElementById('pickerTagName').textContent=name;
+  pickerColor=PALETTE[Object.keys(tagMap).length%PALETTE.length];
+  document.getElementById('palette').innerHTML=PALETTE.map(function(c){return '<div class="swatch'+(c===pickerColor?' sel':'')+'" style="background:'+c+'" onclick="pickSwatch(this,\''+c+'\')"></div>';}).join('');
+  document.getElementById('customHex').value=pickerColor;
+  document.getElementById('pickerWrap').style.display='block';
+}
+function pickSwatch(el,c){document.querySelectorAll('.swatch').forEach(function(s){s.classList.remove('sel');});el.classList.add('sel');pickerColor=c;document.getElementById('customHex').value=c;}
+function confirmTag(){
+  const name=document.getElementById('newTag').value.trim();
+  const hex=document.getElementById('customHex').value.trim();
+  if(hex&&/^#[0-9a-fA-F]{3,6}$/.test(hex))pickerColor=hex;
+  if(!name)return;
+  tagMap[name]=pickerColor;
+  // Recriar manualmente uma tag tira ela da lista de excluídas
+  removedTags=removedTags.filter(function(r){return r.toLowerCase()!==name.toLowerCase();});
+  salvarConfigFirestore();closePicker();
+  document.getElementById('newTag').value='';
+  renderTagList();renderTagChips();renderCal();renderLegend();renderTagFormFieldsConfig();
+}
+function closePicker(){document.getElementById('pickerWrap').style.display='none';}
+
+// ══ Tag chips ═══════════════════════════════════════════════════════
+function renderTagChips(){
+  const el=document.getElementById('tagChips');
+  const ent=Object.entries(tagMap);
+  if(!ent.length){el.innerHTML='<span style="font-size:11px;color:var(--text3)">Nenhuma tag.</span>';return;}
+  el.innerHTML=ent.map(function([tag,color]){
+    const isActive=activeTags.has(tag.toLowerCase()), isExcl=excludedTags.has(tag.toLowerCase());
+    return '<div class="val-chip'+(isActive?' active':'')+(isExcl?' excl':'')+'" style="background:'+color+'22;color:'+color+';border-color:'+color+'55" onclick="toggleTagChip(event,\''+tag+'\')">'+tag+'</div>';
+  }).join('');
+}
+function toggleTagChip(event,tag){
+  const lower=tag.toLowerCase();
+  if(event.altKey){if(excludedTags.has(lower))excludedTags.delete(lower);else{excludedTags.add(lower);activeTags.delete(lower);}}
+  else{if(activeTags.has(lower))activeTags.delete(lower);else{activeTags.add(lower);excludedTags.delete(lower);}}
+  renderTagChips();applyFilters();
+}
+
+// ══ Extra cols ══════════════════════════════════════════════════════
+function sanitize(s){return s.replace(/[^a-zA-Z0-9]/g,'_');}
+function addExtraCol(){
+  const v=(document.getElementById('newExtraCol').value||'').trim();
+  if(!v||extraCols.includes(v))return;
+  extraCols.push(v);salvarConfigFirestore();
+  document.getElementById('newExtraCol').value='';
+  renderExtraColsList();renderDynColSelector();renderPillCfg();renderTagFormFieldsConfig();renderTaskTable();
+}
+function delExtraCol(col){
+  extraCols=extraCols.filter(function(x){return x!==col;});
+  // Remover este campo de todas as tags
+  Object.keys(tagFormFields).forEach(function(tag){
+    tagFormFields[tag]=tagFormFields[tag].filter(f=>f!==col);
+  });
+  // Remover este campo das colunas de tabela de todas as abas
+  Object.keys(tableCols).forEach(function(abaId){
+    tableCols[abaId]=tableCols[abaId].filter(function(c){return c.toLowerCase()!==col.toLowerCase();});
+  });
+  salvarConfigFirestore();renderExtraColsList();renderDynColSelector();renderPillCfg();renderTagFormFieldsConfig();renderTaskTable();
+}
+function renderExtraColsList(){
+  const el=document.getElementById('extraColsList');
+  if(!extraCols.length){el.innerHTML='<div style="font-size:12px;color:var(--text3)">Nenhum campo extra ainda. Use o botão acima para detectar automaticamente.</div>';return;}
+  el.innerHTML=extraCols.map(function(c){
+    return '<div style="display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px;font-size:13px;color:var(--text2)"><span style="flex:1">'+c+'</span><button class="del-btn" onclick="delExtraCol(\''+c+'\')">×</button></div>';
+  }).join('');
+}
+
+// Detecta automaticamente os campos extras das tarefas já carregadas
+function autoDetectarCampos(){
+  if(!allTasks.length){alert('Sincronize o calendário primeiro para carregar as tarefas.');return;}
+  const padroes=new Set(['titulo','data','horario','tipo','tags','prioridade','emoji','notas','concluida']);
+  const detectados=new Set();
+  allTasks.forEach(function(t){
+    Object.keys(t._raw||{}).forEach(function(k){
+      if(!padroes.has(k.toLowerCase())&&(t._raw[k]||'').toString().trim()){
+        detectados.add(k);
+      }
+    });
+  });
+  if(!detectados.size){alert('Nenhum campo extra encontrado nas tarefas.');return;}
+  let adicionados=0;
+  detectados.forEach(function(col){
+    if(!extraCols.includes(col)){extraCols.push(col);adicionados++;}
+  });
+  if(adicionados>0){
+    salvarConfigFirestore();
+    renderExtraColsList();renderDynColSelector();renderPillCfg();renderTaskTable();
+    alert('✅ '+adicionados+' campo(s) detectado(s) e adicionado(s):\n'+[...detectados].join('\n'));
+  } else {
+    alert('Todos os campos detectados já estavam configurados.');
+  }
+}
+
+// Busca valor de campo extra de forma case-insensitive
+function getExtraVal(raw,colName){
+  if(!raw) return '';
+  // 1. Busca exata
+  if(raw[colName]!==undefined) return (raw[colName]||'').toString();
+  // 2. Case-insensitive
+  var key=Object.keys(raw).find(function(k){return k.toLowerCase()===colName.toLowerCase();});
+  if(key) return (raw[key]||'').toString();
+  // 3. Sanitizado — ex: "Público/Restrições" → "Público_Restrições"
+  var sanitized=sanitizeFirestoreKey(colName).toLowerCase();
+  var sanitizedKey=Object.keys(raw).find(function(k){
+    return sanitizeFirestoreKey(k).toLowerCase()===sanitized;
+  });
+  return sanitizedKey?(raw[sanitizedKey]||'').toString():'';
+}
+
+// ══ Dynamic col filters ══════════════════════════════════════════════
+function getAllFilterableCols(){
+  return ['tipo','tags','prioridade',...extraCols];
+}
+function getColValues(col){
+  const vals=new Set();
+  allTasks.forEach(function(t){
+    const v=(t._raw[col]||t[col]||'').trim();
+    if(v){
+      if(col==='tags') v.split(';').map(function(x){return x.trim();}).filter(Boolean).forEach(function(tag){vals.add(tag);});
+      else vals.add(v);
+    }
+  });
+  return [...vals].sort();
+}
+function renderDynColFilters(){
+  const container=document.getElementById('dynColFilters');
+  if(!dynFilterCols.length){container.innerHTML='';return;}
+  container.innerHTML=dynFilterCols.map(function(col){
+    const vals=getColValues(col);
+    const active=dynColFilters[col]||new Set();
+    const chips=vals.map(function(v){
+      const isActive=active.has(v),isExcl=active.has('__excl__'+v);
+      return '<div class="plain-chip'+(isExcl?' excl':isActive?' active':'')+'" onclick="toggleDynChip(event,\''+col+'\',\''+v.replace(/'/g,"\\'")+'\')">'+(isExcl?'✗ ':'')+v+'</div>';
+    }).join('');
+    return '<div class="drawer-section" style="margin-bottom:.5rem"><div class="drawer-section-label" style="display:flex;align-items:center;justify-content:space-between"><span>'+col+'</span><button class="del-btn" style="font-size:13px" onclick="removeDynFilter(\''+col.replace(/'/g,"\\'")+'\')" >×</button></div><div class="chip-group">'+chips+'</div></div>';
+  }).join('');
+}
+function toggleDynChip(event,col,val){
+  if(!dynColFilters[col])dynColFilters[col]=new Set();
+  const s=dynColFilters[col],ek='__excl__'+val;
+  if(event.altKey){if(s.has(ek))s.delete(ek);else{s.delete(val);s.add(ek);}}
+  else{if(s.has(val))s.delete(val);else{s.delete(ek);s.add(val);}}
+  renderDynColFilters();applyFilters();
+}
+function removeDynFilter(col){dynFilterCols=dynFilterCols.filter(function(c){return c!==col;});delete dynColFilters[col];saveLocal();renderDynColFilters();renderDynColSelector();applyFilters();}
+function renderDynColSelector(){
+  const sel=document.getElementById('dynColSelector');if(!sel)return;
+  const available=getAllFilterableCols().filter(function(c){return !dynFilterCols.includes(c);});
+  sel.innerHTML='<option value="">— escolha um campo —</option>'+available.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('');
+}
+function addDynColFromSelector(){
+  const sel=document.getElementById('dynColSelector'),col=sel?.value;if(!col)return;
+  if(!dynFilterCols.includes(col)){dynFilterCols.push(col);dynColFilters[col]=new Set();}
+  saveLocal();renderDynColFilters();renderDynColSelector();applyFilters();sel.value='';
+}
+function addDynColFilter(col){
+  if(!dynFilterCols.includes(col)){dynFilterCols.push(col);dynColFilters[col]=new Set();}
+  saveLocal();renderDynColFilters();renderDynColSelector();openDrawer();
+}
+
+// ══ Date helpers ════════════════════════════════════════════════════
+function dk(y,m,d){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
+function parseDt(v){
+  if(!v)return'';
+  const s=v.toString().trim();
+  if(/^\d{4}-\d{2}-\d{2}(T.*)?$/.test(s))return s.slice(0,10);
+  const d=new Date(s);if(!isNaN(d))return dk(d.getFullYear(),d.getMonth(),d.getDate());
+  return s.replace(/[T\s].*$/,'').slice(0,10);
+}
+function fmtDate(s){
+  if(!s)return'';
+  const dt=s.slice(0,10);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(dt))return dt;
+  const[y,m,d]=dt.split('-');return d+'/'+m+'/'+y;
+}
+function cleanVal(v){
+  if(!v)return v;
+  const s=v.toString().trim();
+  if(/^\d{4}-\d{2}-\d{2}(T.*)?$/.test(s))return fmtDate(s.slice(0,10));
+  return s;
+}
+
+// ══ Pill display ════════════════════════════════════════════════════
+function allPillFields(){
+  const base=[
+    {key:'none',label:'— nenhum —'},{key:'emoji',label:'Emoji'},
+    {key:'titulo',label:'Título'},{key:'data',label:'Data'},
+    {key:'horario',label:'Horário'},{key:'tipo',label:'Tipo'},
+    {key:'tags',label:'Tags'},{key:'prioridade',label:'Prioridade'},
+    {key:'notas',label:'Notas'},
+  ];
+  extraCols.forEach(function(c){base.push({key:c,label:c});});
+  return base;
+}
+function renderPillCfg(){
+  const fields=allPillFields();
+  const opts=fields.map(function(f){return '<option value="'+f.key+'">'+f.label+'</option>';}).join('');
+  const labels=['Linha 1','Linha 2','Linha 3'];
+  document.getElementById('pillCfgSlots').innerHTML=pillSlots.map(function(slot,i){
+    return '<div class="pill-slot"><span class="pill-slot-label">'+labels[i]+'</span><select onchange="setPillSlot('+i+',this.value)">'+opts.replace('value="'+slot+'"','value="'+slot+'" selected')+'</select></div>';
+  }).join('');
+}
+function setPillSlot(idx,val){pillSlots[idx]=val;salvarConfigFirestore();renderCal();}
+
+// ══ Type field config ════════════════════════════════════════════════
+const defaultModalFields=['titulo','data','horario','tipo','tags','prioridade','notas'];
+function allModalFieldDefs(){
+  const base=[
+    {key:'data',label:'Data'},{key:'horario',label:'Horário'},
+    {key:'tipo',label:'Tipo'},{key:'tags',label:'Tags'},
+    {key:'prioridade',label:'Prioridade'},{key:'notas',label:'Notas'},
+  ];
+  extraCols.forEach(function(c){if(c.toLowerCase()!=='tipo')base.push({key:c,label:c});});
+  return base;
+}
+function getTipoValues(){
+  const vals=new Set();
+  allTasks.forEach(function(t){const v=(t.tipo||'').trim();if(v)vals.add(v);});
+  return [...vals].sort();
+}
+function renderTypeCfgList(){
+  const container=document.getElementById('typeCfgList');if(!container)return;
+  const defs=allModalFieldDefs(),types=Object.keys(typeFieldConfig);
+  const tiposNasTarefas=getTipoValues();
+  const naoConfigurados=tiposNasTarefas.filter(function(t){
+    return !Object.keys(typeFieldConfig).find(function(k){return k.toLowerCase()===t.toLowerCase();});
+  });
+  let html='';
+  if(naoConfigurados.length){
+    html+='<div style="background:#378ADD11;border:1px solid #378ADD33;border-radius:var(--radius);padding:.65rem .9rem;margin-bottom:.65rem;font-size:12px;color:#378ADD">';
+    html+='<strong>Tipos encontrados nas tarefas:</strong> '+naoConfigurados.map(function(t){
+      return '<span onclick="document.getElementById(\'newTypeVal\').value=\''+t+'\'" style="cursor:pointer;text-decoration:underline">'+t+'</span>';
+    }).join(', ')+'<br><span style="font-size:11px;opacity:.8">Clique no nome para preencher o campo abaixo.</span></div>';
+  }
+  if(!types.length){
+    html+='<div style="font-size:12px;color:var(--text3);margin-bottom:.5rem">Nenhum tipo configurado ainda.</div>';
+  } else {
+    html+=types.map(function(tipo){
+      const fields=typeFieldConfig[tipo]||[...defaultModalFields];
+      const toggles=defs.map(function(d){
+        const on=fields.includes(d.key);
+        return '<div class="type-field-toggle'+(on?' on':'')+'" onclick="toggleTypeField(\''+tipo.replace(/'/g,"\\'")+'\',\''+d.key+'\')">'+d.label+'</div>';
+      }).join('');
+      return '<div class="type-cfg-block"><div class="type-cfg-head"><span class="type-cfg-name">📋 '+tipo+'</span><button class="del-btn" onclick="deleteTypeCfg(\''+tipo.replace(/'/g,"\\'")+'\')">×</button></div><div class="type-cfg-fields">'+toggles+'</div></div>';
+    }).join('');
+  }
+  container.innerHTML=html;
+}
+function addTypeCfg(){
+  const tipo=(document.getElementById('newTypeVal').value||'').trim();if(!tipo)return;
+  if(!typeFieldConfig[tipo])typeFieldConfig[tipo]=[...defaultModalFields];
+  salvarConfigFirestore();renderTypeCfgList();document.getElementById('newTypeVal').value='';
+}
+function deleteTypeCfg(tipo){delete typeFieldConfig[tipo];salvarConfigFirestore();renderTypeCfgList();}
+function toggleTypeField(tipo,key){
+  if(!typeFieldConfig[tipo])return;
+  const arr=typeFieldConfig[tipo],idx=arr.indexOf(key);
+  if(idx>-1)arr.splice(idx,1);else arr.push(key);
+  salvarConfigFirestore();renderTypeCfgList();
+}
+
+// ══ Filters ═════════════════════════════════════════════════════════
+function getPresetRange(p){
+  const now=new Date();now.setHours(0,0,0,0);
+  const y=now.getFullYear(),m=now.getMonth();
+  const pad=function(n){return String(n).padStart(2,'0');};
+  const fmt=function(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());};
+  if(p==='today')return{from:fmt(now),to:fmt(now)};
+  if(p==='tomorrow'){const t=new Date(now);t.setDate(t.getDate()+1);return{from:fmt(t),to:fmt(t)};}
+  if(p==='this_week'){const s=new Date(now);s.setDate(now.getDate()-now.getDay());const e=new Date(s);e.setDate(s.getDate()+6);return{from:fmt(s),to:fmt(e)};}
+  if(p==='next_week'){const s=new Date(now);s.setDate(now.getDate()-now.getDay()+7);const e=new Date(s);e.setDate(s.getDate()+6);return{from:fmt(s),to:fmt(e)};}
+  if(p==='this_month')return{from:y+'-'+pad(m+1)+'-01',to:fmt(new Date(y,m+1,0))};
+  if(p==='next_month'){const nm=m===11?0:m+1,ny=m===11?y+1:y;return{from:ny+'-'+pad(nm+1)+'-01',to:fmt(new Date(ny,nm+1,0))};}
+  if(p==='this_quarter'){const q=Math.floor(m/3)*3;return{from:y+'-'+pad(q+1)+'-01',to:fmt(new Date(y,q+3,0))};}
+  if(p==='this_semester'){const h=m<6?0:6;return{from:y+'-'+pad(h+1)+'-01',to:fmt(new Date(y,h+6,0))};}
+  if(p==='this_year')return{from:y+'-01-01',to:y+'-12-31'};
+  if(p==='overdue')return{from:'2000-01-01',to:fmt(new Date(now.getTime()-86400000))};
+  return null;
+}
+function setDatePreset(el){
+  const preset=el.dataset.preset;
+  if(activeDatePreset===preset&&preset!=='exact'&&preset!=='range'){
+    activeDatePreset='';dateFrom='';dateTo='';
+    document.querySelectorAll('#datePresets .chip').forEach(function(c){c.classList.remove('active');});
+    document.getElementById('dateInputRow').style.display='none';
+    applyFilters();return;
+  }
+  document.querySelectorAll('#datePresets .chip').forEach(function(c){c.classList.remove('active');});
+  el.classList.add('active');activeDatePreset=preset;
+  const ir=document.getElementById('dateInputRow');
+  if(preset==='exact'){ir.style.display='flex';document.getElementById('dateToLabel').style.display='none';document.getElementById('dateTo').style.display='none';document.getElementById('dateFrom').value='';dateFrom='';dateTo='';applyFilters();return;}
+  if(preset==='range'){ir.style.display='flex';document.getElementById('dateToLabel').style.display='inline';document.getElementById('dateTo').style.display='block';document.getElementById('dateFrom').value='';document.getElementById('dateTo').value='';dateFrom='';dateTo='';applyFilters();return;}
+  ir.style.display='none';
+  const range=getPresetRange(preset);if(range){dateFrom=range.from;dateTo=range.to;}
+  applyFilters();
+}
+
+function applyFilters(){
+  if(activeDatePreset==='exact'){dateFrom=document.getElementById('dateFrom').value;dateTo=dateFrom;}
+  else if(activeDatePreset==='range'){dateFrom=document.getElementById('dateFrom').value;dateTo=document.getElementById('dateTo').value;}
+  const tagLogic=document.querySelector('input[name="tagLogic"]:checked')?.value||'or';
+  const textQ=(document.getElementById('textSearch').value||'').toLowerCase().trim();
+
+  filteredTasks=allTasks.filter(function(t){
+    // Filtro por aba de calendário ativa (a aba padrão mostra todas)
+    if(!taskInAba(t,currentCalId)) return false;
+    if(dateFrom&&dateTo){if(!t.date||t.date<dateFrom||t.date>dateTo)return false;}
+    else if(dateFrom){if(!t.date||t.date<dateFrom)return false;}
+    const taskTags=(t.tags||'').split(';').map(function(x){return x.trim().toLowerCase();}).filter(Boolean);
+    if(activeTags.size>0){
+      const hit=tagLogic==='or'?[...activeTags].some(function(at){return taskTags.includes(at);}): [...activeTags].every(function(at){return taskTags.includes(at);});
+      if(!hit)return false;
+    }
+    if(excludedTags.size>0){if([...excludedTags].some(function(et){return taskTags.includes(et);}))return false;}
+    for(var i=0;i<dynFilterCols.length;i++){
+      const col=dynFilterCols[i],s=dynColFilters[col];if(!s||s.size===0)continue;
+      const taskVal=getExtraVal(t._raw,col).trim();
+      const incl=[...s].filter(function(v){return!v.startsWith('__excl__');});
+      const excl=[...s].filter(function(v){return v.startsWith('__excl__');}).map(function(v){return v.slice(8);});
+      if(incl.length>0&&!incl.includes(taskVal))return false;
+      if(excl.length>0&&excl.includes(taskVal))return false;
+    }
+    if(textQ){const hay=(t.titulo+' '+(t.notes||'')).toLowerCase();if(!hay.includes(textQ))return false;}
+    return true;
+  });
+
+  updateFilterUI();renderCal();renderTaskTable();
+}
+
+function countActiveFilters(){
+  let n=0;
+  if(activeDatePreset)n++;
+  if(activeTags.size>0)n++;
+  if(excludedTags.size>0)n++;
+  for(var i=0;i<dynFilterCols.length;i++){const s=dynColFilters[dynFilterCols[i]];if(s&&s.size>0)n++;}
+  if((document.getElementById('textSearch').value||'').trim())n++;
+  return n;
+}
+function updateFilterUI(){
+  const n=countActiveFilters();
+  const fab=document.getElementById('fabBadge');fab.textContent=n;fab.style.display=n>0?'block':'none';
+  const db2=document.getElementById('drawerBadge');db2.textContent=n;db2.style.display=n>0?'inline':'none';
+  const totalNaAba=allTasks.filter(function(t){return taskInAba(t,currentCalId);}).length;
+  document.getElementById('calResultCount').textContent=totalNaAba>0?(filteredTasks.length+' de '+totalNaAba+' tarefas'):'';
+  const wrap=document.getElementById('activePillsWrap');
+  const pills=[];
+  if(activeDatePreset){
+    const pl=document.querySelector('.chip[data-preset="'+activeDatePreset+'"]')?.textContent||activeDatePreset;
+    let label=pl;
+    if(activeDatePreset==='exact'&&dateFrom)label='Data: '+fmtDate(dateFrom);
+    if(activeDatePreset==='range'&&dateFrom&&dateTo)label=fmtDate(dateFrom)+' → '+fmtDate(dateTo);
+    pills.push('<div class="af-pill">📅 '+label+'<span class="af-x" onclick="clearDateFilter()">×</span></div>');
+  }
+  [...activeTags].forEach(function(tag){const c=tagMap[Object.keys(tagMap).find(function(k){return k.toLowerCase()===tag;})];pills.push('<div class="af-pill" style="color:'+(c||'var(--text2)')+'">🏷️ '+tag+'<span class="af-x" onclick="removePillTag(\''+tag+'\',false)">×</span></div>');});
+  [...excludedTags].forEach(function(tag){pills.push('<div class="af-pill" style="color:#e24b4a">✗ '+tag+'<span class="af-x" onclick="removePillTag(\''+tag+'\',true)">×</span></div>');});
+  if((document.getElementById('textSearch').value||'').trim())pills.push('<div class="af-pill">🔎 "'+document.getElementById('textSearch').value.trim()+'"<span class="af-x" onclick="clearTextSearch()">×</span></div>');
+  wrap.innerHTML=pills.join('');
+}
+function clearDateFilter(){activeDatePreset='';dateFrom='';dateTo='';document.querySelectorAll('#datePresets .chip').forEach(function(c){c.classList.remove('active');});document.getElementById('dateInputRow').style.display='none';applyFilters();}
+function removePillTag(tag,excl){if(excl)excludedTags.delete(tag.toLowerCase());else activeTags.delete(tag.toLowerCase());renderTagChips();applyFilters();}
+function clearTextSearch(){document.getElementById('textSearch').value='';applyFilters();}
+function clearAllFilters(){
+  clearDateFilter();activeTags.clear();excludedTags.clear();renderTagChips();
+  dynFilterCols.forEach(function(c){if(dynColFilters[c])dynColFilters[c].clear();});renderDynColFilters();
+  clearTextSearch();
+}
+
+// ══ Calendar render ══════════════════════════════════════════════════
+// renderLabels integrado ao renderCal
+
+function renderCal(){
+  document.getElementById('calTitle').textContent=MONTHS[mo]+' '+yr;
+  const grid=document.getElementById('calGrid');
+  const fd=new Date(yr,mo,1).getDay(),dim=new Date(yr,mo+1,0).getDate(),pd=new Date(yr,mo,0).getDate();
+  const todayDow=td.getDay();
+
+  // Cabeçalho dos dias da semana integrado ao grid
+  const headerHtml=DAYS.map(function(d,i){
+    return '<div class="day-label-cell'+(i===todayDow?' today-col':'')+'">'+d+'</div>';
+  }).join('');
+
+  const cells=[];
+  // Células do mês anterior (preenchimento do início)
+  for(var i=0;i<fd;i++){const pm=mo===0?11:mo-1,py=mo===0?yr-1:yr;cells.push({day:pd-fd+1+i,m:pm,y:py,o:true});}
+  // Dias do mês atual
+  for(var i=1;i<=dim;i++)cells.push({day:i,m:mo,y:yr,o:false});
+  // Células do próximo mês (preenchimento do fim) — começa em 1
+  var nextDay=1;
+  var nm=mo===11?0:mo+1,ny=mo===11?yr+1:yr;
+  while(cells.length%7!==0){cells.push({day:nextDay++,m:nm,y:ny,o:true});}
+  const fDates=new Set(filteredTasks.map(function(t){return t.date;}));
+  const aDates=new Set(allTasks.map(function(t){return t.date;}));
+
+  grid.innerHTML=headerHtml+cells.map(function(c){
+    const ds=dk(c.y,c.m,c.day);
+    const isT=c.y===td.getFullYear()&&c.m===td.getMonth()&&c.day===td.getDate();
+    const dt=filteredTasks.filter(function(t){return t.date===ds;});
+    const dimmed=aDates.has(ds)&&!fDates.has(ds)&&filteredTasks.length<allTasks.length;
+
+    const pills=dt.slice(0,3).map(function(t){
+      const col=colorFor(t);
+      const emoji=t.emoji?'<span style="margin-right:3px">'+t.emoji+'</span>':'';
+      const lines=pillSlots.map(function(slot){
+        if(slot==='none'||!slot)return null;
+        if(slot==='titulo')return t.titulo;
+        if(slot==='data')return fmtDate(t.date);
+        if(slot==='horario')return t.time||null;
+        if(slot==='tags')return(t.tags||'').split(';').map(function(x){return x.trim();}).filter(Boolean).join(', ')||null;
+        if(slot==='tipo')return t.tipo||null;
+        if(slot==='prioridade'){const pk=(t.priority||'').toLowerCase();return PRIO_L[pk]||t.priority||null;}
+        if(slot==='notas')return t.notes?(t.notes.slice(0,25)+(t.notes.length>25?'…':'')):null;
+        if(slot==='concluida')return null; // campo removido do site
+        if(slot==='emoji')return t.emoji||null;
+        return cleanVal(getExtraVal(t._raw,slot))||null;
+      }).filter(Boolean);
+      const textHtml=lines.map(function(l,i){return '<span style="'+(i>0?'font-size:9px;opacity:.75;display:block;margin-top:1px':'')+'">'+l+'</span>';}).join('');
+      const clickFn=adminMode?'openEditModal(\''+t.id+'\')':'openReadOnlyModal(\''+t.id+'\')';
+      const hoverAttrs=adminMode?'':' onmouseenter="showTaskTip(event,\''+t.id+'\')" onmousemove="moveTaskTip(event)" onmouseleave="hideTaskTip()"';
+      return '<div class="pill" style="background:'+col+'18;border-left:3px solid '+col+';color:#1a1917;padding-left:5px" onclick="event.stopPropagation();'+clickFn+'"'+hoverAttrs+'>'+emoji+textHtml+'</div>';
+    }).join('');
+    const more=dt.length>3?'<div class="more" onclick="event.stopPropagation();openDayModal(\''+ds+'\')">+'+( dt.length-3)+' mais</div>':'';
+    return '<div class="cell'+(c.o?' other':'')+(isT?' today':'')+(dimmed?' dimmed':'')+'"><div class="day-num">'+c.day+'</div>'+pills+more+'</div>';
+  }).join('');
+
+  if(allTasks.length===0&&db)grid.innerHTML+='<div class="empty-msg">Nenhuma tarefa. '+(adminMode?'Clique em um dia para adicionar.':'')+'</div>';
+  else if(filteredTasks.length===0&&allTasks.length>0)grid.innerHTML+='<div class="empty-msg">Nenhuma tarefa corresponde aos filtros.</div>';
+}
+
+// ══ Legend ═══════════════════════════════════════════════════════════
+function renderLegend(){
+  const section=document.getElementById('legendSection');
+  const grid=document.getElementById('legendGrid');
+  const ent=Object.entries(tagMap);
+  if(!ent.length){section.style.display='none';return;}
+  const tasksNaAba=allTasks.filter(function(t){return taskInAba(t,currentCalId);});
+  section.style.display='block';
+  grid.innerHTML=ent.map(function([tag,color]){
+    const count=tasksNaAba.filter(function(t){return(t.tags||'').toLowerCase().includes(tag.toLowerCase());}).length;
+    return '<div class="legend-card"><div class="legend-swatch" style="background:'+color+'"></div>'+tag+(count?'<span style="font-size:10px;color:var(--text3);margin-left:4px">'+count+'</span>':'')+'</div>';
+  }).join('');
+}
+
+// ══ Tabela de tarefas ════════════════════════════════════════════════
+// A tabela espelha filteredTasks (aba ativa + filtros). As colunas visíveis
+// são configuradas pelo admin POR ABA e salvas no Firestore (valem p/ todos).
+
+// Todos os campos que podem virar coluna: fixos + campos do formulário + extras
+function allTableFieldDefs(){
+  var base=[
+    {key:'titulo',    label:'Título'},
+    {key:'data',      label:'Data'},
+    {key:'horario',   label:'Horário'},
+    {key:'tipo',      label:'Tipo'},
+    {key:'tags',      label:'Tags'},
+    {key:'prioridade',label:'Prioridade'},
+    {key:'notas',     label:'Notas'},
+    {key:'emoji',     label:'Emoji'},
+  ];
+  function push(key,label){
+    if(!base.some(function(b){return b.key.toLowerCase()===String(key).toLowerCase();}))
+      base.push({key:key,label:label||key});
+  }
+  allDynFormFields().forEach(function(f){push(f.key,f.label);});
+  extraCols.forEach(function(c){push(c,c);});
+  return base;
+}
+
+function defaultTableCols(){
+  return ['titulo','data','horario','tags','tipo'];
+}
+// Campos retirados do site — ignorados em configurações antigas
+var RETIRED_FIELDS=['concluida'];
+function getTableColsForTab(abaId){
+  var cols=tableCols[abaId];
+  if(!cols||!cols.length) return defaultTableCols();
+  var limpas=cols.filter(function(c){return RETIRED_FIELDS.indexOf(String(c).toLowerCase())===-1;});
+  return limpas.length?limpas:defaultTableCols();
+}
+// Definição de uma coluna; campos que ainda não foram detectados nesta sessão
+// aparecem mesmo assim, com o próprio nome como título.
+function tableColDef(key){
+  return allTableFieldDefs().find(function(d){return d.key.toLowerCase()===String(key).toLowerCase();})||{key:key,label:key};
+}
+
+// Valor textual de uma coluna para uma tarefa (usado na tabela e na exportação)
+function tableCellValue(t,col){
+  var k=col.toLowerCase();
+  if(k==='titulo')    return t.titulo||'';
+  if(k==='data')      return fmtDate(t.date);
+  if(k==='horario')   return t.time||'';
+  if(k==='tipo')      return t.tipo||'';
+  if(k==='tags')      return (t.tags||'').split(';').map(function(x){return x.trim();}).filter(Boolean).join(', ');
+  if(k==='prioridade'){var pk=(t.priority||'').toLowerCase();return PRIO_L[pk]||t.priority||'';}
+  if(k==='notas')     return t.notes||'';
+  if(k==='emoji')     return t.emoji||'';
+  return cleanVal(getExtraVal(t._raw,col))||'';
+}
+
+// ── Filtros por coluna (estilo Excel) ──
+// tableColFilters[abaId][coluna] = [valores excluídos]. Guardar os valores
+// EXCLUÍDOS (e não os marcados) faz com que um valor novo que apareça depois
+// entre automaticamente na tabela, sem precisar remarcar o filtro.
+function jsq(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+
+function colFilterStore(){
+  if(!tableColFilters[currentCalId]) tableColFilters[currentCalId]={};
+  return tableColFilters[currentCalId];
+}
+function isColFiltered(col){
+  var a=colFilterStore()[col];
+  return !!(a&&a.length);
+}
+// Valor usado como chave do filtro. A coluna de data usa YYYY-MM-DD para
+// permitir a árvore ano › mês › dia; as demais usam o texto exibido.
+function tableCellFilterKey(t,col){
+  if(String(col).toLowerCase()==='data') return t.date||'';
+  return tableCellValue(t,col);
+}
+// Tarefas da tabela: filtros globais do calendário + filtros de coluna.
+// exceptCol monta a lista de valores de uma coluna sem aplicar o filtro dela
+// mesma (é assim que o Excel mostra as opções de uma coluna já filtrada).
+function tableFilteredTasks(exceptCol){
+  var store=colFilterStore();
+  var cols=getTableColsForTab(currentCalId).filter(function(c){
+    if(exceptCol&&c.toLowerCase()===String(exceptCol).toLowerCase()) return false;
+    return store[c]&&store[c].length;
+  });
+  if(!cols.length) return filteredTasks.slice();
+  var sets={};
+  cols.forEach(function(c){sets[c]=new Set(store[c]);});
+  return filteredTasks.filter(function(t){
+    return cols.every(function(c){return !sets[c].has(tableCellFilterKey(t,c));});
+  });
+}
+function algumFiltroDeColuna(){
+  var store=colFilterStore();
+  return getTableColsForTab(currentCalId).some(function(c){return store[c]&&store[c].length;});
+}
+function limparFiltrosTabela(){
+  tableColFilters[currentCalId]={};
+  saveLocal();closeColFilterMenu();renderTaskTable();
+}
+
+// Valores distintos de uma coluna (ordenados; vazio por último)
+function colFilterDistinct(col){
+  var isDate=String(col).toLowerCase()==='data';
+  var vals=new Set();
+  tableFilteredTasks(col).forEach(function(t){vals.add(tableCellFilterKey(t,col));});
+  var arr=Array.from(vals);
+  var temVazio=arr.indexOf('')!==-1;
+  arr=arr.filter(function(v){return v!=='';});
+  if(isDate) arr.sort();
+  else arr.sort(function(a,b){return a.localeCompare(b,'pt-BR',{numeric:true,sensitivity:'base'});});
+  if(temVazio) arr.push('');
+  return arr;
+}
+function colFilterLabel(col,v){
+  if(v==='') return '(vazias)';
+  if(String(col).toLowerCase()==='data') return fmtDate(v);
+  return v;
+}
+
+// ── Menu do filtro ──
+var openFilterCol=null, colFilterDraft=null, colFilterSearch='', colFilterExpanded={}, colFilterAnchor=null;
+
+function toggleColFilterMenu(col,ev){
+  if(ev) ev.stopPropagation();
+  if(openFilterCol&&openFilterCol.toLowerCase()===String(col).toLowerCase()){closeColFilterMenu();return;}
+  openFilterCol=col;
+  colFilterSearch='';
+  colFilterExpanded={};
+  var excl=new Set(colFilterStore()[col]||[]);
+  colFilterDraft=new Set(colFilterDistinct(col).filter(function(v){return !excl.has(v);}));
+  colFilterAnchor=ev?ev.currentTarget:null;
+  renderColFilterMenu();
+}
+function closeColFilterMenu(){
+  openFilterCol=null;colFilterDraft=null;colFilterAnchor=null;
+  var m=document.getElementById('colFilterMenu');
+  if(m){m.classList.remove('open');m.innerHTML='';}
+}
+function aplicarFiltroColuna(){
+  var col=openFilterCol;
+  if(!col){closeColFilterMenu();return;}
+  var todos=colFilterDistinct(col);
+  var antigos=colFilterStore()[col]||[];
+  // Exclui o que ficou desmarcado + mantém exclusões de valores que nem
+  // aparecem na lista atual (escondidos por filtros de outras colunas)
+  var novos=todos.filter(function(v){return !colFilterDraft.has(v);});
+  antigos.forEach(function(v){
+    if(todos.indexOf(v)===-1&&novos.indexOf(v)===-1) novos.push(v);
+  });
+  if(novos.length) colFilterStore()[col]=novos;
+  else delete colFilterStore()[col];
+  saveLocal();closeColFilterMenu();renderTaskTable();
+}
+function limparFiltroColuna(){
+  if(openFilterCol) delete colFilterStore()[openFilterCol];
+  saveLocal();closeColFilterMenu();renderTaskTable();
+}
+
+function renderColFilterMenu(){
+  var m=document.getElementById('colFilterMenu');
+  if(!m||!openFilterCol) return;
+  var col=openFilterCol;
+  var d=allTableFieldDefs().find(function(x){return x.key.toLowerCase()===col.toLowerCase();});
+  var isDate=col.toLowerCase()==='data';
+  m.innerHTML=
+    '<div class="cfm-head">'+
+      '<div class="cfm-sort">'+
+        '<button onclick="ordenarPeloMenu(1)">'+(isDate?'▲ Mais antigas':'▲ A → Z')+'</button>'+
+        '<button onclick="ordenarPeloMenu(-1)">'+(isDate?'▼ Mais recentes':'▼ Z → A')+'</button>'+
+      '</div>'+
+      '<input class="cfm-search" type="text" id="cfmSearch" placeholder="Pesquisar em '+escVal(d?d.label:col)+'..." oninput="onColFilterSearch(this.value)">'+
+      '<label class="cfm-selall"><input type="checkbox" id="cfmSelAll" onchange="setColFilterTodos(this.checked)"><span>(Selecionar tudo)</span></label>'+
+    '</div>'+
+    '<div class="cfm-list" id="cfmList"></div>'+
+    '<div class="cfm-foot">'+
+      '<button class="cfm-clear" onclick="limparFiltroColuna()">Limpar</button>'+
+      '<button class="cfm-apply" onclick="aplicarFiltroColuna()">Aplicar</button>'+
+    '</div>';
+  renderColFilterList();
+  positionColFilterMenu();
+  var si=document.getElementById('cfmSearch');
+  if(si){ try{ si.focus({preventScroll:true}); }catch(e){ si.focus(); } }
+}
+function positionColFilterMenu(){
+  var m=document.getElementById('colFilterMenu');
+  if(!m) return;
+  m.style.visibility='hidden';
+  m.classList.add('open');
+  var mr=m.getBoundingClientRect();
+  var left=8, top=8;
+  if(colFilterAnchor){
+    var r=colFilterAnchor.getBoundingClientRect();
+    left=Math.max(8,Math.min(r.left,window.innerWidth-mr.width-8));
+    top=r.bottom+4;
+    if(top+mr.height>window.innerHeight-8) top=Math.max(8,r.top-mr.height-4);
+  }
+  m.style.left=left+'px';
+  m.style.top=top+'px';
+  m.style.visibility='';
+}
+function onColFilterSearch(v){
+  colFilterSearch=v;
+  renderColFilterList();
+}
+// Valores atualmente listados (respeitando a busca)
+function colFilterShown(){
+  var col=openFilterCol;
+  var q=(colFilterSearch||'').toLowerCase().trim();
+  return colFilterDistinct(col).filter(function(v){
+    return !q||colFilterLabel(col,v).toLowerCase().indexOf(q)!==-1;
+  });
+}
+function renderColFilterList(){
+  var list=document.getElementById('cfmList');
+  if(!list||!openFilterCol) return;
+  var col=openFilterCol;
+  var shown=colFilterShown();
+  if(!shown.length){
+    list.innerHTML='<div class="cfm-empty">Nenhum valor encontrado.</div>';
+  } else if(col.toLowerCase()==='data'){
+    list.innerHTML=dateTreeHtml(shown);
+  } else {
+    list.innerHTML=shown.map(function(v){
+      return '<label class="cfm-item"><input type="checkbox" '+(colFilterDraft.has(v)?'checked':'')+
+        ' data-keys="'+escVal(JSON.stringify([v]))+'"><span class="cfm-txt">'+escVal(colFilterLabel(col,v))+'</span></label>';
+    }).join('');
+  }
+  // Estado dos checkboxes (inclusive o "parcial" dos nós ano/mês)
+  [].slice.call(list.querySelectorAll('input[type=checkbox]')).forEach(function(cb){
+    cb.indeterminate=cb.dataset.ind==='1';
+    cb.addEventListener('change',function(){
+      var keys=[];
+      try{keys=JSON.parse(cb.dataset.keys||'[]');}catch(e){}
+      keys.forEach(function(k){ if(cb.checked) colFilterDraft.add(k); else colFilterDraft.delete(k); });
+      renderColFilterList();
+    });
+  });
+  [].slice.call(list.querySelectorAll('.cfm-exp[data-node]')).forEach(function(sp){
+    sp.addEventListener('click',function(e){
+      e.preventDefault();e.stopPropagation();
+      var n=sp.dataset.node;
+      colFilterExpanded[n]=!colFilterExpanded[n];
+      renderColFilterList();
+    });
+  });
+  var sel=document.getElementById('cfmSelAll');
+  if(sel){
+    var marcados=shown.filter(function(v){return colFilterDraft.has(v);}).length;
+    sel.checked=shown.length>0&&marcados===shown.length;
+    sel.indeterminate=marcados>0&&marcados<shown.length;
+  }
+}
+function setColFilterTodos(checked){
+  colFilterShown().forEach(function(v){
+    if(checked) colFilterDraft.add(v); else colFilterDraft.delete(v);
+  });
+  renderColFilterList();
+}
+function ordenarPeloMenu(dir){
+  tableSortCol=openFilterCol;tableSortDir=dir;
+  closeColFilterMenu();renderTaskTable();
+}
+// Árvore ano › mês › dia da coluna de data
+function estadoGrupo(keys){
+  var n=keys.filter(function(k){return colFilterDraft.has(k);}).length;
+  return n===0?'none':(n===keys.length?'all':'some');
+}
+function itemHtml(cls,nodeId,expandido,keys,estado,texto){
+  var seta=nodeId?'<span class="cfm-exp" data-node="'+nodeId+'">'+(expandido?'▾':'▸')+'</span>'
+                 :'<span class="cfm-exp blank"></span>';
+  return '<label class="cfm-item '+cls+'">'+seta+
+    '<input type="checkbox" '+(estado==='all'?'checked':'')+' data-ind="'+(estado==='some'?'1':'')+'"'+
+    ' data-keys="'+escVal(JSON.stringify(keys))+'"><span class="cfm-txt">'+escVal(texto)+'</span></label>';
+}
+function dateTreeHtml(keys){
+  var temVazio=keys.indexOf('')!==-1;
+  var anos={};
+  keys.filter(Boolean).forEach(function(k){
+    var y=k.slice(0,4), mes=k.slice(5,7);
+    if(!anos[y]) anos[y]={};
+    if(!anos[y][mes]) anos[y][mes]=[];
+    anos[y][mes].push(k);
+  });
+  var html=Object.keys(anos).sort().map(function(y){
+    var meses=anos[y], diasAno=[];
+    Object.keys(meses).forEach(function(mes){diasAno=diasAno.concat(meses[mes]);});
+    var yExp=!!colFilterExpanded['y'+y];
+    var h=itemHtml('','y'+y,yExp,diasAno,estadoGrupo(diasAno),y);
+    if(!yExp) return h;
+    h+=Object.keys(meses).sort().map(function(mes){
+      var dias=meses[mes].slice().sort();
+      var mId='m'+y+mes, mExp=!!colFilterExpanded[mId];
+      var hm=itemHtml('lvl1',mId,mExp,dias,estadoGrupo(dias),MONTHS[parseInt(mes,10)-1]||mes);
+      if(!mExp) return hm;
+      hm+=dias.map(function(k){
+        return itemHtml('lvl2','',false,[k],colFilterDraft.has(k)?'all':'none',parseInt(k.slice(8,10),10));
+      }).join('');
+      return hm;
+    }).join('');
+    return h;
+  }).join('');
+  if(temVazio) html+=itemHtml('','',false,[''],colFilterDraft.has('')?'all':'none','(vazias)');
+  return html;
+}
+
+// Fecha o menu ao clicar fora, apertar Esc ou rolar a página
+document.addEventListener('click',function(e){
+  if(!openFilterCol) return;
+  if(e.target.closest&&(e.target.closest('#colFilterMenu')||e.target.closest('.th-filter'))) return;
+  closeColFilterMenu();
+});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'&&openFilterCol) closeColFilterMenu();
+});
+// Ao rolar a página, o menu acompanha o cabeçalho; só fecha se ele sair da tela
+window.addEventListener('scroll',function(e){
+  if(!openFilterCol) return;
+  var alvo=e.target;
+  if(alvo&&alvo.closest&&alvo.closest('#colFilterMenu')) return; // rolagem dentro do menu
+  if(colFilterAnchor){
+    var r=colFilterAnchor.getBoundingClientRect();
+    if(r.bottom<0||r.top>window.innerHeight){ closeColFilterMenu(); return; }
+  }
+  positionColFilterMenu();
+},true);
+
+// Tarefas visíveis na tabela, já ordenadas
+function tableSortedTasks(){
+  var list=tableFilteredTasks();
+  if(tableSortCol){
+    var col=tableSortCol, dir=tableSortDir;
+    list.sort(function(a,b){
+      var va,vb;
+      if(col.toLowerCase()==='data'){va=a.date||'';vb=b.date||'';}
+      else{va=tableCellValue(a,col).toLowerCase();vb=tableCellValue(b,col).toLowerCase();}
+      if(va<vb)return -1*dir;
+      if(va>vb)return 1*dir;
+      return 0;
+    });
+  } else {
+    // Padrão: por data e horário
+    list.sort(function(a,b){
+      var ka=(a.date||'')+' '+(a.time||''), kb=(b.date||'')+' '+(b.time||'');
+      return ka<kb?-1:ka>kb?1:0;
+    });
+  }
+  return list;
+}
+
+function sortTableBy(col){
+  if(tableSortCol===col){ tableSortDir=-tableSortDir; }
+  else { tableSortCol=col; tableSortDir=1; }
+  renderTaskTable();
+}
+
+function renderTaskTable(){
+  var wrap=document.getElementById('taskTableWrap');
+  if(!wrap) return;
+  var cols=getTableColsForTab(currentCalId).map(tableColDef);
+
+  var hint=document.getElementById('tableAbaHint');
+  if(hint){
+    var naGeral=currentCalId===DEFAULT_CAL_ID;
+    hint.style.display=naGeral?'block':'none';
+    if(naGeral) hint.textContent='ℹ️ Esta é a aba geral: ela reúne as tarefas de todas as abas e tem colunas próprias. Escolha uma aba acima para ver apenas as tarefas dela.';
+  }
+
+  var visiveis=tableFilteredTasks();
+  var temFiltroCol=algumFiltroDeColuna();
+  var countEl=document.getElementById('tableCount');
+  if(countEl) countEl.textContent='· '+visiveis.length+(temFiltroCol?' de '+filteredTasks.length:'')+
+    ' tarefa'+((temFiltroCol?filteredTasks.length:visiveis.length)!==1?'s':'');
+
+  var btnCols=document.getElementById('btnTableCols');
+  if(btnCols) btnCols.style.display=adminMode?'flex':'none';
+  var btnClr=document.getElementById('btnClearTableFilters');
+  if(btnClr) btnClr.style.display=temFiltroCol?'flex':'none';
+  renderTableColsCfg();
+
+  if(!filteredTasks.length){
+    wrap.innerHTML='<div class="table-empty">Nenhuma tarefa para exibir nesta aba com os filtros atuais.</div>';
+    return;
+  }
+  var funil='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>';
+  var head='<tr>'+cols.map(function(c){
+    var arrow=tableSortCol===c.key?'<span class="sort-arrow">'+(tableSortDir===1?'▲':'▼')+'</span>':'';
+    var js=jsq(c.key);
+    var filtrada=isColFiltered(c.key);
+    return '<th><div class="th-inner">'+
+      '<span class="th-label" onclick="sortTableBy(\''+js+'\')" title="Ordenar por '+escVal(c.label)+'">'+escVal(c.label)+arrow+'</span>'+
+      '<span class="th-filter'+(filtrada?' on':'')+'" onclick="toggleColFilterMenu(\''+js+'\',event)" title="'+(filtrada?'Filtro ativo — clique para editar':'Filtrar / pesquisar nesta coluna')+'">'+funil+'</span>'+
+    '</div></th>';
+  }).join('')+'</tr>';
+
+  var body=tableSortedTasks().map(function(t){
+    var clickFn=adminMode?'openEditModal(\''+t.id+'\')':'openReadOnlyModal(\''+t.id+'\')';
+    var tds=cols.map(function(c){
+      if(c.key==='titulo'){
+        var color=colorFor(t);
+        return '<td style="border-left:3px solid '+color+';font-weight:500">'+(t.emoji?t.emoji+' ':'')+escVal(t.titulo)+'</td>';
+      }
+      return '<td>'+escVal(tableCellValue(t,c.key))+'</td>';
+    }).join('');
+    return '<tr onclick="'+clickFn+'">'+tds+'</tr>';
+  }).join('');
+
+  wrap.innerHTML='<table class="task-table"><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
+  if(!visiveis.length) wrap.innerHTML+='<div class="table-empty">Nenhuma tarefa corresponde aos filtros das colunas.</div>';
+}
+
+// ── Configuração de colunas (admin, por aba) ──
+function toggleTableColsCfg(){
+  tableColsCfgOpen=!tableColsCfgOpen;
+  renderTableColsCfg();
+}
+function renderTableColsCfg(){
+  var el=document.getElementById('tableColsCfg');
+  if(!el) return;
+  if(!adminMode||!tableColsCfgOpen){el.classList.remove('open');el.innerHTML='';return;}
+  el.classList.add('open');
+  var aba=calendarios.find(function(c){return c.id===currentCalId;});
+  var active=getTableColsForTab(currentCalId);
+  var toggles=allTableFieldDefs().map(function(d){
+    var on=active.some(function(c){return c.toLowerCase()===d.key.toLowerCase();});
+    var js=d.key.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return '<div class="type-field-toggle'+(on?' on':'')+'" onclick="toggleTableCol(\''+js+'\')">'+escVal(d.label)+'</div>';
+  }).join('');
+  var orderChips=active.map(function(c,i){
+    var d=tableColDef(c);
+    return '<div class="col-order-chip">'+
+      '<span class="col-order-btn'+(i===0?' disabled':'')+'" onclick="moveTableCol('+i+',-1)" title="Mover para a esquerda">◀</span>'+
+      '<span class="col-name">'+escVal(d?d.label:c)+'</span>'+
+      '<span class="col-order-btn'+(i===active.length-1?' disabled':'')+'" onclick="moveTableCol('+i+',1)" title="Mover para a direita">▶</span>'+
+    '</div>';
+  }).join('');
+  el.innerHTML=
+    '<div class="cfg-hint">Colunas da tabela para a aba <strong>'+escVal(aba?aba.nome:'')+'</strong>. '+
+    'Cada aba tem sua própria configuração, que vale para todos os usuários.</div>'+
+    '<div class="drawer-section-label" style="margin-bottom:.35rem">Ordem das colunas</div>'+
+    '<div class="col-order-list">'+orderChips+'</div>'+
+    '<div class="drawer-section-label" style="margin-bottom:.35rem">Colunas visíveis</div>'+
+    '<div class="type-cfg-fields" style="margin-bottom:.75rem">'+toggles+'</div>'+
+    '<div class="row">'+
+      '<input class="inp" type="text" id="newTableField" placeholder="Novo campo (ex: Responsável, Projeto...)" onkeydown="if(event.key===\'Enter\')addTableNewField()">'+
+      '<button class="btn-g" onclick="addTableNewField()">+ Adicionar campo</button>'+
+    '</div>'+
+    '<div style="font-size:11px;color:var(--text3);margin-top:.4rem">Campos novos criados aqui também ficam disponíveis nas outras configurações do site (formulário por tag, filtros, informações no calendário...).</div>';
+}
+// Move uma coluna de posição na tabela da aba atual (◀ / ▶ no painel de colunas)
+function moveTableCol(idx,dir){
+  var cols=getTableColsForTab(currentCalId).slice();
+  var to=idx+dir;
+  if(to<0||to>=cols.length) return;
+  var tmp=cols[idx];cols[idx]=cols[to];cols[to]=tmp;
+  tableCols[currentCalId]=cols;
+  salvarConfigFirestore();
+  renderTaskTable();
+}
+function toggleTableCol(key){
+  var cols=getTableColsForTab(currentCalId).slice();
+  var idx=cols.findIndex(function(c){return c.toLowerCase()===key.toLowerCase();});
+  if(idx>-1){
+    if(cols.length===1){alert('A tabela precisa de pelo menos uma coluna.');return;}
+    cols.splice(idx,1);
+  } else {
+    cols.push(key);
+  }
+  tableCols[currentCalId]=cols;
+  salvarConfigFirestore();
+  renderTaskTable();
+}
+// Cria um campo novo a partir da config da tabela: entra em extraCols
+// (disponível em todo o site) e já aparece como coluna na aba atual.
+function addTableNewField(){
+  var inp=document.getElementById('newTableField');
+  var v=(inp?inp.value:'').trim();
+  if(!v) return;
+  var exists=allTableFieldDefs().some(function(d){return d.key.toLowerCase()===v.toLowerCase();});
+  if(!exists) extraCols.push(v);
+  var cols=getTableColsForTab(currentCalId).slice();
+  if(!cols.some(function(c){return c.toLowerCase()===v.toLowerCase();})) cols.push(v);
+  tableCols[currentCalId]=cols;
+  salvarConfigFirestore();
+  if(inp) inp.value='';
+  renderExtraColsList();renderDynColSelector();renderPillCfg();renderTagFormFieldsConfig();
+  renderTaskTable();
+}
+
+// ── Exportação (Excel / Google Planilhas) ──
+function tableExportRows(){
+  var cols=getTableColsForTab(currentCalId).map(tableColDef);
+  var rows=[cols.map(function(c){return c.label;})];
+  tableSortedTasks().forEach(function(t){
+    rows.push(cols.map(function(c){return tableCellValue(t,c.key);}));
+  });
+  return rows;
+}
+function tableExportFilename(ext){
+  var aba=calendarios.find(function(c){return c.id===currentCalId;});
+  var nome=(aba?aba.nome:'calendario').replace(/[^a-zA-Z0-9À-ÿ _-]/g,'').trim()||'calendario';
+  var d=new Date();
+  var pad=function(n){return String(n).padStart(2,'0');};
+  return 'tarefas-'+nome+'-'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'.'+ext;
+}
+function downloadBlob(blob,filename){
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);
+}
+// CSV com BOM UTF-8 e separador ";" — abre direto no Excel pt-BR e importa no Google Planilhas
+function exportTableCSV(){
+  if(!filteredTasks.length){alert('Não há tarefas para exportar.');return;}
+  var csv=tableExportRows().map(function(r){
+    return r.map(function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}).join(';');
+  }).join('\r\n');
+  downloadBlob(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}),tableExportFilename('csv'));
+}
+// XLSX via SheetJS, carregado sob demanda no primeiro clique
+function ensureXLSX(cb){
+  if(window.XLSX){cb();return;}
+  var s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.onload=cb;
+  s.onerror=function(){alert('Não foi possível carregar a biblioteca de Excel. Verifique a conexão ou use o botão CSV.');};
+  document.head.appendChild(s);
+}
+function exportTableXLSX(){
+  if(!filteredTasks.length){alert('Não há tarefas para exportar.');return;}
+  ensureXLSX(function(){
+    var rows=tableExportRows();
+    var ws=XLSX.utils.aoa_to_sheet(rows);
+    // Largura das colunas conforme o conteúdo
+    ws['!cols']=rows[0].map(function(_,ci){
+      var w=10;
+      rows.forEach(function(r){w=Math.max(w,String(r[ci]||'').length+2);});
+      return {wch:Math.min(w,50)};
+    });
+    var wb=XLSX.utils.book_new();
+    var aba=calendarios.find(function(c){return c.id===currentCalId;});
+    var sheetName=(aba?aba.nome:'Tarefas').replace(/[\\\/\?\*\[\]:]/g,' ').slice(0,31)||'Tarefas';
+    XLSX.utils.book_append_sheet(wb,ws,sheetName);
+    XLSX.writeFile(wb,tableExportFilename('xlsx'));
+  });
+}
+
+// ══ Importação de tarefas via Excel (admin) ═════════════════════════
+// Fluxo: 1) ler a planilha com SheetJS  2) admin mapeia cada coluna para
+// um campo do calendário (ou para a coluna especial "Aba")  3) gravar em
+// lotes no Firestore. Campos com múltiplos valores usam ";" na célula —
+// mesma convenção já usada em tags/aba no resto do app.
+let importHeaders=[], importRows=[], importColMap={}, importDefaultAbaIds=new Set();
+
+function normImportKey(s){
+  return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+}
+function importFieldOptions(){ return allTableFieldDefs(); }
+
+function handleImportFile(input){
+  var file=input.files&&input.files[0];
+  if(!file) return;
+  if(!adminMode||!db){ alert('Entre no modo admin e conecte o Firebase primeiro.'); input.value=''; return; }
+  var status=document.getElementById('importStatus');
+  if(status) status.textContent='Lendo arquivo...';
+  ensureXLSX(function(){
+    var reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});
+        var ws=wb.Sheets[wb.SheetNames[0]];
+        var aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true});
+        aoa=aoa.filter(function(r){return r.some(function(c){return c!==''&&c!=null;});});
+        if(!aoa.length){ alert('Planilha vazia.'); if(status)status.textContent=''; return; }
+        importHeaders=aoa[0].map(function(h){return String(h==null?'':h).trim();});
+        importRows=aoa.slice(1);
+        importColMap={};
+        guessImportColMap();
+        renderImportMapper();
+        renderImportDefaultAbaChips();
+        renderImportPreview();
+        document.getElementById('importMapperWrap').style.display='block';
+        if(status) status.textContent=importRows.length+' linha(s) encontrada(s) em "'+file.name+'".';
+      }catch(err){
+        alert('Não foi possível ler o arquivo: '+err.message);
+        if(status) status.textContent='';
+      }
+    };
+    reader.onerror=function(){ alert('Erro ao ler o arquivo.'); if(status)status.textContent=''; };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// Pré-seleciona um mapeamento razoável: nome da coluna bate com o de um
+// campo já conhecido → usa esse campo; parece "aba"/"calendário" → Aba;
+// senão vira campo novo (o próprio nome da coluna vira o campo).
+function guessImportColMap(){
+  var defs=importFieldOptions();
+  importHeaders.forEach(function(h,idx){
+    var nh=normImportKey(h);
+    if(!nh){ importColMap[idx]=''; return; }
+    if(/^(aba|calendario)/.test(nh)){ importColMap[idx]='__aba__'; return; }
+    var found=defs.find(function(d){return normImportKey(d.key)===nh||normImportKey(d.label)===nh;});
+    importColMap[idx]=found?found.key:'__new__';
+  });
+}
+
+function setImportColMap(idx,val){
+  if(val) importColMap[idx]=val; else delete importColMap[idx];
+  renderImportMapper();
+  renderImportPreview();
+}
+
+function findImportColByTarget(target){
+  var idx=Object.keys(importColMap).find(function(i){return importColMap[i]===target;});
+  return idx===undefined?null:parseInt(idx,10);
+}
+
+// Chave final de gravação de uma coluna mapeada: campo existente usa sua
+// própria key; "+ Novo campo" usa o texto do cabeçalho da planilha.
+function resolvedImportKey(idx){
+  var target=importColMap[idx];
+  if(!target||target==='__aba__') return null;
+  if(target==='__new__') return (importHeaders[idx]||'').trim()||null;
+  return target;
+}
+
+function renderImportMapper(){
+  var grid=document.getElementById('importColMapGrid');
+  if(!grid) return;
+  var defs=importFieldOptions();
+  grid.innerHTML=importHeaders.map(function(h,idx){
+    var sample=importRows[0]&&importRows[0][idx]!=null?String(importRows[0][idx]).slice(0,30):'';
+    var cur=importColMap[idx]||'';
+    var opts='<option value="">— Ignorar esta coluna —</option>'+
+      '<option value="__aba__"'+(cur==='__aba__'?' selected':'')+'>🗂️ Aba (calendário)</option>'+
+      defs.map(function(d){
+        return '<option value="'+escVal(d.key)+'"'+(cur===d.key?' selected':'')+'>'+escVal(d.label)+'</option>';
+      }).join('')+
+      '<option value="__new__"'+(cur==='__new__'?' selected':'')+'>+ Novo campo: "'+escVal(h||'coluna '+(idx+1))+'"</option>';
+    var badge=(cur==='titulo'||cur==='data')?'<span class="req-badge">obrigatório</span>':'<span class="opt-badge">opcional</span>';
+    return '<div class="col-map-row">'+
+      '<span class="col-map-label">'+escVal(h||'(coluna '+(idx+1)+')')+
+        (sample?'<span class="col-map-desc">ex: '+escVal(sample)+'</span>':'')+
+      '</span>'+
+      '<select class="sel" onchange="setImportColMap('+idx+',this.value)">'+opts+'</select>'+
+      badge+
+    '</div>';
+  }).join('');
+  updateImportValidity();
+}
+
+function updateImportValidity(){
+  var msg=document.getElementById('importValidityMsg');
+  var btn=document.getElementById('btnExecutarImportacao');
+  var ok=findImportColByTarget('titulo')!=null&&findImportColByTarget('data')!=null;
+  if(btn) btn.disabled=!ok;
+  if(msg) msg.innerHTML=ok?'':'<span style="color:#e24b4a">Mapeie pelo menos as colunas <strong>Título</strong> e <strong>Data</strong> para poder importar.</span>';
+}
+
+function renderImportDefaultAbaChips(){
+  var wrap=document.getElementById('importDefaultAbaChips');
+  if(!wrap) return;
+  var opts=calendarios.filter(function(c){return c.id!==DEFAULT_CAL_ID;});
+  if(!opts.length){ wrap.innerHTML='<span style="font-size:12px;color:var(--text3)">Nenhuma aba além da geral ainda — crie abas no calendário para poder escolher aqui.</span>'; return; }
+  wrap.innerHTML=opts.map(function(c){
+    var active=importDefaultAbaIds.has(c.id);
+    return '<div class="chip'+(active?' active':'')+'" onclick="toggleImportDefaultAba(\''+c.id+'\')">'+escVal(c.nome)+'</div>';
+  }).join('');
+}
+function toggleImportDefaultAba(id){
+  if(importDefaultAbaIds.has(id)) importDefaultAbaIds.delete(id); else importDefaultAbaIds.add(id);
+  renderImportDefaultAbaChips();
+}
+
+// dd/mm/aaaa é o formato usual de planilha brasileira — tratado antes do
+// fallback genérico parseDt(), que interpretaria "05/03/2026" como maio.
+function parseImportDate(v){
+  if(v==null||v==='') return '';
+  if(v instanceof Date&&!isNaN(v)) return dk(v.getFullYear(),v.getMonth(),v.getDate());
+  var s=String(v).trim();
+  var m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if(m) return dk(parseInt(m[3],10),parseInt(m[2],10)-1,parseInt(m[1],10));
+  return parseDt(s);
+}
+function parseImportTime(v){
+  if(v==null||v==='') return '';
+  if(v instanceof Date&&!isNaN(v)){
+    var pad=function(n){return String(n).padStart(2,'0');};
+    return pad(v.getHours())+':'+pad(v.getMinutes());
+  }
+  return String(v).trim();
+}
+
+// Converte uma linha crua da planilha no objeto de campos que será salvo.
+// __abaNames guarda os nomes de aba lidos da coluna "Aba" (se mapeada),
+// separados por ";" — resolvidos para IDs só na hora de importar.
+function importRowToObj(row){
+  var obj={};
+  Object.keys(importColMap).forEach(function(i){
+    var idx=parseInt(i,10);
+    var key=resolvedImportKey(idx);
+    if(!key) return;
+    var raw=row[idx];
+    var val;
+    if(key.toLowerCase()==='data') val=parseImportDate(raw);
+    else if(key.toLowerCase()==='horario') val=parseImportTime(raw);
+    else val=(raw==null?'':String(raw)).trim();
+    obj[key]=val;
+  });
+  var abaIdx=findImportColByTarget('__aba__');
+  obj.__abaNames=abaIdx!=null?(row[abaIdx]==null?'':String(row[abaIdx])).split(';').map(function(x){return x.trim();}).filter(Boolean):[];
+  return obj;
+}
+
+function renderImportPreview(){
+  var wrap=document.getElementById('importPreviewWrap');
+  if(!wrap) return;
+  if(!importRows.length){ wrap.innerHTML=''; return; }
+  var colIdxs=Object.keys(importColMap).map(Number).filter(function(idx){return importColMap[idx]&&importColMap[idx]!=='__aba__';});
+  var defs=importFieldOptions();
+  var labels=colIdxs.map(function(idx){
+    var key=resolvedImportKey(idx);
+    var def=defs.find(function(d){return d.key.toLowerCase()===key.toLowerCase();});
+    return def?def.label:key;
+  });
+  var abaIdx=findImportColByTarget('__aba__');
+  if(abaIdx!=null){ colIdxs=colIdxs.concat([abaIdx]); labels.push('Aba'); }
+  var sample=importRows.slice(0,5);
+  var html='<div style="font-size:11px;color:var(--text3);margin-bottom:.4rem">Pré-visualização (primeiras '+sample.length+' de '+importRows.length+' linha(s))</div>';
+  html+='<div class="table-wrapper"><table class="task-table"><thead><tr>'+labels.map(function(l){return '<th>'+escVal(l)+'</th>';}).join('')+'</tr></thead><tbody>';
+  sample.forEach(function(row){
+    var obj=importRowToObj(row);
+    html+='<tr>'+colIdxs.map(function(idx){
+      if(idx===abaIdx&&importColMap[idx]==='__aba__') return '<td>'+escVal(obj.__abaNames.join(', '))+'</td>';
+      var key=resolvedImportKey(idx);
+      var val=key.toLowerCase()==='data'?fmtDate(obj[key]):obj[key];
+      return '<td>'+escVal(val||'')+'</td>';
+    }).join('')+'</tr>';
+  });
+  html+='</tbody></table></div>';
+  wrap.innerHTML=html;
+}
+
+function chunkArray(arr,size){
+  var out=[];
+  for(var i=0;i<arr.length;i+=size) out.push(arr.slice(i,i+size));
+  return out;
+}
+
+function executarImportacao(){
+  if(!db){ alert('Firebase não conectado.'); return; }
+  if(!adminMode){ alert('Entre no modo admin primeiro.'); return; }
+  if(findImportColByTarget('titulo')==null||findImportColByTarget('data')==null){
+    alert('Mapeie pelo menos as colunas Título e Data.'); return;
+  }
+  if(!importRows.length){ alert('Selecione um arquivo primeiro.'); return; }
+
+  var criarAbas=(document.getElementById('importCreateAbas')||{}).checked;
+  var novosCampos=[];
+  Object.keys(importColMap).forEach(function(i){
+    if(importColMap[i]==='__new__'){
+      var key=(importHeaders[i]||'').trim();
+      if(key&&!extraCols.some(function(c){return c.toLowerCase()===key.toLowerCase();})) novosCampos.push(key);
+    }
+  });
+
+  var abasNaoEncontradas=new Set();
+  var puladas=0;
+  var docs=[];
+  importRows.forEach(function(row){
+    var obj=importRowToObj(row);
+    var titulo=(obj.titulo||'').trim();
+    var data=obj.data||'';
+    if(!titulo||!data){ puladas++; return; }
+    var abaIds=[];
+    if(obj.__abaNames.length){
+      obj.__abaNames.forEach(function(nome){
+        var cal=calendarios.find(function(c){return c.nome.toLowerCase()===nome.toLowerCase();});
+        if(cal){ if(cal.id!==DEFAULT_CAL_ID) abaIds.push(cal.id); }
+        else if(criarAbas){
+          var id='cal_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+          var cor=TAB_COLORS[calendarios.length%TAB_COLORS.length];
+          calendarios.push({id:id,nome:nome,cor:cor});
+          abaIds.push(id);
+        } else {
+          abasNaoEncontradas.add(nome);
+        }
+      });
+    } else {
+      abaIds=[...importDefaultAbaIds];
+    }
+    delete obj.__abaNames;
+    obj.calendarioIds=abaIds.join(';');
+    var clean={};
+    Object.keys(obj).forEach(function(k){ clean[sanitizeFirestoreKey(k)]=obj[k]; });
+    docs.push(clean);
+  });
+
+  if(!docs.length){ alert('Nenhuma linha válida para importar (verifique Título e Data em cada linha).'); return; }
+
+  var btn=document.getElementById('btnExecutarImportacao');
+  var status=document.getElementById('importStatus');
+  if(btn) btn.disabled=true;
+  if(status) status.textContent='Importando 0/'+docs.length+'...';
+
+  var batches=chunkArray(docs,450);
+  var done=0;
+  function proximoLote(i){
+    if(i>=batches.length){
+      novosCampos.forEach(function(c){ extraCols.push(c); });
+      salvarConfigFirestore();
+      var resumo='✅ '+docs.length+' tarefa(s) importada(s).';
+      if(puladas) resumo+=' '+puladas+' linha(s) ignorada(s) (sem título/data).';
+      if(abasNaoEncontradas.size) resumo+=' Abas não encontradas (tarefa foi importada só na aba geral): '+[...abasNaoEncontradas].join(', ')+'.';
+      if(status) status.textContent=resumo;
+      if(btn) btn.disabled=false;
+      renderExtraColsList();renderDynColSelector();renderPillCfg();renderTagFormFieldsConfig();renderCalTabs();renderAbaInicialCfg();renderImportDefaultAbaChips();
+      return;
+    }
+    var batch=db.batch();
+    batches[i].forEach(function(obj){
+      var ref=db.collection('tarefas').doc();
+      batch.set(ref,obj);
+    });
+    batch.commit().then(function(){
+      done+=batches[i].length;
+      if(status) status.textContent='Importando '+done+'/'+docs.length+'...';
+      proximoLote(i+1);
+    }).catch(function(e){
+      if(status) status.textContent='❌ Erro ao importar (linha em torno de '+done+'): '+e.message;
+      if(btn) btn.disabled=false;
+    });
+  }
+  proximoLote(0);
+}
+
+// ══ Modals ═══════════════════════════════════════════════════════════
+function getModalFields(t){
+  // 1. Tentar o campo tipo padrão
+  let tipoVal=(t.tipo||'').trim();
+
+  // 2. Se vazio, buscar em _raw de forma case-insensitive
+  if(!tipoVal){
+    const tipoKey=Object.keys(t._raw||{}).find(function(k){return k.toLowerCase()==='tipo';});
+    if(tipoKey) tipoVal=(t._raw[tipoKey]||'').trim();
+  }
+
+  // 3. Se ainda vazio, verificar se alguma tag corresponde a um tipo configurado
+  // (caso o usuário use tags como categoria de tipo)
+  if(!tipoVal){
+    const taskTags=(t.tags||'').split(';').map(function(x){return x.trim();}).filter(Boolean);
+    for(var i=0;i<taskTags.length;i++){
+      const match=Object.keys(typeFieldConfig).find(function(k){
+        return k.toLowerCase()===taskTags[i].toLowerCase();
+      });
+      if(match){tipoVal=taskTags[i];break;}
+    }
+  }
+
+  // 4. Sem tipo → campos padrão
+  if(!tipoVal) return defaultModalFields;
+
+  // 5. Buscar config case-insensitive
+  const cfgKey=Object.keys(typeFieldConfig).find(function(k){
+    return k.toLowerCase()===tipoVal.toLowerCase();
+  });
+  return cfgKey?typeFieldConfig[cfgKey]:defaultModalFields;
+}
+
+function openViewModal(id){
+  const t=allTasks.find(function(x){return x.id===id;});if(!t)return;
+  modalIsForm=false;
+  const color=colorFor(t);
+  const fields=getModalFields(t);
+  const rows=fields.filter(function(f){return f!=='titulo';}).map(function(f){
+    return renderFieldRow(t,f);
+  }).join('');
+  document.getElementById('modal').innerHTML=
+    '<div class="modal-bar" style="background:'+color+'"></div>'+
+    '<div class="modal-title">'+(t.emoji?t.emoji+' ':'')+t.titulo+'</div>'+
+    '<div class="dg">'+rows+'</div>'+
+    '<div class="modal-actions">'+
+    (adminMode
+      ? '<button class="btn-danger" onclick="deletarTarefa(\''+id+'\')">🗑 Excluir</button>'+
+        '<button class="btn-close" onclick="closeModal()">Fechar</button>'+
+        '<button class="btn-p" style="background:#378ADD" onclick="openEditModal(\''+id+'\')">✏️ Editar tarefa</button>'
+      : '<button class="btn-close" onclick="closeModal()">Fechar</button>'
+    )+
+    '</div>';
+  document.getElementById('overlay').classList.add('open');
+}
+
+function renderFieldRow(t,key){
+  if(key==='titulo')return'';
+  if(key==='data')return'<div class="dr"><span class="dl">Data</span><span class="dv">'+fmtDate(t.date)+(t.time?' · '+t.time:'')+'</span></div>';
+  if(key==='horario'&&t.time)return'<div class="dr"><span class="dl">Horário</span><span class="dv">'+t.time+'</span></div>';
+  if(key==='tipo'&&t.tipo)return'<div class="dr"><span class="dl">Tipo</span><span class="dv">'+t.tipo+'</span></div>';
+  if(key==='tags'){
+    const tags=(t.tags||'').split(';').map(function(x){return x.trim();}).filter(Boolean);
+    if(!tags.length)return'';
+    const tagHtml=tags.map(function(tag){const k=Object.keys(tagMap).find(function(k){return k.toLowerCase()===tag.toLowerCase();});const c=k?tagMap[k]:null;return c?'<span class="tag c" style="background:'+c+'22;color:'+c+'">'+tag+'</span>':'<span class="tag">'+tag+'</span>';}).join('');
+    return'<div class="dr"><span class="dl">Tags</span><span class="dv"><div class="tag-row">'+tagHtml+'</div></span></div>';
+  }
+  if(key==='prioridade'&&t.priority){const pk=t.priority.toLowerCase();const norm={high:'alta',mid:'média',low:'baixa'}[pk]||pk;const c=PRIO_C[norm]||'#aaa';return'<div class="dr"><span class="dl">Prioridade</span><span class="dv"><span style="background:'+c+'22;color:'+c+';padding:2px 9px;border-radius:20px;font-size:12px;font-weight:500">'+(PRIO_L[norm]||t.priority)+'</span></span></div>';}
+  if(key==='notas'&&t.notes)return'<div class="dr"><span class="dl">Notas</span><span class="dv">'+t.notes+'</span></div>';
+  // extra col — busca case-insensitive
+  const v=cleanVal(getExtraVal(t._raw,key));
+  if(!v)return'';
+  return'<div class="dr"><span class="dl">'+key+'</span><span class="dv">'+v+'</span></div>';
+}
+
+function openDayModal(dateStr){
+  modalIsForm=false;
+  var dt=filteredTasks.filter(function(t){return t.date===dateStr;});
+  var d=new Date(dateStr+'T12:00:00');
+  var titulo=d.getDate()+' de '+MONTHS[d.getMonth()]+' '+d.getFullYear();
+  var taskHtml=dt.map(function(t){
+    var col=colorFor(t);
+    var clickFn=adminMode?'openEditModal(\''+t.id+'\')':'openReadOnlyModal(\''+t.id+'\')';
+    var tags=(t.tags||'').split(';').filter(Boolean).map(function(tag){
+      var c=tagMap[Object.keys(tagMap).find(function(k){return k.toLowerCase()===tag.trim().toLowerCase();})||'']||'#aaa';
+      return '<span style="background:'+c+'22;color:'+c+';border-radius:20px;padding:1px 7px;font-size:10px;font-weight:600">'+tag.trim()+'</span>';
+    }).join(' ');
+    return '<div class="day-modal-task" onclick="document.getElementById(\'overlay\').classList.remove(\'open\');setTimeout(function(){'+clickFn+'},50)">'+
+      '<div style="width:4px;border-radius:2px;background:'+col+';flex-shrink:0;align-self:stretch"></div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="font-size:13px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(t.emoji?t.emoji+' ':'')+t.titulo+'</div>'+
+        '<div style="font-size:11px;color:var(--text3)">'+[t.time,tags].filter(Boolean).join(' · ')+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  document.getElementById('modal').innerHTML=
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">'+
+      '<div style="font-size:16px;font-weight:600">📅 '+titulo+'</div>'+
+      '<span style="font-size:12px;color:var(--text3)">'+dt.length+' tarefa'+(dt.length!==1?'s':'')+'</span>'+
+    '</div>'+
+    '<div style="max-height:65vh;overflow-y:auto;padding-right:2px">'+taskHtml+'</div>'+
+    (adminMode?'<div style="margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border)">'+
+      '<button class="btn-p" style="width:100%" onclick="document.getElementById(\'overlay\').classList.remove(\'open\');setTimeout(function(){openAddModal(\''+dateStr+'\');},50)">+ Nova tarefa neste dia</button>'+
+    '</div>':'')+
+    '<div class="modal-actions" style="margin-top:.5rem"><button class="btn-close" onclick="closeModal()">Fechar</button></div>';
+  document.getElementById('overlay').classList.add('open');
+}
+
+// ══ Abas de calendário (estilo Excel) ════════════════════════════════
+
+var TAB_COLORS=['#378ADD','#4caf7d','#f59e0b','#e24b4a','#9c6ade','#06b6d4','#ec4899'];
+
+function renderCalTabs(){
+  var bar=document.getElementById('calTabsBar');
+  if(!bar) return;
+
+  bar.innerHTML=calendarios.map(function(c){
+    var isActive=c.id===currentCalId;
+    var count=allTasks.filter(function(t){return taskInAba(t,c.id);}).length;
+    var dica=c.id===DEFAULT_CAL_ID?'Aba geral: mostra as tarefas de todas as abas':'Mostra apenas as tarefas desta aba';
+    return '<div class="cal-tab'+(isActive?' active':'')+'" data-calid="'+c.id+'" title="'+dica+'" '+
+      'onclick="trocarAbaCalendario(\''+c.id+'\')" '+
+      (adminMode?'ondblclick="event.stopPropagation();renomearAbaCalendario(\''+c.id+'\')"':'')+'>'+
+      '<span class="tab-dot" style="background:'+(c.cor||'#378ADD')+'"></span>'+
+      '<span>'+c.nome+'</span>'+
+      (count>0?'<span style="font-size:10px;color:var(--text3)">('+count+')</span>':'')+
+      (adminMode&&c.id!==DEFAULT_CAL_ID?'<span class="tab-close" onclick="event.stopPropagation();excluirAbaCalendario(\''+c.id+'\')" title="Excluir aba">×</span>':'')+
+    '</div>';
+  }).join('')+
+  (adminMode?'<div class="cal-tab-add" onclick="criarAbaCalendario()" title="Nova aba de calendário"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>':'');
+}
+
+function renderAbaInicialCfg(){
+  var sel=document.getElementById('abaInicialSel');
+  if(!sel) return;
+  sel.innerHTML=calendarios.map(function(c){
+    var marca=c.id===DEFAULT_CAL_ID?' — aba geral (todas as tarefas)':'';
+    return '<option value="'+c.id+'"'+(c.id===abaInicial?' selected':'')+'>'+escVal(c.nome)+marca+'</option>';
+  }).join('');
+  sel.value=abaInicial&&calendarios.some(function(c){return c.id===abaInicial;})?abaInicial:DEFAULT_CAL_ID;
+}
+function setAbaInicial(id){
+  abaInicial=id;
+  salvarConfigFirestore();
+  renderAbaInicialCfg();renderImportDefaultAbaChips();
+}
+
+function trocarAbaCalendario(id){
+  if(id===currentCalId) return;
+  closeColFilterMenu();
+  currentCalId=id;
+  saveLocal();
+  renderCalTabs();
+  applyFilters();
+  renderLegend();
+}
+
+function criarAbaCalendario(){
+  var nome=(prompt('Nome da nova aba de calendário:')||'').trim();
+  if(!nome) return;
+  var id='cal_'+Date.now();
+  var cor=TAB_COLORS[calendarios.length%TAB_COLORS.length];
+  calendarios.push({id:id, nome:nome, cor:cor});
+  salvarConfigFirestore();
+  renderCalTabs();renderAbaInicialCfg();renderImportDefaultAbaChips();
+  trocarAbaCalendario(id);
+}
+
+function renomearAbaCalendario(id){
+  var cal=calendarios.find(function(c){return c.id===id;});
+  if(!cal) return;
+  var novoNome=(prompt('Renomear aba:', cal.nome)||'').trim();
+  if(!novoNome) return;
+  cal.nome=novoNome;
+  salvarConfigFirestore();
+  renderCalTabs();renderAbaInicialCfg();renderImportDefaultAbaChips();
+}
+
+function excluirAbaCalendario(id){
+  if(id===DEFAULT_CAL_ID){ alert('A aba padrão não pode ser excluída — ela sempre mostra todas as tarefas.'); return; }
+  var cal=calendarios.find(function(c){return c.id===id;});
+  if(!cal) return;
+  var affected=allTasks.filter(function(t){return(t.calendarioIds||[]).indexOf(id)!==-1;});
+  var msg='Excluir a aba "'+cal.nome+'"?';
+  if(affected.length) msg+='\n\n⚠️ '+affected.length+' tarefa(s) estão nesta aba. Elas continuarão existindo na aba padrão, mas serão removidas desta aba específica.';
+  if(!confirm(msg)) return;
+
+  calendarios=calendarios.filter(function(c){return c.id!==id;});
+  delete tableCols[id]; // config de colunas da aba excluída
+  if(abaInicial===id) abaInicial='';
+  salvarConfigFirestore();
+
+  // Remove o id excluído do campo calendarioIds de cada tarefa afetada
+  if(db&&affected.length){
+    var batch=db.batch();
+    affected.forEach(function(t){
+      var newIds=(t.calendarioIds||[]).filter(function(x){return x!==id;});
+      batch.update(db.collection('tarefas').doc(t.id),{calendarioIds:newIds.join(';')});
+    });
+    batch.commit().catch(function(){});
+  }
+
+  if(currentCalId===id) currentCalId=DEFAULT_CAL_ID;
+  saveLocal();
+  renderCalTabs();renderAbaInicialCfg();renderImportDefaultAbaChips();
+  applyFilters();
+  renderLegend();
+}
+
+function closeModal(e){
+  // Clique no fundo escuro: só fecha modais de visualização — o formulário de
+  // nova/editar tarefa fica aberto para não perder o que foi digitado.
+  if(e&&e.target===document.getElementById('overlay')&&modalIsForm) return;
+  if(!e||e.target===document.getElementById('overlay')){
+    document.getElementById('overlay').classList.remove('open');
+    modalIsForm=false;
+  }
+}
+
+// ══ Nav ════════════════════════════════════════════════════════════
+function prevM(){mo--;if(mo<0){mo=11;yr--;}renderCal();}
+function nextM(){mo++;if(mo>11){mo=0;yr++;}renderCal();}
+function goToday(){yr=td.getFullYear();mo=td.getMonth();renderCal();}
+
+// ══ Init ════════════════════════════════════════════════════════════
+loadLocal();
+renderCal();renderTaskTable();renderTagList();renderExtraColsList();
+renderPillCfg();renderTagChips();renderDynColSelector();renderCalTabs();renderSelectFieldsList();renderTagFormFieldsConfig();renderAbaInicialCfg();renderImportDefaultAbaChips();
+
+const savedCfg=localStorage.getItem('fb_config');
+const cfgToUse = FIREBASE_CONFIG || (savedCfg ? JSON.parse(savedCfg) : null);
+if(cfgToUse){
+  try{
+    document.getElementById('firebaseCfgInput').value=JSON.stringify(cfgToUse,null,2);
+    iniciarFirebase(cfgToUse);
+  }catch(e){
+    switchTab('cfg');
+    document.getElementById('pFirebase').classList.remove('collapsed');
+  }
+} else {
+  switchTab('cfg');
+  document.getElementById('pFirebase').classList.remove('collapsed');
+}
+
+window.addDynColFilter=addDynColFilter;
+</script>
+</body>
+</html>
