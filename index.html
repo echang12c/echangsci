@@ -803,6 +803,11 @@ canvas{max-width:100%}
         <input type="url" id="notaLinkInput" placeholder="Cole aqui o link nfce.fazenda.sp.gov.br/…" style="flex:1">
         <button type="button" class="btnGhost" id="btnNotaLinkIr">Buscar</button>
       </div>
+      <button type="button" class="linkBtn" id="btnNotaColar">📋 Colar lista de itens</button>
+      <div class="hidden" id="notaColarBox" style="margin-top:8px">
+        <textarea id="notaColarTexto" rows="6" style="width:100%;font-family:monospace;font-size:12px" placeholder="Um item por linha: Nome | Qtd | Un | Valor unit. | Valor total&#10;Ex.: Arroz Tipo 1 5kg | 1 | UN | 24,90 | 24,90"></textarea>
+        <button type="button" class="btnGhost" id="btnNotaColarIr" style="width:100%;margin-top:6px">Processar lista</button>
+      </div>
       <div class="modalActions"><button type="button" class="btnGhost" data-close style="flex:1">Cancelar</button></div>
     </div>
 
@@ -2424,6 +2429,32 @@ document.getElementById('btnNotaLinkIr').onclick=async ()=>{
     toast('Não consegui buscar esse link');
   }
   btn.disabled=false; btn.textContent='Buscar';
+};
+
+document.getElementById('btnNotaColar').onclick=()=>{
+  document.getElementById('notaColarBox').classList.toggle('hidden');
+  document.getElementById('notaColarTexto').focus();
+};
+/* cada linha: Nome | Qtd | Un | Valor unit. | Valor total */
+function parseListaColada(texto){
+  const itens=[];
+  texto.split('\n').forEach(l=>{
+    const p=l.split('|').map(s=>s.trim());
+    if(p.length<5 || !p[0]) return;
+    const qtd=numBR(p[1])||1, unit=centsBR(p[3]);
+    let total=centsBR(p[4]);
+    if(!total) total=Math.round(qtd*unit);
+    itens.push({ nome:tituloBR(p[0]).slice(0,80), qtd, un:normUn(p[2]), unit, desconto:0, total, peso:0 });
+  });
+  return itens;
+}
+document.getElementById('btnNotaColarIr').onclick=()=>{
+  const itens=parseListaColada(document.getElementById('notaColarTexto').value);
+  if(!itens.length){ toast('Não entendi nenhuma linha — confira o formato Nome | Qtd | Un | Unit | Total'); return; }
+  nota.origem='foto';
+  document.getElementById('notaColarTexto').value='';
+  document.getElementById('notaColarBox').classList.add('hidden');
+  abrirNotaEdicao({ mercado:'', data:hojeISO(), itens, desconto:0, total:itens.reduce((a,i)=>a+i.total,0) });
 };
 
 async function lerNota(file){
