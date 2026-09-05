@@ -798,15 +798,14 @@ canvas{max-width:100%}
         <div class="notifSub" id="notaProgTxt">Preparando…</div>
       </div>
       <p class="impHint" style="margin-bottom:0">A foto <b>não</b> sai do seu aparelho. Se a nota tiver QR code (NFC-e de SP), buscamos os itens oficiais na Sefaz — só a chave da nota é usada pra isso; senão, a leitura acontece por OCR aqui mesmo. Só os itens conferidos são salvos.</p>
-      <button type="button" class="linkBtn" id="btnNotaLink" style="margin-top:10px">🔗 Já tenho o link da consulta na Sefaz</button>
-      <div class="hidden" id="notaLinkBox" style="display:flex;gap:8px;margin-top:8px">
-        <input type="url" id="notaLinkInput" placeholder="Cole aqui o link nfce.fazenda.sp.gov.br/…" style="flex:1">
-        <button type="button" class="btnGhost" id="btnNotaLinkIr">Buscar</button>
-      </div>
-      <button type="button" class="linkBtn" id="btnNotaColar">📋 Colar lista de itens</button>
+      <button type="button" class="linkBtn" id="btnNotaColar" style="margin-top:10px">📋 Colar ou anexar lista de itens</button>
       <div class="hidden" id="notaColarBox" style="margin-top:8px">
         <textarea id="notaColarTexto" rows="6" style="width:100%;font-family:monospace;font-size:12px" placeholder="Um item por linha: Nome | Qtd | Un | Valor unit. | Valor total&#10;Ex.: Arroz Tipo 1 5kg | 1 | UN | 24,90 | 24,90"></textarea>
-        <button type="button" class="btnGhost" id="btnNotaColarIr" style="width:100%;margin-top:6px">Processar lista</button>
+        <input type="file" id="notaColarArq" accept=".txt,.csv,text/plain,text/csv" class="hidden">
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <button type="button" class="btnGhost" id="btnNotaColarArq" style="flex:1">📎 Anexar arquivo</button>
+          <button type="button" class="btnPrimary" id="btnNotaColarIr" style="flex:1">Processar lista</button>
+        </div>
       </div>
       <div class="modalActions"><button type="button" class="btnGhost" data-close style="flex:1">Cancelar</button></div>
     </div>
@@ -2401,36 +2400,6 @@ function abrirNotaComDadosSefaz(dadosSefaz){
   });
 }
 
-document.getElementById('btnNotaLink').onclick=()=>{
-  document.getElementById('notaLinkBox').classList.toggle('hidden');
-  document.getElementById('notaLinkInput').focus();
-};
-document.getElementById('btnNotaLinkIr').onclick=async ()=>{
-  const btn=document.getElementById('btnNotaLinkIr');
-  const input=document.getElementById('notaLinkInput');
-  const link=input.value.trim();
-  if(!/nfce\.fazenda\.sp\.gov\.br/i.test(link)){ toast('Cole o link da consulta da Sefaz-SP'); return; }
-  btn.disabled=true; btn.textContent='Buscando…';
-  try{
-    const dadosSefaz=await buscarNotaNaSefaz(link);
-    if(!dadosSefaz){
-      toast('Não consegui falar com a Sefaz agora — tenta de novo');
-    }else if(!dadosSefaz.ok){
-      toast(dadosSefaz.error||'Não consegui buscar esse link');
-    }else if(!dadosSefaz.itens || !dadosSefaz.itens.length){
-      toast('Não achei os itens nesse link — confira se a nota já está autorizada');
-    }else{
-      input.value='';
-      document.getElementById('notaLinkBox').classList.add('hidden');
-      abrirNotaComDadosSefaz(dadosSefaz);
-    }
-  }catch(ex){
-    console.error('link sefaz:',ex);
-    toast('Não consegui buscar esse link');
-  }
-  btn.disabled=false; btn.textContent='Buscar';
-};
-
 document.getElementById('btnNotaColar').onclick=()=>{
   document.getElementById('notaColarBox').classList.toggle('hidden');
   document.getElementById('notaColarTexto').focus();
@@ -2448,13 +2417,25 @@ function parseListaColada(texto){
   });
   return itens;
 }
-document.getElementById('btnNotaColarIr').onclick=()=>{
-  const itens=parseListaColada(document.getElementById('notaColarTexto').value);
+function processarListaColada(texto){
+  const itens=parseListaColada(texto);
   if(!itens.length){ toast('Não entendi nenhuma linha — confira o formato Nome | Qtd | Un | Unit | Total'); return; }
   nota.origem='foto';
   document.getElementById('notaColarTexto').value='';
   document.getElementById('notaColarBox').classList.add('hidden');
   abrirNotaEdicao({ mercado:'', data:hojeISO(), itens, desconto:0, total:itens.reduce((a,i)=>a+i.total,0) });
+}
+document.getElementById('btnNotaColarIr').onclick=()=>{
+  processarListaColada(document.getElementById('notaColarTexto').value);
+};
+document.getElementById('btnNotaColarArq').onclick=()=>document.getElementById('notaColarArq').click();
+document.getElementById('notaColarArq').onchange=e=>{
+  const f=e.target.files[0]; e.target.value='';
+  if(!f) return;
+  const reader=new FileReader();
+  reader.onload=()=>processarListaColada(String(reader.result||''));
+  reader.onerror=()=>toast('Não consegui abrir esse arquivo');
+  reader.readAsText(f,'utf-8');
 };
 
 async function lerNota(file){
