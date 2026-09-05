@@ -2380,8 +2380,7 @@ async function buscarNotaNaSefaz(qrUrl){
     headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
     body:JSON.stringify({url:qrUrl}),
   });
-  const j=await r.json().catch(()=>null);
-  return (j&&j.ok) ? j : null;
+  return await r.json().catch(()=>null); // {ok:true,...} ou {ok:false,error}; null só se a resposta nem veio
 }
 /* abre a conferência já com os dados que vieram do worker /nfce (via QR ou link colado) */
 function abrirNotaComDadosSefaz(dadosSefaz){
@@ -2409,7 +2408,11 @@ document.getElementById('btnNotaLinkIr').onclick=async ()=>{
   btn.disabled=true; btn.textContent='Buscando…';
   try{
     const dadosSefaz=await buscarNotaNaSefaz(link);
-    if(!dadosSefaz || !dadosSefaz.itens || !dadosSefaz.itens.length){
+    if(!dadosSefaz){
+      toast('Não consegui falar com a Sefaz agora — tenta de novo');
+    }else if(!dadosSefaz.ok){
+      toast(dadosSefaz.error||'Não consegui buscar esse link');
+    }else if(!dadosSefaz.itens || !dadosSefaz.itens.length){
       toast('Não achei os itens nesse link — confira se a nota já está autorizada');
     }else{
       input.value='';

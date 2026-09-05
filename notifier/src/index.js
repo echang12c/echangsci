@@ -175,6 +175,9 @@ async function consultarNfceSP(urlStr) {
   if (u.protocol !== 'https:' || !NFCE_HOST_RE.test(u.hostname) || !/^\/(NFCeConsultaPublica|qrcode)/i.test(u.pathname)) {
     throw new Error('Só aceito o QR code oficial da Sefaz-SP');
   }
+  if (!/^\d{44}\|/.test(u.searchParams.get('p') || '')) {
+    throw new Error('Esse link não tem os dados da nota (parece ser da busca manual, não do QR code) — abra o QR code impresso na nota e cole o link que aparecer');
+  }
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), 9000);
   let res;
