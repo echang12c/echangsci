@@ -312,6 +312,7 @@ canvas{max-width:100%}
 .chartBox{height:260px;position:relative}
 
 /* ---------- Mercado (notas fiscais) ---------- */
+.linkBtn{background:none;border:none;color:var(--primary);font-weight:700;font-size:13px;text-decoration:underline;padding:4px 0;cursor:pointer}
 .mkHero{background:linear-gradient(135deg,#0E7DC2 0%,#00A88F 60%,#00C87B 100%);color:#fff;border:none;box-shadow:0 8px 24px rgba(14,125,194,.35);display:flex;align-items:center;gap:16px}
 .mkHero .emoji{font-size:42px;line-height:1}
 .mkHero .info{flex:1}
@@ -797,6 +798,11 @@ canvas{max-width:100%}
         <div class="notifSub" id="notaProgTxt">Preparando…</div>
       </div>
       <p class="impHint" style="margin-bottom:0">A foto <b>não</b> sai do seu aparelho. Se a nota tiver QR code (NFC-e de SP), buscamos os itens oficiais na Sefaz — só a chave da nota é usada pra isso; senão, a leitura acontece por OCR aqui mesmo. Só os itens conferidos são salvos.</p>
+      <button type="button" class="linkBtn" id="btnNotaLink" style="margin-top:10px">🔗 Já tenho o link da consulta na Sefaz</button>
+      <div class="hidden" id="notaLinkBox" style="display:flex;gap:8px;margin-top:8px">
+        <input type="url" id="notaLinkInput" placeholder="Cole aqui o link nfce.fazenda.sp.gov.br/…" style="flex:1">
+        <button type="button" class="btnGhost" id="btnNotaLinkIr">Buscar</button>
+      </div>
       <div class="modalActions"><button type="button" class="btnGhost" data-close style="flex:1">Cancelar</button></div>
     </div>
 
@@ -2377,6 +2383,45 @@ async function buscarNotaNaSefaz(qrUrl){
   const j=await r.json().catch(()=>null);
   return (j&&j.ok) ? j : null;
 }
+/* abre a conferência já com os dados que vieram do worker /nfce (via QR ou link colado) */
+function abrirNotaComDadosSefaz(dadosSefaz){
+  nota.origem='foto';
+  abrirNotaEdicao({
+    mercado:tituloBR(dadosSefaz.mercado||'').slice(0,60),
+    data:dadosSefaz.data||hojeISO(),
+    itens:dadosSefaz.itens.map(it=>({
+      nome:tituloBR(it.nome||'').slice(0,80), qtd:it.qtd||1, un:normUn(it.un),
+      unit:it.unitCents||0, desconto:0, total:it.totalCents||0, peso:0,
+    })),
+    desconto:0, total:dadosSefaz.totalCents||0,
+  });
+}
+
+document.getElementById('btnNotaLink').onclick=()=>{
+  document.getElementById('notaLinkBox').classList.toggle('hidden');
+  document.getElementById('notaLinkInput').focus();
+};
+document.getElementById('btnNotaLinkIr').onclick=async ()=>{
+  const btn=document.getElementById('btnNotaLinkIr');
+  const input=document.getElementById('notaLinkInput');
+  const link=input.value.trim();
+  if(!/nfce\.fazenda\.sp\.gov\.br/i.test(link)){ toast('Cole o link da consulta da Sefaz-SP'); return; }
+  btn.disabled=true; btn.textContent='Buscando…';
+  try{
+    const dadosSefaz=await buscarNotaNaSefaz(link);
+    if(!dadosSefaz || !dadosSefaz.itens || !dadosSefaz.itens.length){
+      toast('Não achei os itens nesse link — confira se a nota já está autorizada');
+    }else{
+      input.value='';
+      document.getElementById('notaLinkBox').classList.add('hidden');
+      abrirNotaComDadosSefaz(dadosSefaz);
+    }
+  }catch(ex){
+    console.error('link sefaz:',ex);
+    toast('Não consegui buscar esse link');
+  }
+  btn.disabled=false; btn.textContent='Buscar';
+};
 
 async function lerNota(file){
   const prog=document.getElementById('notaProg');
@@ -2393,17 +2438,8 @@ async function lerNota(file){
         setP(.3,'Achei o QR code — buscando os itens na Sefaz…');
         const dadosSefaz=await buscarNotaNaSefaz(qrTexto).catch(()=>null);
         if(dadosSefaz && dadosSefaz.itens && dadosSefaz.itens.length){
-          nota.origem='foto';
           setP(1,'Pronto!');
-          abrirNotaEdicao({
-            mercado:tituloBR(dadosSefaz.mercado||'').slice(0,60),
-            data:dadosSefaz.data||hojeISO(),
-            itens:dadosSefaz.itens.map(it=>({
-              nome:tituloBR(it.nome||'').slice(0,80), qtd:it.qtd||1, un:normUn(it.un),
-              unit:it.unitCents||0, desconto:0, total:it.totalCents||0, peso:0,
-            })),
-            desconto:0, total:dadosSefaz.totalCents||0,
-          });
+          abrirNotaComDadosSefaz(dadosSefaz);
           return;
         }
       }
