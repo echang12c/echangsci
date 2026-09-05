@@ -136,6 +136,111 @@ async function sendPush(env, sub, payloadObj) {
   return res.status;
 }
 
+/* ---------------- NFC-e: consulta pública da Sefaz-SP pelo QR code ----------------
+   O QR code da nota aponta para uma URL de consulta com uma "chave de acesso" (44
+   dígitos) mais um hash que comprova a autenticidade — por isso essa consulta não
+   pede captcha, diferente da consulta livre por chave. Buscamos essa mesma URL aqui
+   (o navegador não consegue por causa do CORS) e devolvemos os itens já estruturados. */
+const NFCE_HOST_RE = /^(www\.)?nfce\.fazenda\.sp\.gov\.br$/i;
+
+function centsFromBR(s) {
+  s = String(s || '').replace(/ /g, ' ').trim();
+  const m = s.match(/-?\d{1,3}(?:\.\d{3})*,\d{2}|-?\d+\.\d{2}|-?\d+/);
+  if (!m) return 0;
+  const v = m[0].replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
+  const n = parseFloat(v);
+  return Number.isNaN(n) ? 0 : Math.round(n * 100);
+}
+function numFromBR(s) {
+  s = String(s || '').replace(/ /g, ' ').trim();
+  const m = s.match(/\d+(?:,\d+)?/);
+  if (!m) return 0;
+  const n = parseFloat(m[0].replace(',', '.'));
+  return Number.isNaN(n) ? 0 : n;
+}
+function textCollector() {
+  const arr = [];
+  return {
+    arr,
+    handler: {
+      element() { arr.push(''); },
+      text(t) { if (arr.length) arr[arr.length - 1] += t.text; },
+    },
+  };
+}
+
+async function consultarNfceSP(urlStr) {
+  let u;
+  try { u = new URL(urlStr); } catch { throw new Error('URL inválida'); }
+  if (u.protocol !== 'https:' || !NFCE_HOST_RE.test(u.hostname) || !/^\/(NFCeConsultaPublica|qrcode)/i.test(u.pathname)) {
+    throw new Error('Só aceito o QR code oficial da Sefaz-SP');
+  }
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), 9000);
+  let res;
+  try {
+    res = await fetch(u.toString(), {
+      signal: ac.signal,
+      headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Mobile Safari/537.36' },
+    });
+  } finally { clearTimeout(timer); }
+  if (!res.ok) throw new Error('Sefaz respondeu ' + res.status);
+
+  const nome = textCollector(), qtd = textCollector(), un = textCollector();
+  const unitVal = textCollector(), totVal = textCollector();
+  const conteudo = textCollector(), infos = textCollector(), totalMax = textCollector();
+
+  const rw = new HTMLRewriter()
+    .on('span.txtTit', nome.handler)
+    .on('span.Rqtd', qtd.handler)
+    .on('span.RUN', un.handler)
+    .on('span.RvlUnit', unitVal.handler)
+    .on('span.valor', totVal.handler)
+    .on('#conteudo', conteudo.handler)
+    .on('#infos', infos.handler)
+    .on('.txtMax', totalMax.handler);
+  await rw.transform(res).text(); // consome a resposta pra rodar os handlers
+
+  const n = Math.min(nome.arr.length, qtd.arr.length, un.arr.length, unitVal.arr.length, totVal.arr.length);
+  const itens = [];
+  for (let i = 0; i < n; i++) {
+    const nomeStr = nome.arr[i].trim();
+    if (!nomeStr) continue;
+    itens.push({
+      nome: nomeStr.slice(0, 80),
+      qtd: numFromBR(qtd.arr[i].replace(/Qtde\.?:?/i, '')) || 1,
+      un: un.arr[i].replace(/UN:?/i, '').trim(),
+      unitCents: centsFromBR(unitVal.arr[i].replace(/Vl\.?\s*Unit\.?:?/i, '')),
+      totalCents: centsFromBR(totVal.arr[i]),
+    });
+  }
+
+  const conteudoTxt = conteudo.arr.join(' ');
+  const mercado = conteudoTxt.replace(/CNPJ[\s\S]*/i, '').replace(/\s+/g, ' ').trim().slice(0, 80);
+  const cnpjM = conteudoTxt.match(/CNPJ:?\s*([\d./-]{14,20})/i);
+  const cnpj = cnpjM ? cnpjM[1].replace(/\D/g, '') : '';
+
+  const infosTxt = infos.arr.join(' ');
+  const numeroM = infosTxt.match(/N[uú]mero:?\s*(\d+)/i);
+  const serieM = infosTxt.match(/S[eé]rie:?\s*(\d+)/i);
+  const emissaoM = infosTxt.match(/Emiss[ãa]o:?\s*(\d{2})\/(\d{2})\/(\d{4})/i);
+  const data = emissaoM ? `${emissaoM[3]}-${emissaoM[2]}-${emissaoM[1]}` : '';
+
+  const totalCents = centsFromBR(totalMax.arr[totalMax.arr.length - 1] || '')
+    || itens.reduce((a, it) => a + it.totalCents, 0);
+
+  return {
+    ok: true,
+    mercado,
+    cnpj,
+    numero: numeroM ? numeroM[1] : '',
+    serie: serieM ? serieM[1] : '',
+    data,
+    totalCents,
+    itens,
+  };
+}
+
 /* ---------------- Dados no KV ---------------- */
 async function endpointId(endpoint) {
   const h = await crypto.subtle.digest('SHA-256', te.encode(endpoint));
@@ -308,6 +413,17 @@ export default {
         }).catch(() => 0));
       }
       return json({ ok: true, results });
+    }
+
+    if (path === '/nfce') {
+      const url = String(body.url || '');
+      try {
+        const info = await consultarNfceSP(url);
+        if (!info.itens.length) return json({ ok: false, error: 'nenhum item encontrado' });
+        return json(info);
+      } catch (e) {
+        return json({ ok: false, error: (e && e.message) || 'falha na consulta' });
+      }
     }
 
     if (path === '/wipe') {

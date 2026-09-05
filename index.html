@@ -796,7 +796,7 @@ canvas{max-width:100%}
         <div class="bar"><span id="notaBar" style="width:0%"></span></div>
         <div class="notifSub" id="notaProgTxt">Preparando…</div>
       </div>
-      <p class="impHint" style="margin-bottom:0">A foto <b>não</b> é enviada para lugar nenhum: a leitura acontece dentro do seu aparelho e só os itens conferidos são salvos.</p>
+      <p class="impHint" style="margin-bottom:0">A foto <b>não</b> sai do seu aparelho. Se a nota tiver QR code (NFC-e de SP), buscamos os itens oficiais na Sefaz — só a chave da nota é usada pra isso; senão, a leitura acontece por OCR aqui mesmo. Só os itens conferidos são salvos.</p>
       <div class="modalActions"><button type="button" class="btnGhost" data-close style="flex:1">Cancelar</button></div>
     </div>
 
@@ -2319,6 +2319,65 @@ async function ocrLinhas(file, onProg){
   }finally{ try{ await worker.terminate(); }catch(_){ } }
 }
 
+/* --- QR code da nota (NFC-e): quando dá pra ler, busca os itens oficiais na Sefaz-SP --- */
+let jsQrPromise=null;
+function loadJsQR(){
+  if(jsQrPromise) return jsQrPromise;
+  jsQrPromise=new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
+    s.onload=()=>res(window.jsQR);
+    s.onerror=()=>{ jsQrPromise=null; rej(new Error('Falha ao carregar o leitor de QR code')); };
+    document.head.appendChild(s);
+  });
+  return jsQrPromise;
+}
+function imagemParaCanvasQr(file){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.onload=()=>{
+      const escala=Math.min(1, 2000/Math.max(img.width,img.height,1));
+      const c=document.createElement('canvas');
+      c.width=Math.round(img.width*escala); c.height=Math.round(img.height*escala);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(img.src);
+      res(c);
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(img.src); rej(new Error('Não consegui abrir esta imagem')); };
+    img.src=URL.createObjectURL(file);
+  });
+}
+/* devolve o texto cru do QR (a URL da Sefaz), ou null se não achar nenhum na foto */
+async function lerQrDaFoto(file){
+  let canvas;
+  try{ canvas=await imagemParaCanvasQr(file); }catch(_){ return null; }
+  if('BarcodeDetector' in window){
+    try{
+      const det=new window.BarcodeDetector({formats:['qr_code']});
+      const achados=await det.detect(canvas);
+      if(achados&&achados[0]&&achados[0].rawValue) return achados[0].rawValue;
+    }catch(_){ /* segue pro fallback */ }
+  }
+  try{
+    const jsQR=await loadJsQR();
+    const ctx=canvas.getContext('2d');
+    const img=ctx.getImageData(0,0,canvas.width,canvas.height);
+    const achado=jsQR(img.data, img.width, img.height);
+    return achado ? achado.data : null;
+  }catch(_){ return null; }
+}
+/* pede pro worker buscar a nota na Sefaz (o worker faz o fetch pra fugir do CORS) */
+async function buscarNotaNaSefaz(qrUrl){
+  const token=await auth.currentUser.getIdToken();
+  const r=await fetch(PUSH_URL+'/nfce',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body:JSON.stringify({url:qrUrl}),
+  });
+  const j=await r.json().catch(()=>null);
+  return (j&&j.ok) ? j : null;
+}
+
 async function lerNota(file){
   const prog=document.getElementById('notaProg');
   const bar=document.getElementById('notaBar');
@@ -2327,6 +2386,28 @@ async function lerNota(file){
   prog.classList.remove('hidden'); setP(.04,'Abrindo o arquivo…');
   const ehPdf=/pdf/i.test(file.type)||/\.pdf$/i.test(file.name);
   try{
+    if(!ehPdf){
+      setP(.08,'Procurando o QR code da nota…');
+      const qrTexto=await lerQrDaFoto(file);
+      if(qrTexto && /\d{44}/.test(qrTexto) && /nfce\.fazenda\.sp\.gov\.br/i.test(qrTexto)){
+        setP(.3,'Achei o QR code — buscando os itens na Sefaz…');
+        const dadosSefaz=await buscarNotaNaSefaz(qrTexto).catch(()=>null);
+        if(dadosSefaz && dadosSefaz.itens && dadosSefaz.itens.length){
+          nota.origem='foto';
+          setP(1,'Pronto!');
+          abrirNotaEdicao({
+            mercado:tituloBR(dadosSefaz.mercado||'').slice(0,60),
+            data:dadosSefaz.data||hojeISO(),
+            itens:dadosSefaz.itens.map(it=>({
+              nome:tituloBR(it.nome||'').slice(0,80), qtd:it.qtd||1, un:normUn(it.un),
+              unit:it.unitCents||0, desconto:0, total:it.totalCents||0, peso:0,
+            })),
+            desconto:0, total:dadosSefaz.totalCents||0,
+          });
+          return;
+        }
+      }
+    }
     let linhas;
     if(ehPdf){
       nota.origem='pdf';
@@ -2335,8 +2416,8 @@ async function lerNota(file){
       setP(1,'Pronto!');
     }else{
       nota.origem='foto';
-      setP(.06,'Carregando o leitor de imagem (só na primeira vez)…');
-      linhas=await ocrLinhas(file, p=>setP(.1+p*.88,'Lendo a nota… '+Math.round(p*100)+'%'));
+      setP(.1,'Carregando o leitor de imagem (só na primeira vez)…');
+      linhas=await ocrLinhas(file, p=>setP(.15+p*.83,'Lendo a nota… '+Math.round(p*100)+'%'));
     }
     abrirNotaEdicao(parseNota(linhas));
   }catch(ex){
