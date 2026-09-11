@@ -94,6 +94,27 @@ service cloud.firestore {
                                    'subtotal', 'desconto', 'total', 'txId']);
       }
 
+      // ---------- Contas da casa (despesas fixas recorrentes) ----------
+      // O histórico de pagamentos fica embutido no doc: pagamentos = {"YYYY-MM": centavos}.
+      function contaValida(d) {
+        return d.keys().hasAll(['nome', 'valor', 'criadoEm'])
+            && d.keys().hasOnly(['nome', 'valor', 'dia', 'pagamentos', 'criadoEm'])
+            && txt(d.nome, 60)
+            && centavos(d.valor)
+            && (!('dia' in d) || (d.dia is int && d.dia >= 1 && d.dia <= 31))
+            && (!('pagamentos' in d) || (d.pagamentos is map && d.pagamentos.size() <= 120));
+      }
+      match /contas/{id} {
+        allow read, delete: if souDono(uid);
+        allow create: if souDono(uid)
+                      && contaValida(request.resource.data)
+                      && request.resource.data.criadoEm == request.time;
+        allow update: if souDono(uid)
+                      && contaValida(request.resource.data)
+                      && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['nome', 'valor', 'dia', 'pagamentos']);
+      }
+
       // ---------- Orçamentos e Assinaturas (LEGADO) ----------
       // As seções saíram do app; leitura e exclusão continuam liberadas
       // para a exportação de dados e a exclusão de conta (LGPD).

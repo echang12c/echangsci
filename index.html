@@ -427,6 +427,7 @@ canvas{max-width:100%}
         <button data-tab="tx">💸 Lançamentos</button>
         <button data-tab="relat">📈 Relatórios</button>
         <button data-tab="mercado">🛒 Mercado</button>
+        <button data-tab="contas">🏠 Contas da casa</button>
         <button data-tab="metas">✅ Metas do dia</button>
         <button data-tab="pets">🐾 Coleção</button>
       </nav>
@@ -580,6 +581,30 @@ canvas{max-width:100%}
       <div class="card" id="mkTabNotas"><div class="empty">Nenhuma nota no período.</div></div>
     </section>
 
+    <!-- ===== Contas da casa ===== -->
+    <section id="tab-contas" class="hidden">
+      <div class="grid3">
+        <div class="card kpi"><div class="lbl">Pago em <span id="ctMesLbl"></span></div><div class="val pos" id="kContasPago">R$ 0,00</div></div>
+        <div class="card kpi"><div class="lbl">Em aberto</div><div class="val neg" id="kContasAberto">R$ 0,00</div></div>
+        <div class="card kpi"><div class="lbl">Contas pagas</div><div class="val" id="kContasQtd">0 de 0</div></div>
+      </div>
+      <h2 class="section">Suas contas</h2>
+      <div class="card" id="contasList"><div class="empty">Nenhuma conta cadastrada. Toque em "+ Nova conta" para começar.</div></div>
+      <div style="margin-top:14px"><button class="btnGhost" id="btnAddConta">+ Nova conta</button></div>
+
+      <h2 class="section" id="ctChartTitle">Gasto mês a mês — todas as contas juntas</h2>
+      <div class="card relCtrls">
+        <div class="relRow">
+          <div class="field"><label>De (mês)</label><input type="month" id="ctDe"></div>
+          <div class="field"><label>Até (mês)</label><input type="month" id="ctAte"></div>
+        </div>
+        <div class="relRow">
+          <div class="field"><label>Conta</label><select id="ctContaSel"><option value="">— todas juntas —</option></select></div>
+        </div>
+      </div>
+      <div class="card chartBox" style="margin-top:14px"><canvas id="chartContas"></canvas></div>
+    </section>
+
     <!-- ===== Metas do dia ===== -->
     <section id="tab-metas" class="hidden">
       <div class="diaBar">
@@ -661,6 +686,22 @@ canvas{max-width:100%}
         <option value="pix">PIX</option>
       </select></div>
       <div id="txCustomFields" style="display:contents"></div>
+      <div class="modalActions">
+        <button type="button" class="btnGhost" data-close>Cancelar</button>
+        <button type="submit" class="btnPrimary">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Modal conta da casa ===== -->
+<div class="modalWrap hidden" id="contaModal">
+  <div class="modal">
+    <h3 id="contaModalTitle">Nova conta</h3>
+    <form id="contaForm">
+      <div class="field"><label>Nome</label><input id="contaNome" placeholder="Ex.: Aluguel, Luz, Água, Internet…" maxlength="60" required></div>
+      <div class="field"><label>Valor esperado (R$)</label><input inputmode="decimal" id="contaValor" placeholder="0,00" required></div>
+      <div class="field"><label>Dia do vencimento (opcional)</label><input type="number" id="contaDia" min="1" max="31" placeholder="Ex.: 10"></div>
       <div class="modalActions">
         <button type="button" class="btnGhost" data-close>Cancelar</button>
         <button type="submit" class="btnPrimary">Salvar</button>
@@ -952,9 +993,10 @@ const state = {
   camposCustom: [],             // definições de campos personalizados
   perfil: {},                   // {nome, foto} salvos no Firestore
   cats: null,                   // {despesa:[...], receita:[...]} — null = usa o padrão
-  unsubTx:null, unsubRotinas:null, unsubMetaStatus:null, unsubInv:null, unsubCampos:null, unsubPerfil:null, unsubCats:null,
+  contas: [],                   // contas da casa: {id, nome, valor, dia?, pagamentos:{mes:centavosPago}}
+  unsubTx:null, unsubRotinas:null, unsubMetaStatus:null, unsubInv:null, unsubCampos:null, unsubPerfil:null, unsubCats:null, unsubContas:null,
   charts:{cat:null, trend:null, rel:null, relDonut:null, relLinha:null,
-           mkProd:null, mkComp:null, mkMercado:null, mkTop:null},
+           mkProd:null, mkComp:null, mkMercado:null, mkTop:null, contas:null},
 };
 
 /* ---------------- Utilidades ---------------- */
@@ -1121,6 +1163,7 @@ function entrarNoApp(user){
   document.getElementById('appView').classList.remove('hidden');
   carregarMes();
   escutarCats();
+  escutarContas();
   escutarRotinas();
   escutarDiaMetas();
   escutarInventario();
@@ -1144,6 +1187,7 @@ auth.onAuthStateChanged(user=>{
     clearInterval(verifyPoll); verifyPoll=null;
     document.getElementById('verifyMsg').textContent='';
     if(state.unsubTx)state.unsubTx(); if(state.unsubCats)state.unsubCats();
+    if(state.unsubContas)state.unsubContas(); state.contas=[];
     if(state.unsubRotinas)state.unsubRotinas(); if(state.unsubMetaStatus)state.unsubMetaStatus(); if(state.unsubInv)state.unsubInv();
     if(state.unsubCampos)state.unsubCampos(); if(state.unsubPerfil)state.unsubPerfil();
     document.getElementById('appView').classList.add('hidden');
@@ -1173,19 +1217,21 @@ document.querySelectorAll('nav.tabs button').forEach(b=>{
   b.onclick=()=>{
     document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('active'));
     b.classList.add('active');
-    ['dash','tx','relat','mercado','metas','pets'].forEach(t=>
+    ['dash','tx','relat','mercado','contas','metas','pets'].forEach(t=>
       document.getElementById('tab-'+t).classList.toggle('hidden', t!==b.dataset.tab));
     document.getElementById('tabsToggleLabel').textContent=b.textContent.trim();
     tabsMenu.classList.remove('open');
     tabsToggle.setAttribute('aria-expanded','false');
     if(b.dataset.tab==='relat') abrirRelatorios();
     if(b.dataset.tab==='mercado') abrirMercado();
+    if(b.dataset.tab==='contas') abrirContas();
   };
 });
 
 /* ---------------- Dados do mês ---------------- */
 function carregarMes(){
   document.getElementById('monthLabel').textContent=mesLabel(state.mes);
+  renderContasList();
   if(state.unsubTx)state.unsubTx();
 
   state.unsubTx = col('tx').where('mes','==',state.mes)
@@ -2556,6 +2602,155 @@ function parseNota(linhas){
   return out;
 }
 
+/* ====================================================================
+   CONTAS DA CASA — despesas fixas recorrentes (aluguel, luz, água…)
+   Modelo de dados: users/{uid}/contas/{id}
+     { nome, valor (esperado, centavos), dia (vencimento, opcional),
+       pagamentos:{ "YYYY-MM": valorPagoCentavos }, criadoEm }
+   Todo o histórico fica embutido no próprio documento — o gráfico
+   mês a mês é montado no cliente, sem consultas extras ao Firestore.
+   ==================================================================== */
+const ct={conta:''};
+
+function escutarContas(){
+  if(state.unsubContas)state.unsubContas();
+  state.unsubContas = col('contas').orderBy('criadoEm').onSnapshot(snap=>{
+    state.contas = snap.docs.map(d=>({id:d.id,...d.data()}));
+    preencherContaSel();
+    renderContasList();
+    renderContasChart();
+  });
+}
+function contaPago(c, mes){ return c.pagamentos && c.pagamentos[mes]!=null ? c.pagamentos[mes] : null; }
+
+function abrirContas(){
+  const de=document.getElementById('ctDe'), ate=document.getElementById('ctAte');
+  if(!de.value){ de.value=shiftMes(state.mes,-5); ate.value=state.mes; }
+  preencherContaSel();
+  renderContasList();
+  renderContasChart();
+}
+
+function renderContasList(){
+  document.getElementById('ctMesLbl').textContent=mesLabel(state.mes);
+  const mes=state.mes;
+  const box=document.getElementById('contasList');
+  box.innerHTML = state.contas.length ? state.contas.map(c=>{
+    const pago=contaPago(c, mes);
+    const done=pago!=null;
+    return `<div class="metaItem ${done?'done':''}" data-id="${c.id}">
+      <button type="button" class="metaCheck" title="${done?'Desmarcar':'Marcar como paga'}">${done?'✓':''}</button>
+      <div class="metaTxt">${esc(c.nome)}
+        <div class="metaDias">${done?'Pago: '+fmt(pago):'Previsto: '+fmt(c.valor||0)}${c.dia?' · vence dia '+c.dia:''}</div>
+      </div>
+      <button type="button" class="catEditBtn" data-act="edit" title="Editar">✎</button>
+      <button type="button" class="txDel" data-act="del" title="Excluir">✕</button>
+    </div>`;
+  }).join('') : '<div class="empty">Nenhuma conta cadastrada. Toque em "+ Nova conta" para começar.</div>';
+  box.querySelectorAll('.metaItem').forEach(el=>{
+    const c=state.contas.find(x=>x.id===el.dataset.id); if(!c) return;
+    el.querySelector('.metaCheck').onclick=()=>toggleContaPaga(c);
+    el.querySelector('[data-act="edit"]').onclick=()=>abrirContaModal(c);
+    el.querySelector('[data-act="del"]').onclick=()=>excluirConta(c);
+  });
+
+  let pagoSum=0, abertoSum=0, pagas=0;
+  state.contas.forEach(c=>{
+    const p=contaPago(c, mes);
+    if(p!=null){ pagoSum+=p; pagas++; } else abertoSum+=(c.valor||0);
+  });
+  document.getElementById('kContasPago').textContent=fmt(pagoSum);
+  document.getElementById('kContasAberto').textContent=fmt(abertoSum);
+  document.getElementById('kContasQtd').textContent=`${pagas} de ${state.contas.length}`;
+}
+
+async function toggleContaPaga(c){
+  const mes=state.mes;
+  if(contaPago(c, mes)!=null){
+    if(!confirm(`Desmarcar "${c.nome}" como paga em ${mesLabel(mes)}?`)) return;
+    try{ await col('contas').doc(c.id).update({[`pagamentos.${mes}`]:firebase.firestore.FieldValue.delete()}); }
+    catch(ex){ toast('Erro: '+ex.message); }
+    return;
+  }
+  const padrao=c.valor?(c.valor/100).toFixed(2).replace('.',','):'';
+  const str=prompt(`Valor pago de "${c.nome}" em ${mesLabel(mes)}:`, padrao);
+  if(str===null) return;
+  const valor=parseValor(str);
+  if(!valor){ toast('Valor inválido'); return; }
+  try{
+    await col('contas').doc(c.id).update({[`pagamentos.${mes}`]:valor});
+    toast('Conta marcada como paga! ✅');
+  }catch(ex){ toast('Erro: '+ex.message); }
+}
+
+async function excluirConta(c){
+  if(!confirm(`Excluir a conta "${c.nome}"? Todo o histórico de pagamentos dela se perde.`)) return;
+  try{ await col('contas').doc(c.id).delete(); toast('Conta excluída'); }
+  catch(ex){ toast('Erro ao excluir: '+ex.message); }
+}
+
+let contaEditId=null;
+function abrirContaModal(c){
+  contaEditId = c ? c.id : null;
+  document.getElementById('contaModalTitle').textContent = c ? 'Editar conta' : 'Nova conta';
+  document.getElementById('contaNome').value = c ? c.nome : '';
+  document.getElementById('contaValor').value = c && c.valor ? (c.valor/100).toFixed(2).replace('.',',') : '';
+  document.getElementById('contaDia').value = c && c.dia ? c.dia : '';
+  document.getElementById('contaModal').classList.remove('hidden');
+}
+document.getElementById('btnAddConta').onclick=()=>abrirContaModal(null);
+document.getElementById('contaForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const nome=document.getElementById('contaNome').value.trim();
+  const valor=parseValor(document.getElementById('contaValor').value);
+  const diaStr=document.getElementById('contaDia').value;
+  const dia = diaStr ? Math.max(1,Math.min(31,parseInt(diaStr,10))) : null;
+  if(!nome){ toast('Dê um nome à conta'); return; }
+  if(!valor){ toast('Informe o valor esperado'); return; }
+  try{
+    if(contaEditId){
+      await col('contas').doc(contaEditId).update({nome, valor,
+        dia: dia!=null ? dia : firebase.firestore.FieldValue.delete()});
+      toast('Conta atualizada');
+    }else{
+      await col('contas').add({nome, valor, ...(dia!=null?{dia}:{}), pagamentos:{},
+        criadoEm:firebase.firestore.FieldValue.serverTimestamp()});
+      toast('Conta criada! 🏠');
+    }
+    document.getElementById('contaModal').classList.add('hidden');
+  }catch(ex){ toast('Erro ao salvar: '+ex.message); }
+});
+
+function preencherContaSel(){
+  const sel=document.getElementById('ctContaSel');
+  const atual=ct.conta;
+  sel.innerHTML='<option value="">— todas juntas —</option>'+
+    state.contas.map(c=>`<option value="${c.id}"${c.id===atual?' selected':''}>${esc(c.nome)}</option>`).join('');
+  if(atual && !state.contas.some(c=>c.id===atual)){ ct.conta=''; sel.value=''; }
+}
+function renderContasChart(){
+  let de=document.getElementById('ctDe').value, ate=document.getElementById('ctAte').value;
+  if(!de){ de=shiftMes(state.mes,-5); document.getElementById('ctDe').value=de; }
+  if(!ate){ ate=state.mes; document.getElementById('ctAte').value=ate; }
+  const meses=mesesEntre(de,ate);
+  const contasAlvo = ct.conta ? state.contas.filter(c=>c.id===ct.conta) : state.contas;
+  const data = meses.map(m=>contasAlvo.reduce((soma,c)=>soma+(contaPago(c,m)||0),0)/100);
+  const contaSel = ct.conta && state.contas.find(c=>c.id===ct.conta);
+  const titulo = contaSel ? contaSel.nome : 'todas as contas juntas';
+  document.getElementById('ctChartTitle').textContent='Gasto mês a mês — '+titulo;
+  mkChart('contas','chartContas',{type:'line',
+    data:{labels:meses.map(mesCurto), datasets:[{label:titulo, data,
+      borderColor:'#0E7DC2', backgroundColor:'#0E7DC2',
+      borderWidth:2, pointRadius:3, tension:.3, fill:false}]},
+    options:{maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>' '+c.parsed.y.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}}},
+      scales:{y:{ticks:{callback:moedaCB}}}}
+  });
+}
+document.getElementById('ctDe').onchange=renderContasChart;
+document.getElementById('ctAte').onchange=renderContasChart;
+document.getElementById('ctContaSel').onchange=e=>{ ct.conta=e.target.value; renderContasChart(); };
+
 /* ---------------- Metas do dia (rotinas programáveis) ---------------- */
 const DIAS_SEMANA=['dom','seg','ter','qua','qui','sex','sáb'];
 let novaDias=new Set();
@@ -3115,7 +3310,7 @@ document.getElementById('senhaForm').addEventListener('submit', async e=>{
 });
 
 /* ---------------- Meus dados: exportação e exclusão (LGPD) ---------------- */
-const COLECOES_USUARIO=['perfil','tx','compras','orcamentos','assinaturas','rotinas','metasStatus','inventario','camposCustom','catMap','config'];
+const COLECOES_USUARIO=['perfil','tx','compras','contas','orcamentos','assinaturas','rotinas','metasStatus','inventario','camposCustom','catMap','config'];
 
 function converterTimestamps(v){
   if(v && typeof v.toDate==='function') return v.toDate().toISOString();
@@ -3797,6 +3992,14 @@ const GUIA_PASSOS=[
       <li>Escolha um produto e veja o <b>preço ao longo do tempo</b>, uma linha para cada mercado — dá para saber onde compensa comprar.</li>
       <li>A tabela <b>Meus produtos</b> mostra menor preço, maior preço, preço médio, R$/kg e a variação desde a primeira compra.</li>
       <li>Toque numa nota salva para corrigir qualquer coisa, e no ✎ de um produto para renomeá-lo em todas as notas.</li>
+    </ul>`},
+  {e:'🏠',t:'Contas da casa',c:`
+    <p>Cadastre as despesas fixas da casa (aluguel, luz, água, internet…) e não perca o controle de quais já foram pagas.</p>
+    <ul>
+      <li><b>+ Nova conta</b>: nome, valor esperado e, se quiser, o dia do vencimento.</li>
+      <li>Toque no ✓ para marcar como paga no mês selecionado no topo — você informa o valor pago (pode ser diferente do esperado).</li>
+      <li>Toque em ✎ para editar ou em ✕ para excluir uma conta.</li>
+      <li>O gráfico mostra o gasto mês a mês, somando todas as contas ou filtrando uma específica.</li>
     </ul>`},
   {e:'✅',t:'Metas do dia',c:`
     <p>Transforme tarefas em rotina — e ganhe recompensas por cumprir.</p>
