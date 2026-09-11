@@ -1,5 +1,5 @@
 /* Service worker do SeuCofrin — cache do app shell + estáticos */
-const CACHE = 'cofre-v7';
+const CACHE = 'cofre-v8';
 const PRECACHE = [
   './',
   'index.html',
