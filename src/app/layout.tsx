@@ -22,7 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <header className="topbar">
           <div className="topbar-inner">
-            <div className="brand">Cofrin <span>· Mercado</span></div>
+            <div className="brand">Cofrin</div>
             <Nav />
           </div>
         </header>
