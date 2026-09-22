@@ -8,12 +8,13 @@ const LINKS = [
   { href: '/mercado/produtos', label: 'Produtos' },
   { href: '/mercado/notas', label: 'Notas' },
   { href: '/mercado/nova', label: '+ Nova nota' },
+  { href: '/casa', label: 'Contas da casa', exact: true },
 ];
 
 export default function Nav() {
   const path = usePathname();
   return (
-    <nav className="nav" aria-label="Seções do Mercado">
+    <nav className="nav" aria-label="Seções do Cofrin">
       {LINKS.map((l) => {
         const active = l.exact ? path === l.href : path.startsWith(l.href);
         return (

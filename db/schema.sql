@@ -122,3 +122,50 @@ CREATE TABLE IF NOT EXISTS receipt_items (
 
 CREATE INDEX IF NOT EXISTS idx_items_receipt ON receipt_items(receipt_id);
 CREATE INDEX IF NOT EXISTS idx_items_product ON receipt_items(product_id);
+
+-- ============================================================================
+-- Cofrin :: Seção Contas da casa
+-- Contas recorrentes do lar (aluguel, luz, água, internet, ...), acompanhadas
+-- mês a mês: quanto custou e se já foi paga. Domínio separado do Mercado —
+-- aqui não há produto nem mercado, só a conta e um lançamento por mês.
+-- ============================================================================
+
+-- ---------------------------------------------------------------------------
+-- 6. house_bills — a conta em si (o "cadastro"), sem valor amarrado a um mês.
+--    `default_amount_cents` é só um palpite inicial para o lançamento de um
+--    mês novo (útil para conta de valor fixo, como aluguel ou streaming);
+--    o valor que realmente conta é o do lançamento (house_bill_entries).
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS house_bills (
+  id                    INTEGER PRIMARY KEY,
+  name                  TEXT    NOT NULL,
+  category              TEXT,
+  default_amount_cents  INTEGER NOT NULL DEFAULT 0 CHECK (default_amount_cents >= 0),
+  -- Exclusão apaga o histórico junto (ON DELETE CASCADE nos lançamentos); uma
+  -- conta que deixou de existir vira inativa, não excluída, quando o usuário
+  -- quer parar de vê-la sem perder o que já foi pago.
+  active                INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0,1)),
+  created_at            TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_house_bills_active ON house_bills(active);
+
+-- ---------------------------------------------------------------------------
+-- 7. house_bill_entries — um lançamento por conta × mês: quanto custou aquele
+--    mês (pode variar, como luz e água) e se já foi pago. Só existe lançamento
+--    para o mês em que o usuário efetivamente mexeu na conta (editou o valor
+--    ou marcou como paga) — é isso que faz do gráfico mensal um histórico
+--    real, e não uma projeção do valor padrão para todo mês.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS house_bill_entries (
+  id           INTEGER PRIMARY KEY,
+  bill_id      INTEGER NOT NULL REFERENCES house_bills(id) ON DELETE CASCADE,
+  month        TEXT    NOT NULL,                 -- 'YYYY-MM'
+  amount_cents INTEGER NOT NULL DEFAULT 0 CHECK (amount_cents >= 0),
+  paid         INTEGER NOT NULL DEFAULT 0 CHECK (paid IN (0,1)),
+  paid_at      TEXT,
+  created_at   TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_house_entries_bill_month ON house_bill_entries(bill_id, month);
+CREATE INDEX IF NOT EXISTS idx_house_entries_month ON house_bill_entries(month);
