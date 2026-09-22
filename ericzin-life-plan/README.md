@@ -1,0 +1,58 @@
+# Ericzin's Life Plan
+
+Painel pessoal semanal com 6 pilares da vida (Saúde & Corpo, Sono & Descanso,
+Mente, Estudo, Finanças, Carreira). Cada pilar tem sua própria página com os
+widgets certos pra aquele assunto (checklist de dias da semana, gráficos de
+evolução, metas com "+10%", contador de sequência, etc.) e a Visão Geral
+resume o progresso de todos.
+
+**Ao vivo:** https://silent-cell-1dd6.ericchang12c.workers.dev (Cloudflare Pages)
+
+## O que é isto, tecnicamente
+
+Um único arquivo HTML (`index.html`) autocontido: CSS e JavaScript inline, sem
+build step, sem framework, sem dependências de npm. As únicas coisas
+carregadas de fora são fontes do Google Fonts, o Chart.js (via cdnjs) e o SDK
+do Firebase (via gstatic), todos por `<script src>`/`<link>` direto no HTML.
+
+Por ser um arquivo único, publicar uma atualização é literalmente substituir
+esse arquivo na hospedagem estática (Cloudflare Pages, no caso).
+
+## Dados e login
+
+- Login com Google via Firebase Authentication.
+- Dados salvos no Firestore, um documento por usuário (`paineis/{uid}`), então
+  sincronizam entre aparelhos.
+- Projeto Firebase: `ericzinlifeplan`. A config do SDK (`FIREBASE_CONFIG`, perto
+  do topo do `<script>`) já está preenchida com os valores reais — esses
+  valores são públicos por design no Firebase; a segurança de verdade está nas
+  regras do Firestore (usuário só lê/escreve o próprio documento).
+- Se o Firebase não estiver configurado ou não carregar (ex: dentro de um
+  preview com CSP restritivo, como o artifact viewer do Claude), o app cai
+  automaticamente para `localStorage` do navegador, sem login. Isso é
+  intencional — não é um bug.
+
+## Publicar uma atualização
+
+1. Edite `index.html` diretamente (é um arquivo só).
+2. Cloudflare Pages → o projeto já existente → suba o `index.html` atualizado
+   (upload manual, ou `wrangler pages deploy` se preferir CLI).
+3. Se adicionar um domínio/URL novo (outro ambiente de preview, domínio
+   próprio etc.), lembre de autorizá-lo em Firebase Console → Authentication →
+   Settings → Authorized domains — senão o login com Google é recusado nesse
+   domínio.
+
+## Contexto pra quem (ou qual IA) for mexer aqui depois
+
+- Este app não tem nenhuma relação com o resto deste repositório (que é o
+  Cofrin, rastreador de preços de mercado em Next.js). Ele mora aqui só pra
+  ficar num lugar versionado e fácil de achar.
+- O design já passou por algumas iterações a pedido do dono: começou com
+  paleta azul-mar/vermelho-fogo, depois um visual "alegre" com fontes
+  arredondadas, e por fim adotou a paleta neutra + roxo (`--primary: #8570fd`)
+  que está em produção hoje — veja os tokens de cor no topo do `<style>`.
+- As páginas de cada pilar (Saúde, Estudo, Finanças, Carreira, Mente, Sono)
+  foram desenhadas uma por vez a partir de mockups que o dono forneceu, então
+  cada uma tem sua própria estrutura de dados e widgets em vez de um template
+  genérico — veja as seções `/* ---------- <Pilar> ---------- */` dentro do
+  `<script>`.
