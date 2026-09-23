@@ -8,6 +8,7 @@ resume o progresso de todos.
 
 **Ao vivo:** https://ericzin.pages.dev (Cloudflare Pages, projeto `ericzin`, branch de produção `main`).
 Deploy: `npx wrangler pages deploy <pasta> --project-name ericzin --branch main`, sem a pasta `tools/`.
+Ícones (coração pixelado sobre roxo) em `icons/`, gerados por `node ericzin-life-plan/tools/gerar-icones.mjs`; o manifest é `manifest.webmanifest`.
 O endereço antigo (silent-cell-1dd6.ericchang12c.workers.dev, um Worker) ainda está no ar.
 
 ## O que é isto, tecnicamente
