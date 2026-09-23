@@ -6,7 +6,9 @@ widgets certos pra aquele assunto (checklist de dias da semana, gráficos de
 evolução, metas com "+10%", contador de sequência, etc.) e a Visão Geral
 resume o progresso de todos.
 
-**Ao vivo:** https://silent-cell-1dd6.ericchang12c.workers.dev (Cloudflare Pages)
+**Ao vivo:** https://ericzin.pages.dev (Cloudflare Pages, projeto `ericzin`, branch de produção `main`).
+Deploy: `npx wrangler pages deploy <pasta> --project-name ericzin --branch main`, sem a pasta `tools/`.
+O endereço antigo (silent-cell-1dd6.ericchang12c.workers.dev, um Worker) ainda está no ar.
 
 ## O que é isto, tecnicamente
 
