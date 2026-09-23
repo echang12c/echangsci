@@ -466,6 +466,7 @@
         <button data-tab="contas">🏠 Contas da casa</button>
         <button data-tab="metas">✅ Metas do dia</button>
         <button data-tab="pets">🐾 Coleção</button>
+        <button data-tab="admin" class="hidden" id="tabAdminBtn">🛠️ Admin</button>
       </nav>
     </div>
   </header>
@@ -693,7 +694,44 @@
         </div>
       </div>
       <h2 class="section">Seus pets</h2>
-      <div class="petGrid" id="petGrid"></div>
+      <div id="petGrid"></div>
+    </section>
+
+    <!-- ===== Admin dos pets (só aparece para quem está em admins/{uid}) ===== -->
+    <section id="tab-admin" class="hidden">
+      <div class="card metaHero">
+        <div class="emoji">🛠️</div>
+        <div class="info">
+          <div class="count">Admin dos pets</div>
+          <div class="msg">O que você salvar aqui vale para todo mundo que usa o app, a partir do próximo baú.</div>
+        </div>
+      </div>
+      <h2 class="section">Chance de cada raridade</h2>
+      <div class="card">
+        <p class="impHint">Quando o baú abre, primeiro sorteia a raridade e depois um monstro dessa raridade. A soma precisa dar 100%.</p>
+        <div class="admRar" id="admRar"></div>
+        <div class="admSoma" id="admSoma"></div>
+      </div>
+      <h2 class="section">Pets repetidos</h2>
+      <div class="card">
+        <div class="field"><label>Chance de vir um pet que a pessoa já tem (%)</label><input type="number" id="admRep" min="0" max="100" step="1" inputmode="numeric"></div>
+        <p class="impHint" id="admRepHint" style="margin:8px 0 0"></p>
+      </div>
+      <h2 class="section">Tipos</h2>
+      <div class="card">
+        <p class="impHint">Servem para organizar os monstros aqui e na aba Coleção. Não mudam o sorteio.</p>
+        <div id="admTipos"></div>
+        <form class="admTipoForm" id="admTipoForm">
+          <input id="admTipoNome" maxlength="30" placeholder="Novo tipo. Ex.: Bolhas, Dragões…" autocomplete="off" required>
+          <button type="submit" class="btnGhost">+ Adicionar</button>
+        </form>
+      </div>
+      <h2 class="section">Monstros</h2>
+      <div class="card" id="admPets"></div>
+      <div class="admAcoes">
+        <button type="button" class="btnGhost" id="admDescartar">Descartar mudanças</button>
+        <button type="button" class="btnPrimary" id="admSalvar">Salvar</button>
+      </div>
     </section>
   </main>
 

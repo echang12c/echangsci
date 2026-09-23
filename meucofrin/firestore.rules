@@ -11,6 +11,8 @@ rules_version = '2';
 //  - Toda escrita passa por validação de schema (tipos, campos,
 //    enums, formatos de data e limites de tamanho)
 //  - Coleções fora das listadas abaixo: negado por padrão
+//  - Exceção ao "só o dono": petsConfig/geral (config dos pets do baú),
+//    que todo usuário logado lê e só quem está em admins/{uid} grava
 //  - delete é liberado para o dono (necessário para "Excluir conta")
 // ============================================================
 
@@ -31,6 +33,38 @@ service cloud.firestore {
     // valores em centavos: > 0 e abaixo de R$ 1 bilhão
     function centavos(v) { return v is int && v > 0 && v <= 100000000000; }
     function raridade(r) { return r in ['comum', 'raro', 'epico', 'lendario']; }
+
+    // ---------- Admin dos pets ----------
+    // Admin = quem tem um doc em admins/{uid}. Esses docs são criados à mão no
+    // console do Firebase; pelo app ninguém consegue criar nem apagar.
+    function ehAdmin() {
+      return request.auth != null
+          && request.auth.token.email_verified == true
+          && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    match /admins/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Configuração dos pets do baú (doc único "geral"): todo mundo logado lê,
+    // só admin grava. rar = % por raridade, repetida = % de vir pet repetido,
+    // tipos = nomes dos grupos, pets = {id: {r, tipo}}.
+    function petsCfgValida(d) {
+      return d.keys().hasAll(['rar', 'repetida', 'tipos', 'pets', 'atualizadoEm'])
+          && d.keys().hasOnly(['rar', 'repetida', 'tipos', 'pets', 'atualizadoEm'])
+          && d.rar is map
+          && d.rar.keys().hasOnly(['comum', 'raro', 'epico', 'lendario'])
+          && d.repetida is number && d.repetida >= 0 && d.repetida <= 100
+          && d.tipos is list && d.tipos.size() <= 50
+          && d.pets is map && d.pets.size() <= 500
+          && d.atualizadoEm == request.time;
+    }
+    match /petsConfig/{doc} {
+      allow read: if request.auth != null;
+      allow create, update: if ehAdmin()
+                    && doc == 'geral'
+                    && petsCfgValida(request.resource.data);
+    }
 
     match /users/{uid} {
 

@@ -224,6 +224,24 @@ h2.section:first-child{margin-top:0}
 .petCard .nm{font-weight:700;font-size:14px;margin-top:6px}
 .petCard .qtd{font-size:11px;color:var(--muted);margin-top:2px}
 .petCard.locked{opacity:.55;cursor:default;filter:grayscale(1)}
+.petTipo{font-family:var(--display);font-size:16px;margin:18px 0 10px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.petTipo:first-child{margin-top:0}
+.petTipo span{font-family:var(--body);font-size:12px;font-weight:600;color:var(--muted)}
+/* ---------- Admin dos pets ---------- */
+.admRar{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.admSoma{margin-top:10px;font-size:13px;font-weight:700;color:var(--muted)}
+.admSoma.erro{color:var(--danger)}
+.admTipoForm{display:flex;gap:8px;margin-top:10px}
+.admTipoForm input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#FAFCFA;outline:none}
+.admGrupo{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:18px 0 4px}
+.admGrupo:first-child{margin-top:0}
+.admPet{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.admPet .nm{font-weight:700;font-size:14px;min-width:0}
+.admPet .nm small{display:block;font-weight:600;font-size:11px;color:var(--muted)}
+.admPet select{border:1px solid var(--line);border-radius:8px;padding:6px 7px;font-size:13px;background:#FAFCFA;max-width:140px}
+.admAcoes{display:flex;gap:8px;margin:18px 0 80px}
+.admAcoes .btnPrimary{flex:1}
+@media (max-width:480px){.admPet{grid-template-columns:1fr 1fr}.admPet .nm{grid-column:1/-1}.admPet select{max-width:none}}
 .petCard.locked:hover{transform:none}
 .rarPill{display:inline-block;font-size:11px;font-weight:800;border-radius:999px;padding:3px 10px;margin-top:6px;color:#fff}
 .r-comum{background:#94A3B8}.r-raro{background:#2D9CDB}.r-epico{background:#8B5CF6}.r-lendario{background:linear-gradient(90deg,#F59E0B,#FF8A3C)}
@@ -430,6 +448,7 @@ canvas{max-width:100%}
         <button data-tab="contas">🏠 Contas da casa</button>
         <button data-tab="metas">✅ Metas do dia</button>
         <button data-tab="pets">🐾 Coleção</button>
+        <button data-tab="admin" class="hidden" id="tabAdminBtn">🛠️ Admin</button>
       </nav>
     </div>
   </header>
@@ -657,7 +676,44 @@ canvas{max-width:100%}
         </div>
       </div>
       <h2 class="section">Seus pets</h2>
-      <div class="petGrid" id="petGrid"></div>
+      <div id="petGrid"></div>
+    </section>
+
+    <!-- ===== Admin dos pets (só aparece para quem está em admins/{uid}) ===== -->
+    <section id="tab-admin" class="hidden">
+      <div class="card metaHero">
+        <div class="emoji">🛠️</div>
+        <div class="info">
+          <div class="count">Admin dos pets</div>
+          <div class="msg">O que você salvar aqui vale para todo mundo que usa o app, a partir do próximo baú.</div>
+        </div>
+      </div>
+      <h2 class="section">Chance de cada raridade</h2>
+      <div class="card">
+        <p class="impHint">Quando o baú abre, primeiro sorteia a raridade e depois um monstro dessa raridade. A soma precisa dar 100%.</p>
+        <div class="admRar" id="admRar"></div>
+        <div class="admSoma" id="admSoma"></div>
+      </div>
+      <h2 class="section">Pets repetidos</h2>
+      <div class="card">
+        <div class="field"><label>Chance de vir um pet que a pessoa já tem (%)</label><input type="number" id="admRep" min="0" max="100" step="1" inputmode="numeric"></div>
+        <p class="impHint" id="admRepHint" style="margin:8px 0 0"></p>
+      </div>
+      <h2 class="section">Tipos</h2>
+      <div class="card">
+        <p class="impHint">Servem para organizar os monstros aqui e na aba Coleção. Não mudam o sorteio.</p>
+        <div id="admTipos"></div>
+        <form class="admTipoForm" id="admTipoForm">
+          <input id="admTipoNome" maxlength="30" placeholder="Novo tipo. Ex.: Bolhas, Dragões…" autocomplete="off" required>
+          <button type="submit" class="btnGhost">+ Adicionar</button>
+        </form>
+      </div>
+      <h2 class="section">Monstros</h2>
+      <div class="card" id="admPets"></div>
+      <div class="admAcoes">
+        <button type="button" class="btnGhost" id="admDescartar">Descartar mudanças</button>
+        <button type="button" class="btnPrimary" id="admSalvar">Salvar</button>
+      </div>
     </section>
   </main>
 
@@ -988,13 +1044,15 @@ const state = {
   metasFeitas: {},              // {rotinaId:true} — status do dia selecionado
   bauDia: null,                 // recompensa já aberta no dia selecionado
   inventario: [],               // pets ganhos
+  petsCfg: null,                // petsConfig/geral (tela Admin) — null = padrão do código
+  admin: false,                 // existe admins/{uid}?
   trend: {},                    // {"YYYY-MM": {rec, desp}}
   filtroCat: null,
   camposCustom: [],             // definições de campos personalizados
   perfil: {},                   // {nome, foto} salvos no Firestore
   cats: null,                   // {despesa:[...], receita:[...]} — null = usa o padrão
   contas: [],                   // contas da casa: {id, nome, valor, dia?, pagamentos:{mes:centavosPago}}
-  unsubTx:null, unsubRotinas:null, unsubMetaStatus:null, unsubInv:null, unsubCampos:null, unsubPerfil:null, unsubCats:null, unsubContas:null,
+  unsubTx:null, unsubRotinas:null, unsubMetaStatus:null, unsubInv:null, unsubCampos:null, unsubPerfil:null, unsubCats:null, unsubContas:null, unsubPetsCfg:null,
   charts:{cat:null, trend:null, rel:null, relDonut:null, relLinha:null,
            mkProd:null, mkComp:null, mkMercado:null, mkTop:null, contas:null},
 };
@@ -1167,6 +1225,8 @@ function entrarNoApp(user){
   escutarRotinas();
   escutarDiaMetas();
   escutarInventario();
+  escutarPetsCfg();
+  verificarAdmin();
   escutarCampos();
   escutarPerfil();
   carregarTendencia();
@@ -1190,6 +1250,8 @@ auth.onAuthStateChanged(user=>{
     if(state.unsubContas)state.unsubContas(); state.contas=[];
     if(state.unsubRotinas)state.unsubRotinas(); if(state.unsubMetaStatus)state.unsubMetaStatus(); if(state.unsubInv)state.unsubInv();
     if(state.unsubCampos)state.unsubCampos(); if(state.unsubPerfil)state.unsubPerfil();
+    if(state.unsubPetsCfg)state.unsubPetsCfg(); state.admin=false; adm.rasc=null; adm.sujo=false;
+    document.getElementById('tabAdminBtn').classList.add('hidden');
     document.getElementById('appView').classList.add('hidden');
     document.getElementById('verifyView').classList.add('hidden');
     document.getElementById('loginView').classList.remove('hidden');
@@ -1217,7 +1279,7 @@ document.querySelectorAll('nav.tabs button').forEach(b=>{
   b.onclick=()=>{
     document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('active'));
     b.classList.add('active');
-    ['dash','tx','relat','mercado','contas','metas','pets'].forEach(t=>
+    ['dash','tx','relat','mercado','contas','metas','pets','admin'].forEach(t=>
       document.getElementById('tab-'+t).classList.toggle('hidden', t!==b.dataset.tab));
     document.getElementById('tabsToggleLabel').textContent=b.textContent.trim();
     tabsMenu.classList.remove('open');
@@ -1225,6 +1287,7 @@ document.querySelectorAll('nav.tabs button').forEach(b=>{
     if(b.dataset.tab==='relat') abrirRelatorios();
     if(b.dataset.tab==='mercado') abrirMercado();
     if(b.dataset.tab==='contas') abrirContas();
+    if(b.dataset.tab==='admin') abrirAdmin();
   };
 });
 
@@ -2887,15 +2950,53 @@ const PETS=[
   ['demon','Demônio','epico'],['blue-demon','Demônio Azul','epico'],['ghost-skull','Caveira Fantasma','epico'],['orc-enemy','Orc Guerreiro','epico'],
   // lendários (3)
   ['dragon','Dragão','lendario'],['dragon-evolved','Dragão Ancestral','lendario'],['mushroom-king','Rei Cogumelo','lendario'],
-].map(([id,nome,r])=>({id,nome,r}));
+].map(([id,nome,r])=>({id,nome,r,rPadrao:r,tipo:''}));
 const petById=id=>PETS.find(p=>p.id===id);
+const RAR_P_PADRAO={comum:60,raro:25,epico:12,lendario:3};
+
+/* Configuração dos pets feita na aba Admin: doc petsConfig/geral, vale para todos os usuários.
+   {rar:{comum,raro,epico,lendario} em %, repetida: % de chance de vir um pet que a pessoa já tem,
+    tipos:[nomes, na ordem], pets:{id:{r,tipo}}}. Sem o doc, vale o padrão deste arquivo. */
+function aplicarPetsCfg(cfg){
+  state.petsCfg=cfg||null;
+  const rar=(cfg&&cfg.rar)||{};
+  Object.keys(RAR).forEach(k=>{ RAR[k].p = typeof rar[k]==='number' ? rar[k] : RAR_P_PADRAO[k]; });
+  const pc=(cfg&&cfg.pets)||{}, tipos=(cfg&&cfg.tipos)||[];
+  PETS.forEach(p=>{
+    const c=pc[p.id]||{};
+    p.r = RAR[c.r] ? c.r : p.rPadrao;
+    p.tipo = tipos.includes(c.tipo) ? c.tipo : '';
+  });
+}
+
+function escutarPetsCfg(){
+  if(state.unsubPetsCfg)state.unsubPetsCfg();
+  state.unsubPetsCfg = db.collection('petsConfig').doc('geral').onSnapshot(doc=>{
+    aplicarPetsCfg(doc.exists ? doc.data() : null);
+    renderPets();
+    if(!adm.sujo) renderAdmin();
+  }, ()=>{ aplicarPetsCfg(null); renderPets(); }); // regras antigas sem petsConfig: segue com o padrão
+}
+
+// chance de cada raridade sair, considerando só as raridades que existem no grupo
+function sortearRaridade(pool){
+  const rars=Object.keys(RAR).filter(r=>RAR[r].p>0 && pool.some(p=>p.r===r));
+  if(!rars.length) return null;
+  let x=Math.random()*rars.reduce((s,r)=>s+RAR[r].p,0);
+  for(const r of rars){ if(x<RAR[r].p) return r; x-=RAR[r].p; }
+  return rars[rars.length-1];
+}
 
 function sortearPet(){
-  const x=Math.random()*100;
-  const r = x<RAR.lendario.p ? 'lendario'
-        : x<RAR.lendario.p+RAR.epico.p ? 'epico'
-        : x<RAR.lendario.p+RAR.epico.p+RAR.raro.p ? 'raro' : 'comum';
-  const opcoes=PETS.filter(p=>p.r===r);
+  let pool=PETS;
+  const rep=state.petsCfg && typeof state.petsCfg.repetida==='number' ? state.petsCfg.repetida : null;
+  if(rep!==null){ // a % de repetida decide se sai dos pets que a pessoa já tem ou dos que faltam
+    const tem=new Set(state.inventario.map(i=>i.pet));
+    const novos=PETS.filter(p=>!tem.has(p.id)), velhos=PETS.filter(p=>tem.has(p.id));
+    pool = !novos.length ? velhos : !velhos.length ? novos : (Math.random()*100<rep ? velhos : novos);
+  }
+  const r=sortearRaridade(pool);
+  const opcoes=r ? pool.filter(p=>p.r===r) : pool;
   return opcoes[Math.floor(Math.random()*opcoes.length)];
 }
 
@@ -2969,7 +3070,8 @@ function renderPets(){
 
   const ordem={lendario:0,epico:1,raro:2,comum:3};
   const pets=[...PETS].sort((a,b)=> (donos[b.id]?1:0)-(donos[a.id]?1:0) || ordem[a.r]-ordem[b.r] || a.nome.localeCompare(b.nome));
-  document.getElementById('petGrid').innerHTML=pets.map(p=>{
+  const grade=lista=>`<div class="petGrid">${lista.map(cardPet).join('')}</div>`;
+  const cardPet=p=>{
     const tem=donos[p.id];
     return tem
       ? `<div class="petCard b-${p.r}" data-pet="${p.id}">
@@ -2980,7 +3082,16 @@ function renderPets(){
           <div class="pic"><img src="pets/silhouettes/${p.id}.png" alt="???" onerror="this.replaceWith('❔')"></div>
           <div class="nm">???</div>
           <div class="qtd">&nbsp;</div></div>`;
-  }).join('');
+  };
+  // com tipos definidos no Admin, a coleção aparece separada por tipo
+  const tipos=(state.petsCfg&&state.petsCfg.tipos)||[];
+  if(PETS.some(p=>p.tipo)){
+    const grupos=[...tipos,''].map(t=>({t, lista:pets.filter(p=>p.tipo===t)})).filter(g=>g.lista.length);
+    document.getElementById('petGrid').innerHTML=grupos.map(g=>
+      `<h3 class="petTipo">${g.t?esc(g.t):'Outros'}<span>${g.lista.filter(p=>donos[p.id]).length} de ${g.lista.length}</span></h3>${grade(g.lista)}`).join('');
+  }else{
+    document.getElementById('petGrid').innerHTML=grade(pets);
+  }
 
   document.querySelectorAll('.petCard[data-pet]').forEach(card=>{
     card.onclick=()=>{
@@ -2997,6 +3108,144 @@ function renderPets(){
     };
   });
 }
+
+/* ---------------- Admin dos pets ----------------
+   Só aparece para quem tem um doc em admins/{uid} (criado à mão no console do Firebase).
+   As regras do Firestore garantem que só essas pessoas gravam petsConfig/geral. */
+const adm={rasc:null, sujo:false};   // rascunho da tela e se tem mudança não salva
+
+function verificarAdmin(){
+  state.admin=false;
+  document.getElementById('tabAdminBtn').classList.add('hidden');
+  const uid=state.uid;
+  db.collection('admins').doc(uid).get().then(d=>{
+    if(state.uid!==uid) return;
+    state.admin=d.exists;
+    document.getElementById('tabAdminBtn').classList.toggle('hidden', !d.exists);
+  }).catch(()=>{});
+}
+
+function admRascunhoAtual(){
+  const c=state.petsCfg||{};
+  return {
+    rar:Object.fromEntries(Object.keys(RAR).map(k=>[k,RAR[k].p])),
+    repetida: typeof c.repetida==='number' ? c.repetida : 30,
+    tipos:[...(c.tipos||[])],
+    pets:Object.fromEntries(PETS.map(p=>[p.id,{r:p.r, tipo:p.tipo}])),
+  };
+}
+
+function abrirAdmin(){ renderAdmin(); }
+function admMudou(){ adm.sujo=true; renderAdmin(); }
+const admNum=v=>Math.round(Number(String(v).replace(',','.'))*100)/100;
+const admPct=v=>v.toLocaleString('pt-BR',{maximumFractionDigits:2})+'%';
+
+function admSomaRar(){
+  const soma=Object.values(adm.rasc.rar).reduce((s,v)=>s+(Number(v)||0),0);
+  const el=document.getElementById('admSoma');
+  const ok=Math.abs(soma-100)<0.01;
+  el.textContent = ok ? 'Soma: 100% ✓' : `Soma: ${admPct(soma)}. Precisa dar 100%.`;
+  el.classList.toggle('erro', !ok);
+  return ok;
+}
+
+function renderAdmin(){
+  if(!state.admin) return;
+  if(!adm.rasc || !adm.sujo) adm.rasc=admRascunhoAtual();
+  const R=adm.rasc;
+
+  document.getElementById('admRar').innerHTML=Object.keys(RAR).map(k=>
+    `<div class="field"><label>${RAR[k].emoji} ${RAR[k].label} (%)</label>
+      <input type="number" min="0" max="100" step="0.1" inputmode="decimal" data-rar="${k}" value="${R.rar[k]}"></div>`).join('');
+  document.querySelectorAll('#admRar input').forEach(i=>{
+    i.oninput=()=>{ R.rar[i.dataset.rar]=admNum(i.value)||0; adm.sujo=true; admSomaRar(); };
+    i.onchange=()=>renderAdmin();   // atualiza a chance de cada monstro ao sair do campo
+  });
+  admSomaRar();
+
+  const repEl=document.getElementById('admRep');
+  repEl.value=R.repetida;
+  const repHint=()=>{ document.getElementById('admRepHint').textContent =
+    `Em ${admPct(R.repetida)} dos baús pode vir um pet repetido; nos outros ${admPct(100-R.repetida)} vem um que a pessoa ainda não tem (enquanto faltar algum).`; };
+  repEl.oninput=()=>{ R.repetida=Math.min(100,Math.max(0,admNum(repEl.value)||0)); adm.sujo=true; repHint(); };
+  repHint();
+
+  const qtdTipo=t=>Object.values(R.pets).filter(p=>p.tipo===t).length;
+  document.getElementById('admTipos').innerHTML = R.tipos.length ? R.tipos.map((t,i)=>
+    `<div class="campoItem" data-i="${i}">
+      <div class="txInfo"><div class="d">${esc(t)}</div><div class="c">${qtdTipo(t)} monstro(s)</div></div>
+      <button type="button" class="catEditBtn" data-act="ren" title="Renomear">✎</button>
+      <button type="button" class="txDel" data-act="del" title="Excluir">✕</button>
+    </div>`).join('') : '<div class="empty">Nenhum tipo ainda. Crie o primeiro abaixo.</div>';
+  document.querySelectorAll('#admTipos [data-act]').forEach(b=>{
+    b.onclick=()=>{
+      const i=Number(b.closest('.campoItem').dataset.i), velho=R.tipos[i];
+      if(b.dataset.act==='ren'){
+        const novo=(prompt('Novo nome do tipo:', velho)||'').trim().slice(0,30);
+        if(!novo || novo===velho) return;
+        if(R.tipos.some(t=>t.toLowerCase()===novo.toLowerCase() && t!==velho)) return toast('Já existe um tipo com esse nome.');
+        R.tipos[i]=novo;
+        Object.values(R.pets).forEach(p=>{ if(p.tipo===velho) p.tipo=novo; });
+      }else{
+        if(!confirm(`Excluir o tipo "${velho}"? Os monstros dele ficam sem tipo.`)) return;
+        R.tipos.splice(i,1);
+        Object.values(R.pets).forEach(p=>{ if(p.tipo===velho) p.tipo=''; });
+      }
+      admMudou();
+    };
+  });
+
+  // chance de cada monstro num sorteio entre todos (sem contar a regra de repetidos)
+  const somaR=Object.keys(RAR).filter(r=>PETS.some(p=>R.pets[p.id].r===r)).reduce((s,r)=>s+(R.rar[r]||0),0);
+  const chance=p=>{ const r=R.pets[p.id].r, n=PETS.filter(x=>R.pets[x.id].r===r).length;
+    return somaR ? (R.rar[r]||0)/somaR/n*100 : 0; };
+  const ordem={lendario:0,epico:1,raro:2,comum:3};
+  const optsTipo=sel=>['',...R.tipos].map(t=>`<option value="${esc(t)}"${t===sel?' selected':''}>${t?esc(t):'— sem tipo —'}</option>`).join('');
+  const optsRar=sel=>Object.keys(RAR).map(k=>`<option value="${k}"${k===sel?' selected':''}>${RAR[k].emoji} ${RAR[k].label}</option>`).join('');
+  const grupos=[...R.tipos,''].map(t=>({t, lista:PETS.filter(p=>R.pets[p.id].tipo===t)
+    .sort((a,b)=>ordem[R.pets[a.id].r]-ordem[R.pets[b.id].r] || a.nome.localeCompare(b.nome))})).filter(g=>g.lista.length);
+  document.getElementById('admPets').innerHTML=grupos.map(g=>
+    `<div class="admGrupo">${g.t?esc(g.t):'Sem tipo'} · ${g.lista.length}</div>`+
+    g.lista.map(p=>`<div class="admPet" data-pet="${p.id}">
+      <div class="nm">${esc(p.nome)}<small>≈ ${admPct(chance(p))} por baú</small></div>
+      <select data-f="tipo" aria-label="Tipo de ${esc(p.nome)}">${optsTipo(R.pets[p.id].tipo)}</select>
+      <select data-f="r" aria-label="Raridade de ${esc(p.nome)}">${optsRar(R.pets[p.id].r)}</select>
+    </div>`).join('')).join('');
+  document.querySelectorAll('#admPets select').forEach(sel=>{
+    sel.onchange=()=>{ R.pets[sel.closest('.admPet').dataset.pet][sel.dataset.f]=sel.value; admMudou(); };
+  });
+}
+
+document.getElementById('admTipoForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const inp=document.getElementById('admTipoNome'), nome=inp.value.trim().slice(0,30);
+  if(!nome || !adm.rasc) return;
+  if(adm.rasc.tipos.some(t=>t.toLowerCase()===nome.toLowerCase())) return toast('Já existe um tipo com esse nome.');
+  if(adm.rasc.tipos.length>=50) return toast('Limite de 50 tipos.');
+  adm.rasc.tipos.push(nome); inp.value='';
+  admMudou();
+});
+document.getElementById('admDescartar').onclick=()=>{ adm.sujo=false; renderAdmin(); toast('Mudanças descartadas.'); };
+document.getElementById('admSalvar').onclick=async()=>{
+  const R=adm.rasc; if(!R) return;
+  if(!admSomaRar()) return toast('A soma das raridades precisa dar 100%.');
+  const btn=document.getElementById('admSalvar'); btn.disabled=true;
+  try{
+    await db.collection('petsConfig').doc('geral').set({
+      rar:Object.fromEntries(Object.keys(RAR).map(k=>[k,admNum(R.rar[k])||0])),
+      repetida:R.repetida,
+      tipos:R.tipos,
+      pets:Object.fromEntries(PETS.map(p=>[p.id,{r:R.pets[p.id].r, tipo:R.pets[p.id].tipo}])),
+      atualizadoEm:firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    adm.sujo=false;
+    toast('Salvo! Vale a partir do próximo baú. ✅');
+  }catch(ex){
+    console.error('admin pets:', ex);
+    toast('Não deu para salvar. Confira se as regras novas do Firestore foram publicadas.');
+  }
+  btn.disabled=false;
+};
 
 /* ---------------- Campos personalizados ---------------- */
 const TIPO_CAMPO_LABEL={texto:'Texto simples',monetario:'Monetário (R$)',numero:'Numérico',data:'Data',opcoes:'Opções'};
