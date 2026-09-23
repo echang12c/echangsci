@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SeuCofrin — Demo Avatar 3D (VRM)</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F2F5F1;--surface:#FFF;--ink:#152019;--muted:#66756C;--line:#E1E8E1;--primary:#17573B;--primary-soft:#E4F0E9}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Schibsted Grotesk',system-ui,sans-serif;padding:24px;display:flex;justify-content:center}
+.wrap{width:100%;max-width:760px}
+h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:26px;color:var(--primary);margin-bottom:4px}
+p.sub{color:var(--muted);font-size:14px;margin-bottom:18px}
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:16px;height:480px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+#status{color:var(--muted);font-size:14px;text-align:center;padding:16px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center}
+.controls button{font-family:inherit;cursor:pointer;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 18px;font-weight:600;font-size:14px;color:var(--muted)}
+.controls button.active{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
+.hint{font-size:12px;color:var(--muted);margin-left:auto}
+canvas{display:block}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Herói 3D — formato VRM</h1>
+  <p class="sub">Modelos oficiais de amostra do VRoid. Arraste sobre o personagem para girar.</p>
+  <div class="stage" id="stage"><div id="status">Preparando o mundo 3D…</div></div>
+  <div class="controls">
+    <button data-m="AvatarSample_A">Modelo A</button>
+    <button data-m="AvatarSample_B">Modelo B</button>
+    <button data-m="AvatarSample_C">Modelo C</button>
+    <span class="hint">cada modelo tem 12–15 MB</span>
+  </div>
+</div>
+<script type="module">
+const stage=document.getElementById('stage'), status=document.getElementById('status');
+try{
+  const THREE=await import('https://esm.sh/three@0.170.0');
+  const {GLTFLoader}=await import('https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js');
+  const {VRMLoaderPlugin,VRMUtils}=await import('https://esm.sh/@pixiv/three-vrm@3.4.1?deps=three@0.170.0');
+
+  const W=Math.min(stage.clientWidth,760), H=478;
+  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
+  renderer.setSize(W,H); renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  renderer.outputColorSpace=THREE.SRGBColorSpace;
+  renderer.domElement.style.touchAction='none';
+
+  const scene=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(30,W/H,.1,50);
+  cam.position.set(0,1.25,2.7); cam.lookAt(0,0.95,0);
+  const dl=new THREE.DirectionalLight(0xffffff,Math.PI*.9); dl.position.set(1,2,3); scene.add(dl);
+  scene.add(new THREE.AmbientLight(0xffffff,Math.PI*.35));
+
+  const loader=new GLTFLoader();
+  loader.register(p=>new VRMLoaderPlugin(p));
+  let vrm=null, carregando=false;
+
+  async function carregar(nome){
+    if(carregando) return;
+    carregando=true;
+    document.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('active',b.dataset.m===nome));
+    if(vrm){scene.remove(vrm.scene);VRMUtils.deepDispose(vrm.scene);vrm=null;}
+    if(renderer.domElement.parentNode===stage) stage.removeChild(renderer.domElement);
+    stage.appendChild(status);
+    status.style.display='block';
+    status.textContent='Baixando modelo… 0%';
+    try{
+      const gltf=await loader.loadAsync(
+        'https://cdn.jsdelivr.net/gh/madjin/vrm-samples@master/vroid/'+(new URLSearchParams(location.search).get('d')||'stable')+'/'+nome+'.vrm',
+        ev=>{ if(ev.total) status.textContent='Baixando modelo… '+Math.round(ev.loaded/ev.total*100)+'%'; }
+      );
+      vrm=gltf.userData.vrm;
+      VRMUtils.rotateVRM0(vrm);
+      vrm.scene.rotation.y=Math.PI;
+      const braco=l=>vrm.humanoid&&vrm.humanoid.getNormalizedBoneNode(l);
+      if(braco('leftUpperArm')) braco('leftUpperArm').rotation.z=1.15;
+      if(braco('rightUpperArm')) braco('rightUpperArm').rotation.z=-1.15;
+      scene.add(vrm.scene);
+      status.style.display='none';
+      stage.appendChild(renderer.domElement);
+    }catch(e){ status.textContent='Erro ao baixar o modelo: '+e.message; }
+    carregando=false;
+  }
+
+  let drag=false,lx=0;
+  renderer.domElement.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX;});
+  window.addEventListener('pointermove',e=>{if(drag&&vrm){vrm.scene.rotation.y+=(e.clientX-lx)*.012;lx=e.clientX;}});
+  window.addEventListener('pointerup',()=>{drag=false;});
+  document.querySelectorAll('[data-m]').forEach(b=>b.addEventListener('click',()=>carregar(b.dataset.m)));
+
+  const clock=new THREE.Clock();
+  (function loop(){
+    requestAnimationFrame(loop);
+    const dt=clock.getDelta();
+    if(vrm){ vrm.update(dt); if(!drag) vrm.scene.rotation.y+=.004; }
+    renderer.render(scene,cam);
+  })();
+
+  window.__carregar=carregar;
+  window.__snap=(ry,largura)=>{
+    if(!vrm) return null;
+    vrm.scene.rotation.y=(ry===undefined?Math.PI:ry);
+    vrm.update(0.016);
+    renderer.render(scene,cam);
+    const src=renderer.domElement, w=largura||150;
+    const c=document.createElement('canvas'); c.width=w; c.height=Math.round(src.height/src.width*w);
+    c.getContext('2d').drawImage(src,0,0,c.width,c.height);
+    return c.toDataURL('image/jpeg',0.7).split(',')[1];
+  };
+  carregar(new URLSearchParams(location.search).get('m')||'AvatarSample_B');
+}catch(e){ status.textContent='Não foi possível iniciar o 3D: '+e.message; }
+</script>
+</body>
+</html>
