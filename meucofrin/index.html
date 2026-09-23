@@ -672,7 +672,7 @@ canvas{max-width:100%}
       <div class="card metaHero">
         <div class="emoji">🐾</div>
         <div class="info">
-          <div class="count" id="petCount">0 de 39 descobertos</div>
+          <div class="count" id="petCount">&nbsp;</div>
           <div class="msg">Complete todas as metas do dia para ganhar um baú com um pet surpresa!</div>
           <div class="bar"><span id="petBar" style="width:0%"></span></div>
         </div>
@@ -2952,7 +2952,46 @@ const PETS=[
   ['demon','Demônio','epico'],['blue-demon','Demônio Azul','epico'],['ghost-skull','Caveira Fantasma','epico'],['orc-enemy','Orc Guerreiro','epico'],
   // lendários (3)
   ['dragon','Dragão','lendario'],['dragon-evolved','Dragão Ancestral','lendario'],['mushroom-king','Rei Cogumelo','lendario'],
-].map(([id,nome,r])=>({id,nome,r,rPadrao:r,tipo:''}));
+  // novos comum (67)
+  ['abelha','Abelha','comum'],['antilope','Antílope','comum'],['atum','Atum','comum'],['avestruz','Avestruz','comum'],['babuino','Babuíno','comum'],
+  ['borboleta','Borboleta','comum'],['bufalo','Búfalo','comum'],['cabra','Cabra','comum'],['cachorro','Cachorro','comum'],
+  ['cachorro-quadrado','Cachorro Quadrado','comum'],['canguru','Canguru','comum'],['caranguejo','Caranguejo','comum'],['carneiro','Carneiro','comum'],
+  ['cavala','Cavala','comum'],['cavalo','Cavalo','comum'],['cavalo-quadrado','Cavalo Quadrado','comum'],['cavalo-selvagem','Cavalo Selvagem','comum'],
+  ['coala','Coala','comum'],['coelho-branco','Coelho Branco','comum'],['coiote','Coiote','comum'],['corvo','Corvo','comum'],['emu','Emu','comum'],
+  ['enguia','Enguia','comum'],['estrela-do-mar','Estrela-do-mar','comum'],['foca','Foca','comum'],['formiga','Formiga','comum'],
+  ['galinha-branca','Galinha Branca','comum'],['gamba','Gambá','comum'],['gato-cinza','Gato Cinza','comum'],['geleca','Geleca','comum'],
+  ['golfinho','Golfinho','comum'],['guaxinim','Guaxinim','comum'],['guaxinim-quadrado','Guaxinim Quadrado','comum'],['hamster','Hamster','comum'],
+  ['lagartixa','Lagartixa','comum'],['lagarto','Lagarto','comum'],['lhama','Lhama','comum'],['libelula','Libélula','comum'],
+  ['linguado','Linguado','comum'],['lula','Lula','comum'],['macaco','Macaco','comum'],['ovelha','Ovelha','comum'],
+  ['ovelha-quadrada','Ovelha Quadrada','comum'],['pato','Pato','comum'],['peixe-cinza','Peixe Cinza','comum'],
+  ['peixe-laranja','Peixe Laranja','comum'],['peixe-agulha','Peixe-agulha','comum'],['peixinho','Peixinho','comum'],['pinguim','Pinguim','comum'],
+  ['pintinho','Pintinho','comum'],['plantinha','Plantinha','comum'],['polvinho','Polvinho','comum'],['porco','Porco','comum'],
+  ['porco-quadrado','Porco Quadrado','comum'],['pug','Pug','comum'],['raposa','Raposa','comum'],['rato','Rato','comum'],['salmao','Salmão','comum'],
+  ['sapo-verde','Sapo Verde','comum'],['tamandua','Tamanduá','comum'],['texugo','Texugo','comum'],['urso','Urso','comum'],['urubu','Urubu','comum'],
+  ['vaca','Vaca','comum'],['vaca-holandesa','Vaca Holandesa','comum'],['zebra','Zebra','comum'],['zebra-listrada','Zebra Listrada','comum'],
+  // novos raro (41)
+  ['anne','Anne','raro'],['arara-azul','Arara-azul','raro'],['arara-vermelha','Arara-vermelha','raro'],['arraia','Arraia','raro'],
+  ['baleia-azul','Baleia Azul','raro'],['preguica','Bicho-preguiça','raro'],['capivara','Capivara','raro'],['caveirao','Caveirão','raro'],
+  ['cervo','Cervo','raro'],['cobra','Cobra','raro'],['elefante','Elefante','raro'],['escorpiao','Escorpião','raro'],['esqueleto','Esqueleto','raro'],
+  ['gato-selvagem','Gato-selvagem','raro'],['geleca-chifruda','Geleca Chifruda','raro'],['girafa','Girafa','raro'],['goblin','Goblin','raro'],
+  ['golfinho-azul','Golfinho Azul','raro'],['henry','Henry','raro'],['lis','Lis','raro'],['lobo','Lobo','raro'],['matt','Matt','raro'],
+  ['morcego','Morcego','raro'],['morsa','Morsa','raro'],['pastor-alemao','Pastor Alemão','raro'],['peixe-monstro','Peixe Monstro','raro'],
+  ['peixe-boi','Peixe-boi','raro'],['planta-gigante','Planta Gigante','raro'],['planta-voadora','Planta Voadora','raro'],['polvo','Polvo','raro'],
+  ['porco-espinho','Porco-espinho','raro'],['pug-aventureiro','Pug Aventureiro','raro'],['rinoceronte','Rinoceronte','raro'],['sam','Sam','raro'],
+  ['shaun','Shaun','raro'],['shiba','Shiba','raro'],['tartaruga','Tartaruga','raro'],['touro','Touro','raro'],['tubarao','Tubarão','raro'],
+  ['zumbi-bracudo','Zumbi Braçudo','raro'],['agua-viva','Água-viva','raro'],
+  // novos epico (18)
+  ['apatossauro','Apatossauro','epico'],['astronauta-abelha','Astronauta Abelha','epico'],['astronauta-flamingo','Astronauta Flamingo','epico'],
+  ['astronauta-sapo','Astronauta Sapo','epico'],['baleia','Baleia','epico'],['cactoro-gigante','Cactoro Gigante','epico'],
+  ['demonio-tridente','Demônio Tridente','epico'],['esqueleto-guerreiro','Esqueleto Guerreiro','epico'],['estegossauro','Estegossauro','epico'],
+  ['leao','Leão','epico'],['mako','Mako','epico'],['narval','Narval','epico'],['ninja-mestre','Ninja Mestre','epico'],
+  ['parassaurolofo','Parassaurolofo','epico'],['sharky','Sharky','epico'],['tigre','Tigre','epico'],['tubarao-feroz','Tubarão Feroz','epico'],
+  ['velociraptor','Velociraptor','epico'],
+  // novos lendario (7)
+  ['alien-gigante','Alien Gigante','lendario'],['capitao-pirata','Capitão Pirata','lendario'],['gigante','Gigante','lendario'],
+  ['robo-abelha','Robô Abelha','lendario'],['robo-flamingo','Robô Flamingo','lendario'],['robo-panda-vermelho','Robô Panda-vermelho','lendario'],
+  ['robo-sapo','Robô Sapo','lendario'],
+].map(([id,nome,r,tipo])=>({id,nome,r,rPadrao:r,tipoPadrao:tipo||'',tipo:''}));
 const petById=id=>PETS.find(p=>p.id===id);
 const RAR_P_PADRAO={comum:60,raro:25,epico:12,lendario:3};
 
@@ -2963,11 +3002,15 @@ function aplicarPetsCfg(cfg){
   state.petsCfg=cfg||null;
   const rar=(cfg&&cfg.rar)||{};
   Object.keys(RAR).forEach(k=>{ RAR[k].p = typeof rar[k]==='number' ? rar[k] : RAR_P_PADRAO[k]; });
-  const pc=(cfg&&cfg.pets)||{}, tipos=(cfg&&cfg.tipos)||[];
+  const pc=(cfg&&cfg.pets)||{};
+  // pets que o Admin ainda não mexeu ficam no tipo padrão do código (ex.: "Peixes")
+  const tipos=[...((cfg&&cfg.tipos)||[])];
+  PETS.forEach(p=>{ if(!pc[p.id] && p.tipoPadrao && !tipos.includes(p.tipoPadrao)) tipos.push(p.tipoPadrao); });
+  if(state.petsCfg) state.petsCfg={...state.petsCfg, tipos}; else if(tipos.length) state.petsCfg={tipos};
   PETS.forEach(p=>{
-    const c=pc[p.id]||{};
-    p.r = RAR[c.r] ? c.r : p.rPadrao;
-    p.tipo = tipos.includes(c.tipo) ? c.tipo : '';
+    const c=pc[p.id];
+    p.r = c && RAR[c.r] ? c.r : p.rPadrao;
+    p.tipo = c ? (tipos.includes(c.tipo) ? c.tipo : '') : p.tipoPadrao;
   });
 }
 
@@ -3054,7 +3097,7 @@ async function abrirBau(){
   document.getElementById('bauModal').classList.remove('hidden');
   setTimeout(()=>{
     body.innerHTML=`<div class="glow-${pet.r}">
-      <model-viewer src="pets/${pet.id}.glb" loading="eager" camera-controls disable-zoom shadow-intensity="1"></model-viewer></div>
+      <model-viewer camera-orbit="30deg 75deg auto" src="pets/${pet.id}.glb" loading="eager" camera-controls disable-zoom shadow-intensity="1"></model-viewer></div>
       <h3>${esc(pet.nome)}</h3>
       <span class="rarPill r-${pet.r}">${RAR[pet.r].emoji} ${RAR[pet.r].label}</span>
       <div class="modalActions" style="margin-top:16px"><button class="btnPrimary" data-close>Que fofo!</button></div>`;
@@ -3077,7 +3120,7 @@ function renderPets(){
     const tem=donos[p.id];
     return tem
       ? `<div class="petCard b-${p.r}" data-pet="${p.id}">
-          <div class="pic"><model-viewer src="pets/${p.id}.glb" loading="lazy" interaction-prompt="none" disable-zoom disable-tap disable-pan></model-viewer></div>
+          <div class="pic"><model-viewer camera-orbit="30deg 75deg auto" src="pets/${p.id}.glb" loading="lazy" interaction-prompt="none" disable-zoom disable-tap disable-pan></model-viewer></div>
           <div class="nm">${esc(p.nome)}</div>
           <div class="qtd">${tem>1?'×'+tem:'&nbsp;'}</div></div>`
       : `<div class="petCard locked b-${p.r}">
@@ -3100,7 +3143,7 @@ function renderPets(){
       const p=petById(card.dataset.pet);
       const body=document.getElementById('petModalBody');
       body.innerHTML=`<div class="glow-${p.r}">
-        <model-viewer src="pets/${p.id}.glb" loading="eager" camera-controls shadow-intensity="1"></model-viewer></div>
+        <model-viewer camera-orbit="30deg 75deg auto" src="pets/${p.id}.glb" loading="eager" camera-controls shadow-intensity="1"></model-viewer></div>
         <h3>${esc(p.nome)}</h3>
         <span class="rarPill r-${p.r}">${RAR[p.r].emoji} ${RAR[p.r].label}</span>
         <div class="modalActions" style="margin-top:16px"><button class="btnGhost" data-close style="flex:1">Fechar</button></div>`;
@@ -4259,7 +4302,7 @@ const GUIA_PASSOS=[
       <li>Completou <b>todas</b> as metas do dia? Você ganha um <b>baú de recompensa</b>! 🎁</li>
     </ul>`},
   {e:'🐾',t:'Coleção de pets',c:`
-    <p>Cada baú traz um <b>pet 3D surpresa</b> para a sua coleção — são 39 espécies para descobrir.</p>
+    <p>Cada baú traz um <b>pet 3D surpresa</b> para a sua coleção — são ${PETS.length} espécies para descobrir.</p>
     <ul>
       <li>Raridades: 🐣 Comum (60%), ⭐ Raro (25%), 💜 Épico (12%) e 👑 Lendário (3%).</li>
       <li>Toque em um pet descoberto para vê-lo em 3D, girando na tela.</li>
