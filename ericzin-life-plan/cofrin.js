@@ -2213,20 +2213,22 @@ function renderPets(){
     document.getElementById('petGrid').innerHTML=grade(pets);
   }
 
-  document.querySelectorAll('.petCard[data-pet]').forEach(card=>{
-    card.onclick=()=>{
-      const p=petById(card.dataset.pet);
-      const body=document.getElementById('petModalBody');
-      body.innerHTML=`<div class="glow-${p.r}">
-        <model-viewer camera-orbit="30deg 75deg auto" src="pets/${p.id}.glb" loading="eager" camera-controls shadow-intensity="1"></model-viewer></div>
-        <h3>${esc(p.nome)}</h3>
-        <span class="rarPill r-${p.r}">${RAR[p.r].emoji} ${RAR[p.r].label}</span>
-        <div class="modalActions" style="margin-top:16px"><button class="btnGhost" data-close style="flex:1">Fechar</button></div>`;
-      poseParada(body.querySelector('model-viewer'));
-      body.querySelector('[data-close]').onclick=()=>document.getElementById('petModal').classList.add('hidden');
-      document.getElementById('petModal').classList.remove('hidden');
-    };
+  document.querySelectorAll('#petGrid .petCard[data-pet]').forEach(card=>{
+    card.onclick=()=>abrirPetModal(petById(card.dataset.pet));
   });
+}
+
+// mostra o monstro em 3D (coleção e Admin)
+function abrirPetModal(p){
+  const body=document.getElementById('petModalBody');
+  body.innerHTML=`<div class="glow-${p.r}">
+    <model-viewer camera-orbit="30deg 75deg auto" src="pets/${p.id}.glb" loading="eager" camera-controls shadow-intensity="1"></model-viewer></div>
+    <h3>${esc(p.nome)}</h3>
+    <span class="rarPill r-${p.r}">${RAR[p.r].emoji} ${RAR[p.r].label}</span>
+    <div class="modalActions" style="margin-top:16px"><button class="btnGhost" data-close style="flex:1">Fechar</button></div>`;
+  poseParada(body.querySelector('model-viewer'));
+  body.querySelector('[data-close]').onclick=()=>document.getElementById('petModal').classList.add('hidden');
+  document.getElementById('petModal').classList.remove('hidden');
 }
 
 /* ---------------- Admin dos pets ----------------
@@ -2324,13 +2326,19 @@ function renderAdmin(){
   const optsRar=sel=>Object.keys(RAR).map(k=>`<option value="${k}"${k===sel?' selected':''}>${RAR[k].emoji} ${RAR[k].label}</option>`).join('');
   const grupos=[...R.tipos,''].map(t=>({t, lista:PETS.filter(p=>R.pets[p.id].tipo===t)
     .sort((a,b)=>ordem[R.pets[a.id].r]-ordem[R.pets[b.id].r] || a.nome.localeCompare(b.nome))})).filter(g=>g.lista.length);
+  // mesmos cards da coleção, com o monstro colorido; tocar na imagem abre em 3D
   document.getElementById('admPets').innerHTML=grupos.map(g=>
-    `<div class="admGrupo">${g.t?esc(g.t):'Sem tipo'} · ${g.lista.length}</div>`+
-    g.lista.map(p=>`<div class="admPet" data-pet="${p.id}">
-      <div class="nm">${esc(p.nome)}<small>≈ ${admPct(chance(p))} por baú</small></div>
+    `<div class="admGrupo">${g.t?esc(g.t):'Sem tipo'}<span>${g.lista.length}</span></div>
+    <div class="petGrid">${g.lista.map(p=>`<div class="petCard admPet b-${R.pets[p.id].r}" data-pet="${p.id}">
+      <div class="pic" title="Ver em 3D"><img src="pets/thumbs/${p.id}.webp" alt="" loading="lazy" onerror="this.src='pets/silhouettes/${p.id}.png'"></div>
+      <div class="nm">${esc(p.nome)}</div>
+      <div class="qtd">≈ ${admPct(chance(p))} por baú</div>
       <select data-f="tipo" aria-label="Tipo de ${esc(p.nome)}">${optsTipo(R.pets[p.id].tipo)}</select>
       <select data-f="r" aria-label="Raridade de ${esc(p.nome)}">${optsRar(R.pets[p.id].r)}</select>
-    </div>`).join('')).join('');
+    </div>`).join('')}</div>`).join('');
+  document.querySelectorAll('#admPets .pic').forEach(pic=>{
+    pic.onclick=()=>abrirPetModal(petById(pic.closest('.admPet').dataset.pet));
+  });
   document.querySelectorAll('#admPets select').forEach(sel=>{
     sel.onchange=()=>{ R.pets[sel.closest('.admPet').dataset.pet][sel.dataset.f]=sel.value; admMudou(); };
   });

@@ -230,13 +230,16 @@
 #cofrin .admTipoForm input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface);outline:none}
 #cofrin .admGrupo{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:18px 0 4px}
 #cofrin .admGrupo:first-child{margin-top:0}
-#cofrin .admPet{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
-#cofrin .admPet .nm{font-weight:700;font-size:14px;min-width:0}
-#cofrin .admPet .nm small{display:block;font-weight:600;font-size:11px;color:var(--muted)}
-#cofrin .admPet select{border:1px solid var(--line);border-radius:8px;padding:6px 7px;font-size:13px;background:var(--surface);max-width:140px}
+#cofrin .admGrupo{display:flex;justify-content:space-between;align-items:baseline}
+#cofrin .admPet{cursor:default;padding:10px 8px;display:flex;flex-direction:column;gap:6px}
+#cofrin .admPet:hover{transform:none}
+#cofrin .admPet .pic{cursor:pointer}
+#cofrin .petCard.admPet .pic img{height:96px;width:auto;max-width:100%;display:inline-block}
+#cofrin .admPet .nm{margin-top:0}
+#cofrin .admPet .qtd{margin-top:-4px}
+#cofrin .admPet select{width:100%;border:1px solid var(--line);border-radius:8px;padding:6px 7px;font-size:12px;background:var(--surface)}
 #cofrin .admAcoes{display:flex;gap:8px;margin:18px 0 80px}
 #cofrin .admAcoes .btnPrimary{flex:1}
-@media (max-width:480px){#cofrin .admPet{grid-template-columns:1fr 1fr}#cofrin .admPet .nm{grid-column:1/-1}#cofrin .admPet select{max-width:none}}
 #cofrin .petCard.locked:hover{transform:none}
 #cofrin .rarPill{display:inline-block;font-size:11px;font-weight:800;border-radius:999px;padding:3px 10px;margin-top:6px;color:#fff}
 #cofrin .r-comum{background:#94A3B8}#cofrin .r-raro{background:#2D9CDB}#cofrin .r-epico{background:#8B5CF6}#cofrin .r-lendario{background:linear-gradient(90deg,#F59E0B,#FF8A3C)}
