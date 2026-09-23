@@ -40,5 +40,6 @@ npx serve meucofrin           # Cofrin
 
 - LifePlan: `npx wrangler pages deploy <pasta> --project-name ericzin --branch main`,
   com o conteúdo de `ericzin-life-plan/` sem a pasta `tools/`.
-- Cofrin sozinho (seucofrin.pages.dev): publicado a partir da pasta `meucofrin/`.
+- Cofrin sozinho (seucofrin.pages.dev, projeto do tipo Direct Upload, sem ligação com o GitHub),
+  a partir da raiz do repo: `npx wrangler pages deploy meucofrin --project-name seucofrin --branch main`.
 - Worker de push: `cd meucofrin/notifier && npx wrangler deploy`.
