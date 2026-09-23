@@ -1,0 +1,39 @@
+# Publica os dois sites no Cloudflare Pages a cada push no Main.
+# Precisa dos secrets CLOUDFLARE_API_TOKEN e CLOUDFLARE_ACCOUNT_ID no repositório.
+name: Publicar no Cloudflare
+
+on:
+  push:
+    branches: [Main]
+  workflow_dispatch:
+
+concurrency:
+  group: publicar
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # LifePlan vai sem a pasta tools/
+      - name: Preparar LifePlan
+        run: |
+          mkdir -p dist
+          cp -r ericzin-life-plan dist/lifeplan
+          rm -rf dist/lifeplan/tools
+
+      - name: Publicar seucofrin.pages.dev
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy meucofrin --project-name seucofrin --branch main --commit-dirty=true
+
+      - name: Publicar ericzin.pages.dev
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist/lifeplan --project-name ericzin --branch main --commit-dirty=true
