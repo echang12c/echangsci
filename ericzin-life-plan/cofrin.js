@@ -2090,7 +2090,7 @@ function renderPets(){
           <div class="pic"><model-viewer src="pets/${p.id}.glb" loading="lazy" interaction-prompt="none" disable-zoom disable-tap disable-pan></model-viewer></div>
           <div class="nm">${esc(p.nome)}</div>
           <div class="qtd">${tem>1?'×'+tem:'&nbsp;'}</div></div>`
-      : `<div class="petCard locked">
+      : `<div class="petCard locked b-${p.r}">
           <div class="pic"><img src="pets/silhouettes/${p.id}.png" alt="???" onerror="this.replaceWith('❔')"></div>
           <div class="nm">???</div>
           <div class="qtd">&nbsp;</div></div>`;

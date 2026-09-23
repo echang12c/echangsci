@@ -223,7 +223,9 @@ h2.section:first-child{margin-top:0}
 .petCard .pic{font-size:40px;line-height:1.2}
 .petCard .nm{font-weight:700;font-size:14px;margin-top:6px}
 .petCard .qtd{font-size:11px;color:var(--muted);margin-top:2px}
-.petCard.locked{opacity:.55;cursor:default;filter:grayscale(1)}
+.petCard.locked{cursor:default}
+/* bloqueado: só o conteúdo fica apagado; a borda mantém a cor da raridade */
+.petCard.locked .pic,.petCard.locked .nm{opacity:.55;filter:grayscale(1)}
 .petTipo{font-family:var(--display);font-size:16px;margin:18px 0 10px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .petTipo:first-child{margin-top:0}
 .petTipo span{font-family:var(--body);font-size:12px;font-weight:600;color:var(--muted)}
@@ -3078,7 +3080,7 @@ function renderPets(){
           <div class="pic"><model-viewer src="pets/${p.id}.glb" loading="lazy" interaction-prompt="none" disable-zoom disable-tap disable-pan></model-viewer></div>
           <div class="nm">${esc(p.nome)}</div>
           <div class="qtd">${tem>1?'×'+tem:'&nbsp;'}</div></div>`
-      : `<div class="petCard locked">
+      : `<div class="petCard locked b-${p.r}">
           <div class="pic"><img src="pets/silhouettes/${p.id}.png" alt="???" onerror="this.replaceWith('❔')"></div>
           <div class="nm">???</div>
           <div class="qtd">&nbsp;</div></div>`;
