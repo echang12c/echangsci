@@ -2928,14 +2928,12 @@ function renderBau(total, feitas){
   }
 }
 
-// toca a animação do pet uma única vez e deixa parado (rotação manual continua livre)
-function playOnce(mv){
+// deixa o pet parado no primeiro quadro da animação (evita a pose em T); rotação manual continua livre
+function poseParada(mv){
   if(!mv) return;
   mv.addEventListener('load',()=>{
     if(!mv.availableAnimations.length) return;
-    try{ mv.play({repetitions:1}); }catch(e){ mv.play(); }
-    const dur=((mv.duration||2)*1000)+120;
-    setTimeout(()=>{ try{ mv.pause(); }catch(e){} }, dur);
+    try{ mv.play(); mv.pause(); mv.currentTime=0; }catch(e){}
   },{once:true});
 }
 
@@ -2957,7 +2955,7 @@ async function abrirBau(){
       <h3>${esc(pet.nome)}</h3>
       <span class="rarPill r-${pet.r}">${RAR[pet.r].emoji} ${RAR[pet.r].label}</span>
       <div class="modalActions" style="margin-top:16px"><button class="btnPrimary" data-close>Que fofo!</button></div>`;
-    playOnce(body.querySelector('model-viewer'));
+    poseParada(body.querySelector('model-viewer'));
     body.querySelector('[data-close]').onclick=()=>document.getElementById('bauModal').classList.add('hidden');
   },1600);
 }
@@ -2993,7 +2991,7 @@ function renderPets(){
         <h3>${esc(p.nome)}</h3>
         <span class="rarPill r-${p.r}">${RAR[p.r].emoji} ${RAR[p.r].label}</span>
         <div class="modalActions" style="margin-top:16px"><button class="btnGhost" data-close style="flex:1">Fechar</button></div>`;
-      playOnce(body.querySelector('model-viewer'));
+      poseParada(body.querySelector('model-viewer'));
       body.querySelector('[data-close]').onclick=()=>document.getElementById('petModal').classList.add('hidden');
       document.getElementById('petModal').classList.remove('hidden');
     };

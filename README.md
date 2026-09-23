@@ -38,6 +38,14 @@ npx serve meucofrin           # Cofrin
 
 ## Publicar
 
+Automático: todo push no `Main` roda `.github/workflows/publicar.yml`, que publica
+o seucofrin e o LifePlan no Cloudflare Pages (dá pra rodar à mão na aba Actions →
+Publicar no Cloudflare → Run workflow). Usa os secrets `CLOUDFLARE_API_TOKEN`
+(token com permissão *Cloudflare Pages: Edit*) e `CLOUDFLARE_ACCOUNT_ID`.
+O worker de push (`notifier`) continua manual.
+
+Os comandos manuais, se precisar:
+
 - LifePlan: `npx wrangler pages deploy <pasta> --project-name ericzin --branch main`,
   com o conteúdo de `ericzin-life-plan/` sem a pasta `tools/`.
 - Cofrin sozinho (seucofrin.pages.dev, projeto do tipo Direct Upload, sem ligação com o GitHub),
