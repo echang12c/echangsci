@@ -1,0 +1,361 @@
+/* Meu Cofrin dentro do LifePlan — gerado a partir do moneyericana/index.html.
+   Cores: os nomes antigos do cofrin apontam para os tokens do LifePlan (:root),
+   então o modo escuro vem de graça. Todo seletor é prefixado com #cofrin. */
+#cofrin{
+  --ink:var(--text); --muted:var(--text-2); --line:var(--border);
+  --primary-soft:var(--primary-light);
+  --accent:var(--primary); --accent-soft:var(--primary-light);
+  --income:#0f9d58; --income-soft:#e2f9ec;
+  --expense:#e5484d; --expense-soft:#fdecec;
+  --warn:#d97706; --warn-soft:#fef3c7;
+  --danger:#e5484d; --sun:#FFC53D;
+  --radius:20px;
+  --display:'Baloo 2',system-ui,sans-serif;
+  --body:'Nunito',system-ui,sans-serif;
+  --mono:'Nunito',system-ui,sans-serif;
+  color:var(--text); font-family:var(--body); font-size:15px; line-height:1.45;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) #cofrin{
+    --income:#6ee6a4; --income-soft:#123527;
+    --expense:#ff8a8a; --expense-soft:#3a1c20;
+    --warn:#fbbf24; --warn-soft:#3a2a0c; --danger:#ff8a8a;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"] #cofrin{
+  --income:#6ee6a4; --income-soft:#123527;
+  --expense:#ff8a8a; --expense-soft:#3a1c20;
+  --warn:#fbbf24; --warn-soft:#3a2a0c; --danger:#ff8a8a;
+  color-scheme:dark;
+}
+#cofrin *{margin:0;padding:0}
+
+#cofrin button{font-family:inherit;cursor:pointer}
+#cofrin input,#cofrin select{font-family:inherit;font-size:15px}
+#cofrin .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+#cofrin .hidden{display:none!important}
+
+/* ---------- Login ---------- */
+#cofrin #loginView,#cofrin #verifyView{min-height:70dvh;display:flex;align-items:center;justify-content:center;padding:24px}
+#cofrin .verifyBody{margin-top:22px;display:grid;gap:12px;text-align:center}
+#cofrin .verifyBody p{font-size:14px;color:var(--ink)}
+#cofrin .verifyHint{font-size:13px;color:var(--muted)}
+#cofrin .verifyOk{color:var(--primary);font-size:13px;min-height:18px}
+#cofrin .loginCard{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:36px 32px;width:100%;max-width:380px;box-shadow:var(--shadow)}
+#cofrin .brand{display:block;padding:0;gap:0;font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:-.02em;background:linear-gradient(90deg,#bcb0fc,#8570fd 45%,#6349f8);-webkit-background-clip:text;background-clip:text;color:transparent}
+#cofrin .brand small{display:block;font-family:var(--body);font-weight:500;font-size:13px;color:var(--muted);letter-spacing:.04em;margin-top:2px}
+#cofrin .loginCard form{margin-top:26px;display:grid;gap:12px}
+#cofrin .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+#cofrin .field input,#cofrin .field select{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:var(--surface);outline:none}
+#cofrin .field input:focus,#cofrin .field select:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+#cofrin .btnPrimary{background:linear-gradient(135deg,var(--primary),var(--primary-hover));color:#fff;border:none;border-radius:12px;padding:12px;font-weight:700;font-size:15px;box-shadow:0 4px 12px rgba(99,73,248,.3)}
+#cofrin .btnPrimary:hover{filter:brightness(1.08)}
+#cofrin .btnGhost{background:transparent;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-weight:600;color:var(--ink)}
+#cofrin .btnGhost:hover{background:var(--surface-2)}
+#cofrin .btnDanger{background:transparent;border:1px solid var(--danger);border-radius:10px;padding:10px 14px;font-weight:600;color:var(--danger)}
+#cofrin .btnDanger:hover{background:var(--danger);color:#fff}
+#cofrin .btnDanger:disabled,#cofrin .btnGhost:disabled,#cofrin .btnPrimary:disabled{opacity:.55;cursor:not-allowed}
+#cofrin .loginErr{color:var(--danger);font-size:13px;min-height:18px}
+#cofrin .loginSwap{border:none;background:none;color:var(--muted);font-size:13px;margin-top:16px;width:100%;text-align:center}
+#cofrin .loginSwap b{color:var(--primary)}
+#cofrin .aceiteRow{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--muted)}
+#cofrin .aceiteRow input{margin-top:3px;accent-color:var(--primary)}
+#cofrin .aceiteRow a{color:var(--primary);font-weight:600}
+#cofrin .loginFooter{margin-top:14px;text-align:center;font-size:12px}
+#cofrin .loginFooter a,#cofrin .appFooter a{color:var(--muted);text-decoration:underline}
+#cofrin .appFooter{text-align:center;font-size:12px;padding:18px 0 84px}
+
+/* ---------- Perfil ---------- */
+#cofrin .perfilBtn{display:flex;align-items:center;gap:8px;border:none;background:none;padding:0}
+#cofrin .perfilBtn b{color:var(--ink);font-size:13px}
+#cofrin .avatar{width:30px;height:30px;border-radius:50%;background:var(--primary-soft);border:2px solid var(--primary);display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden;flex:none}
+#cofrin .avatar img{width:100%;height:100%;object-fit:cover}
+#cofrin .avatar.big{width:84px;height:84px;font-size:38px}
+#cofrin .perfilFotoBox{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+#cofrin .perfilFotoBox .btns{display:flex;flex-direction:column;gap:8px}
+#cofrin .perfilSub{font-family:var(--display);font-size:15px;margin:20px 0 10px;padding-top:16px;border-top:1px dashed var(--line)}
+#cofrin .notifRow{display:flex;align-items:center;gap:12px;justify-content:space-between}
+#cofrin .notifTxt b{font-size:14px}
+#cofrin .notifSub{font-size:12px;color:var(--muted);margin-top:2px}
+#cofrin .notifHint{font-size:12px;color:var(--muted);margin-top:8px}
+#cofrin .notifHint:empty{display:none}
+#cofrin #btnTestNotif{margin-top:10px}
+#cofrin .switch{flex:none;width:52px;height:30px;border-radius:999px;border:1px solid var(--line);background:var(--border-strong);position:relative;transition:background .2s,border-color .2s;padding:0}
+#cofrin .switch .knob{position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);transition:left .2s}
+#cofrin .switch.on{background:linear-gradient(135deg,var(--primary),var(--primary-hover));border-color:var(--primary-hover)}
+#cofrin .switch.on .knob{left:24px}
+#cofrin .switch:disabled{opacity:.5}
+
+/* ---------- Shell ---------- */
+#cofrin header.cfHeader{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--border);margin-bottom:4px}
+#cofrin .headerRow{max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 0 8px}
+#cofrin .headerRow .brand{font-size:22px}
+#cofrin .userChip{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+#cofrin .userChip b{color:var(--ink)}
+#cofrin .userChip #btnLogout{border:none;background:none;color:var(--muted);text-decoration:underline;font-size:12px}
+#cofrin .monthBar{max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:14px;padding:4px 0 10px}
+#cofrin .monthBar button{border:1px solid var(--line);background:var(--surface);border-radius:50%;width:32px;height:32px;font-size:16px;line-height:1}
+#cofrin .monthLabel{font-family:var(--display);font-weight:700;font-size:18px;min-width:190px;text-align:center;text-transform:capitalize}
+#cofrin .tabsMenu{max-width:980px;margin:0 auto;padding:0 0 12px;position:relative}
+#cofrin .tabsToggle{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:1px solid var(--primary-hover);background:linear-gradient(135deg,var(--primary),var(--primary-hover));color:#fff;border-radius:999px;padding:9px 16px;font-weight:600;font-size:14px;box-shadow:0 3px 10px rgba(99,73,248,.3)}
+#cofrin .tabsToggle .chev{font-size:11px;transition:transform .2s}
+#cofrin .tabsMenu.open .tabsToggle .chev{transform:rotate(180deg)}
+#cofrin nav.tabs{display:none;flex-direction:column;gap:6px;padding-top:8px}
+#cofrin .tabsMenu.open nav.tabs{display:flex}
+#cofrin nav.tabs button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px;font-weight:600;font-size:14px;color:var(--muted);white-space:nowrap;text-align:center}
+#cofrin nav.tabs button.active{background:linear-gradient(135deg,var(--primary),var(--primary-hover));border-color:var(--primary-hover);color:#fff;box-shadow:0 3px 10px rgba(99,73,248,.3)}
+#cofrin main{max-width:980px;margin:0 auto;padding:20px 0 90px}
+
+/* ---------- Cards / geral ---------- */
+#cofrin .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+#cofrin .card+.card{margin-top:0}
+#cofrin .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+#cofrin .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:720px){#cofrin .grid2,#cofrin .grid3{grid-template-columns:1fr}}
+#cofrin h2.section{font-family:var(--display);font-weight:700;font-size:18px;margin:26px 0 12px}
+#cofrin h2.section:first-child{margin-top:0}
+#cofrin .kpi .lbl{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+#cofrin .kpi .val{font-family:var(--mono);font-weight:600;font-size:24px;margin-top:6px}
+#cofrin .kpi .val small{font-size:15px;opacity:.65}
+#cofrin .pos{color:var(--income)}#cofrin .neg{color:var(--expense)}
+#cofrin .saldoHero{background:linear-gradient(135deg,#9c8bff 0%,#8570fd 55%,#6349f8 100%);color:#fff;border:none;box-shadow:0 8px 24px rgba(99,73,248,.35)}
+#cofrin .saldoHero.negativo{background:linear-gradient(135deg,#FF7A59 0%,#F04438 55%,#B42334 100%);box-shadow:0 8px 24px rgba(240,68,56,.35)}
+#cofrin .saldoHero .lbl{color:#fff;font-weight:800;font-size:13px;text-shadow:0 1px 3px rgba(0,0,0,.25)}
+#cofrin .saldoHero .val{font-family:var(--display);font-weight:800;font-size:40px;letter-spacing:-.02em}
+#cofrin .saldoHero .sub{margin-top:8px;font-size:14px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.25)}
+#cofrin .empty{color:var(--muted);font-size:14px;text-align:center;padding:26px 10px}
+
+/* ---------- Lançamentos ---------- */
+#cofrin .txForm{display:grid;grid-template-columns:110px 1fr 1fr 140px 130px auto;gap:10px;align-items:end}
+@media(max-width:820px){#cofrin .txForm{grid-template-columns:1fr 1fr}#cofrin .txForm .full{grid-column:1/-1}}
+#cofrin .segment{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+#cofrin .segment button{border:none;background:var(--surface);padding:10px 14px;font-weight:600;color:var(--muted)}
+#cofrin .segment button.selExp{background:var(--expense-soft);color:var(--expense)}
+#cofrin .segment button.selInc{background:var(--income-soft);color:var(--income)}
+#cofrin .txList{display:flex;flex-direction:column}
+#cofrin .txItem{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line)}
+#cofrin .txItem:last-child{border-bottom:none}
+#cofrin .txDate{font-family:var(--mono);font-size:12px;color:var(--muted);width:44px;text-align:center;line-height:1.2}
+#cofrin .txDate b{display:block;font-size:16px;color:var(--ink)}
+#cofrin .txInfo{flex:1;min-width:0}
+#cofrin .txInfo .d{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#cofrin .txInfo .c{font-size:12px;color:var(--muted)}
+#cofrin .txVal{font-family:var(--mono);font-weight:600;font-size:15px;white-space:nowrap}
+#cofrin .txDel{border:none;background:none;color:var(--muted);font-size:16px;padding:4px 6px;border-radius:8px}
+#cofrin .txDel:hover{background:var(--expense-soft);color:var(--expense)}
+#cofrin .chipRow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+#cofrin .chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--muted)}
+#cofrin .chip.active{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
+
+/* ---------- Relatórios ---------- */
+#cofrin .bar{height:10px;border-radius:999px;background:var(--surface-2);overflow:hidden;position:relative}
+#cofrin .bar>span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--primary-500),var(--primary));transition:width .4s ease}
+#cofrin .relCtrls{display:grid;gap:12px}
+#cofrin .relRow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:640px){#cofrin .relRow{grid-template-columns:1fr}}
+#cofrin .relRow .segment{display:flex;width:100%}
+#cofrin .relRow .segment button{flex:1}
+#cofrin .relTableWrap{overflow-x:auto}
+#cofrin .relTable{width:100%;border-collapse:collapse;font-size:14px}
+#cofrin .relTable th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:8px 10px;border-bottom:2px solid var(--line)}
+#cofrin .relTable td{padding:9px 10px;border-bottom:1px solid var(--line)}
+#cofrin .relTable tr:last-child td{border-bottom:none}
+#cofrin .relTable .num{font-family:var(--mono);text-align:right;white-space:nowrap}
+#cofrin .relTable tr.totRow td{font-weight:700;border-top:2px solid var(--line)}
+#cofrin .relGrupo{font-family:var(--display);font-size:15px;margin:14px 0 6px}
+#cofrin .relGrupo:first-child{margin-top:0}
+
+/* ---------- Categorias ---------- */
+#cofrin .catEditBtn{border:none;background:none;color:var(--muted);font-size:15px;padding:4px 6px;border-radius:8px;cursor:pointer}
+#cofrin .catEditBtn:hover{background:var(--accent-soft);color:var(--accent)}
+
+/* ---------- Metas do dia ---------- */
+#cofrin .diaBar{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:14px}
+#cofrin .diaBar button.nav{display:inline-flex;flex-direction:row;align-items:center;justify-content:center;border:1px solid var(--line);background:var(--surface);border-radius:50%;width:34px;height:34px;font-size:16px;line-height:1}
+#cofrin .diaLabel{font-family:var(--display);font-weight:700;font-size:16px;min-width:200px;text-align:center;text-transform:capitalize}
+#cofrin .btnHoje{border:1px solid var(--primary);background:var(--primary-soft);color:var(--primary);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:700}
+#cofrin .metaHero{background:linear-gradient(135deg,#6349f8 0%,#8570fd 55%,#bcb0fc 100%);color:#fff;border:none;box-shadow:0 8px 24px rgba(99,73,248,.35);display:flex;align-items:center;gap:16px}
+#cofrin .metaHero .emoji{font-size:42px;line-height:1}
+#cofrin .metaHero .info{flex:1}
+#cofrin .metaHero .count{font-family:var(--display);font-weight:800;font-size:22px}
+#cofrin .metaHero .msg{font-size:13px;color:rgba(255,255,255,.85);margin-top:2px}
+#cofrin .metaHero .bar{background:rgba(255,255,255,.25);margin-top:10px}
+#cofrin .metaHero .bar>span{background:linear-gradient(90deg,#FFC53D,#FFE29A)}
+#cofrin .metaForm{display:grid;gap:12px;margin-top:14px}
+#cofrin .metaForm input{border:1px solid var(--line);border-radius:12px;padding:11px 14px;background:var(--surface);outline:none;font-size:15px;width:100%}
+#cofrin .metaForm input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+#cofrin .metaFormRow{display:flex;gap:10px;align-items:flex-end}
+#cofrin .metaFormRow .field{flex:1}
+#cofrin .btnAddMeta{background:linear-gradient(135deg,var(--primary),var(--primary-hover));color:#fff;border:none;border-radius:12px;padding:12px 20px;font-weight:700;font-size:15px;box-shadow:0 4px 12px rgba(99,73,248,.3);white-space:nowrap}
+#cofrin .diasRow{display:flex;gap:6px;flex-wrap:wrap}
+#cofrin .diaChip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:700;color:var(--muted);transition:all .12s}
+#cofrin .diaChip.on{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 3px 10px rgba(99,73,248,.3)}
+#cofrin .horaBadge{font-family:var(--mono);font-size:12px;font-weight:600;background:var(--warn-soft);color:var(--warn);border-radius:999px;padding:4px 10px;white-space:nowrap}
+#cofrin .metaDias{font-size:12px;color:var(--muted);font-weight:500;margin-top:1px}
+#cofrin .metaItem{display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px dashed var(--line)}
+#cofrin .metaItem:last-child{border-bottom:none}
+#cofrin .metaCheck{width:28px;height:28px;border-radius:10px;border:2px solid var(--line);background:var(--surface);font-size:15px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;flex:none;transition:all .15s}
+#cofrin .metaCheck:hover{border-color:var(--income)}
+#cofrin .metaItem.done .metaCheck{background:var(--income);border-color:var(--income)}
+#cofrin .metaTxt{flex:1;font-weight:600;min-width:0;overflow-wrap:break-word}
+#cofrin .metaItem.done .metaTxt{text-decoration:line-through;color:var(--muted)}
+
+/* ---------- Baú / Coleção de pets ---------- */
+#cofrin .bauCard{margin-top:14px;background:linear-gradient(135deg,#F59E0B 0%,#FF8A3C 60%,#FF5C4D 100%);color:#fff;border:none;box-shadow:0 8px 24px rgba(245,158,11,.4);display:flex;align-items:center;gap:16px}
+#cofrin .bauCard .emoji{font-size:44px;line-height:1;animation:bauFloat 2s ease-in-out infinite}
+
+#cofrin .bauCard .info{flex:1}
+#cofrin .bauCard .t{font-family:var(--display);font-weight:800;font-size:19px}
+#cofrin .bauCard .s{font-size:13px;color:rgba(255,255,255,.9);margin-top:2px}
+#cofrin .bauCard button{background:#fff;color:#C2410C;border:none;border-radius:12px;padding:12px 18px;font-weight:800;font-size:15px;box-shadow:0 4px 12px rgba(0,0,0,.15);white-space:nowrap}
+#cofrin .bauHint{margin-top:14px;text-align:center;font-size:13px;color:var(--muted);background:var(--warn-soft);border-radius:12px;padding:10px 14px}
+#cofrin .petGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+#cofrin .petCard{background:var(--surface);border:2px solid var(--line);border-radius:var(--radius);padding:14px 10px;text-align:center;cursor:pointer;box-shadow:var(--shadow);transition:transform .12s}
+#cofrin .petCard:hover{transform:translateY(-3px)}
+#cofrin .petCard .pic{font-size:40px;line-height:1.2}
+#cofrin .petCard .nm{font-weight:700;font-size:14px;margin-top:6px}
+#cofrin .petCard .qtd{font-size:11px;color:var(--muted);margin-top:2px}
+#cofrin .petCard.locked{opacity:.55;cursor:default;filter:grayscale(1)}
+#cofrin .petCard.locked:hover{transform:none}
+#cofrin .rarPill{display:inline-block;font-size:11px;font-weight:800;border-radius:999px;padding:3px 10px;margin-top:6px;color:#fff}
+#cofrin .r-comum{background:#94A3B8}#cofrin .r-raro{background:#2D9CDB}#cofrin .r-epico{background:#8B5CF6}#cofrin .r-lendario{background:linear-gradient(90deg,#F59E0B,#FF8A3C)}
+#cofrin .petCard.b-comum{border-color:#94A3B8}#cofrin .petCard.b-raro{border-color:#2D9CDB}#cofrin .petCard.b-epico{border-color:#8B5CF6}
+#cofrin .petCard.b-lendario{border-color:#F59E0B;box-shadow:0 3px 0 #F59E0B,0 0 18px rgba(245,158,11,.35)}
+#cofrin .petCard .pic img{height:52px;width:auto;max-width:100%;display:inline-block}
+#cofrin model-viewer{width:100%;height:280px;background:transparent;--poster-color:transparent}
+#cofrin .petCard .pic model-viewer{height:110px;pointer-events:none;--progress-bar-color:transparent}
+#cofrin .bauReveal{text-align:center}
+#cofrin .bauReveal .fase1{font-size:90px;animation:bauShake .5s ease-in-out infinite}
+
+#cofrin .bauReveal h3{margin:10px 0 4px}
+#cofrin .bauReveal .glow-lendario model-viewer{background:radial-gradient(circle,rgba(245,158,11,.25),transparent 70%)}
+#cofrin .bauReveal .glow-epico model-viewer{background:radial-gradient(circle,rgba(139,92,246,.22),transparent 70%)}
+#cofrin .bauReveal .glow-raro model-viewer{background:radial-gradient(circle,rgba(45,156,219,.2),transparent 70%)}
+
+/* ---------- Importação CSV / edição / campos custom ---------- */
+#cofrin .toolRow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+#cofrin .txItem{cursor:pointer}
+#cofrin .txItem:hover{background:var(--surface-2)}
+#cofrin .payTag{font-size:11px;font-weight:700;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:2px 8px;white-space:nowrap}
+#cofrin .txInfo .c{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#cofrin .modal.wide{max-width:680px}
+#cofrin .impHint{font-size:13px;color:var(--muted);margin-bottom:12px}
+#cofrin .impMap{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px}
+@media(max-width:640px){#cofrin .impMap{grid-template-columns:1fr}}
+#cofrin .impMap.two{grid-template-columns:1fr 1fr}
+@media(max-width:640px){#cofrin .impMap.two{grid-template-columns:1fr}}
+#cofrin .chkLine{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;padding:11px 0;cursor:pointer}
+#cofrin .impBulk{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 12px;padding:12px;background:var(--surface-2);border-radius:12px}
+@media(max-width:640px){#cofrin .impBulk{grid-template-columns:1fr}}
+#cofrin .impList{max-height:42dvh;overflow:auto;border:1px solid var(--line);border-radius:12px;margin-bottom:12px}
+#cofrin .impRow{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;padding:10px 12px;border-bottom:1px solid var(--line);align-items:center}
+#cofrin .impRow:last-child{border-bottom:none}
+#cofrin .impRow.off{opacity:.4}
+#cofrin .impRow .selRow{grid-column:2;display:flex;gap:6px;flex-wrap:wrap}
+#cofrin .impRow select{border:1px solid var(--line);border-radius:8px;padding:4px 6px;font-size:12px;background:var(--surface)}
+#cofrin .campoItem{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line)}
+#cofrin .campoItem:last-child{border-bottom:none}
+#cofrin #camposList{margin-bottom:16px}
+#cofrin .catChips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+#cofrin .catChip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 14px;font-size:13.5px;font-weight:600;cursor:pointer;transition:background .12s,border-color .12s}
+#cofrin .catChip:hover{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+#cofrin .catAskNome{font-weight:800}
+#cofrin .autoTag{font-size:11px}
+#cofrin .txSelBar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding:10px 12px;background:var(--expense-soft);border-radius:12px}
+#cofrin .txSelBar .selCount{font-size:13px;font-weight:600;color:var(--muted);margin-right:auto}
+#cofrin .btnDanger{border:none;background:var(--expense);color:#fff;border-radius:10px;padding:9px 13px;font-weight:700;font-size:13.5px;cursor:pointer}
+#cofrin .btnDanger:disabled{opacity:.45;cursor:default}
+#cofrin .btnDanger.ghost{background:transparent;color:var(--expense);border:1px solid var(--expense)}
+#cofrin .txSelChk{width:18px;height:18px;accent-color:var(--expense);flex-shrink:0}
+#cofrin .txList.selMode .txDel{display:none}
+
+/* ---------- Guia de boas-vindas ---------- */
+#cofrin .ajudaBtn{border:1px solid var(--line);background:var(--surface);border-radius:999px;width:30px;height:30px;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0}
+#cofrin .ajudaBtn:hover{background:var(--accent-soft)}
+#cofrin .modal.guia{max-width:480px}
+#cofrin .guiaPasso{font-size:11px;font-weight:700;color:var(--muted);text-align:center;text-transform:uppercase;letter-spacing:.08em}
+#cofrin .guiaEmoji{font-size:46px;text-align:center;margin-top:6px}
+#cofrin .modal.guia h3{text-align:center;margin:8px 0 0;font-size:21px}
+#cofrin .guiaCorpo{margin-top:12px;font-size:14.5px}
+#cofrin .guiaCorpo p{margin-bottom:10px}
+#cofrin .guiaCorpo ul{padding-left:20px;margin-bottom:10px}
+#cofrin .guiaCorpo li{margin-bottom:7px}
+#cofrin .guiaDots{display:flex;gap:6px;justify-content:center;margin:14px 0 6px}
+#cofrin .guiaDots span{width:8px;height:8px;border-radius:50%;background:var(--line);cursor:pointer;transition:background .15s}
+#cofrin .guiaDots span.on{background:var(--primary)}
+#cofrin .guiaNav{display:flex;gap:10px;margin-top:8px}
+#cofrin .guiaNav .btnPrimary{flex:1}
+#cofrin .guiaSkip{border:none;background:none;color:var(--muted);font-size:13px;width:100%;text-align:center;margin-top:12px;text-decoration:underline}
+
+/* ---------- Modal / toast / fab ---------- */
+#cofrin .fab{position:fixed;right:22px;bottom:22px;z-index:40;background:linear-gradient(135deg,var(--primary),var(--primary-hover));color:#fff;border:none;border-radius:999px;width:58px;height:58px;font-size:28px;box-shadow:0 8px 24px rgba(99,73,248,.45);transition:transform .15s}
+#cofrin .fab:hover{transform:scale(1.08) rotate(90deg)}
+#cofrin .modalWrap{position:fixed;inset:0;background:rgba(17,24,39,.55);display:flex;align-items:flex-end;justify-content:center;z-index:50}
+@media(min-width:640px){#cofrin .modalWrap{align-items:center}}
+#cofrin .modal{background:var(--surface);border-radius:20px 20px 0 0;padding:22px;width:100%;max-width:460px;max-height:88dvh;overflow:auto}
+@media(min-width:640px){#cofrin .modal{border-radius:20px}}
+#cofrin .modal h3{font-family:var(--display);font-size:19px;margin-bottom:16px}
+#cofrin .modal form{display:grid;gap:12px}
+#cofrin .modalActions{display:flex;gap:10px;margin-top:6px}
+#cofrin .modalActions .btnPrimary{flex:1}
+#cofrin #toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;font-weight:600;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none}
+#cofrin #toast.show{opacity:1}
+#cofrin canvas{max-width:100%}
+#cofrin .chartBox{height:260px;position:relative}
+
+/* ---------- Mercado (notas fiscais) ---------- */
+#cofrin .linkBtn{background:none;border:none;color:var(--primary);font-weight:700;font-size:13px;text-decoration:underline;padding:4px 0;cursor:pointer}
+#cofrin .mkHero{background:linear-gradient(135deg,#6349f8 0%,#8570fd 60%,#a898fd 100%);color:#fff;border:none;box-shadow:0 8px 24px rgba(99,73,248,.35);display:flex;align-items:center;gap:16px}
+#cofrin .mkHero .emoji{font-size:42px;line-height:1}
+#cofrin .mkHero .info{flex:1}
+#cofrin .mkHero .t{font-family:var(--display);font-weight:800;font-size:19px}
+#cofrin .mkHero .s{font-size:13px;color:rgba(255,255,255,.9);margin-top:2px}
+#cofrin .mkHero .btns{display:flex;flex-direction:column;gap:8px}
+#cofrin .mkHero button{background:#fff;color:#6349f8;border:none;border-radius:12px;padding:11px 16px;font-weight:800;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,.15);white-space:nowrap}
+@media(max-width:560px){#cofrin .mkHero{flex-direction:column;text-align:center}#cofrin .mkHero .btns{width:100%}}
+#cofrin .mkTag{display:inline-block;font-size:11px;font-weight:700;background:var(--primary-soft);color:var(--income);border-radius:999px;padding:2px 8px;margin-left:6px;white-space:nowrap}
+#cofrin .mkTag.alta{background:var(--expense-soft);color:var(--expense)}
+#cofrin .mkTag.baixa{background:var(--income-soft);color:var(--income)}
+#cofrin .relTable tr.clicavel{cursor:pointer}
+#cofrin .relTable tr.clicavel:hover td{background:var(--surface-2)}
+#cofrin .relTable tr.sel td{background:var(--primary-soft)}
+#cofrin .relTable td .sub{display:block;font-size:11px;color:var(--muted);font-family:var(--body);max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* nome do produto/mercado não quebra: a tabela rola de lado e a linha fica legível */
+#cofrin #mkTabProdutos .relTable td:first-child,#cofrin #mkTabNotas .relTable td:nth-child(2){white-space:nowrap;min-width:150px}
+#cofrin .mkResumo{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+#cofrin .mkResumo .b{background:var(--surface-2);border-radius:12px;padding:10px 12px}
+#cofrin .mkResumo .b .k{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+#cofrin .mkResumo .b .v{font-family:var(--mono);font-weight:600;font-size:16px;margin-top:3px}
+#cofrin .mkResumo .b .w{font-size:11px;color:var(--muted)}
+
+/* leitura da nota */
+#cofrin .ocrProg{margin:14px 0}
+#cofrin .ocrProg .bar{margin-bottom:6px}
+#cofrin .notaFile{width:100%;border:1px dashed var(--line);border-radius:12px;padding:14px;background:var(--surface-2);font-size:14px}
+#cofrin .notaBtns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+@media(max-width:520px){#cofrin .notaBtns{grid-template-columns:1fr}}
+#cofrin .itensBox{max-height:44dvh;overflow:auto;border:1px solid var(--line);border-radius:12px;margin:10px 0}
+#cofrin .itemRow{padding:10px 12px;border-bottom:1px solid var(--line)}
+#cofrin .itemRow:last-child{border-bottom:none}
+#cofrin .itemTop{display:flex;gap:8px;align-items:center}
+#cofrin .itemTop input{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:14px;font-weight:600;background:var(--surface)}
+#cofrin .itemDel{border:none;background:none;color:var(--muted);font-size:16px;padding:4px 6px;border-radius:8px;flex:none}
+#cofrin .itemDel:hover{background:var(--expense-soft);color:var(--expense)}
+#cofrin .itemGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:7px}
+@media(max-width:620px){#cofrin .itemGrid{grid-template-columns:repeat(3,1fr)}}
+#cofrin .itemGrid label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+#cofrin .itemGrid input,#cofrin .itemGrid select{width:100%;border:1px solid var(--line);border-radius:8px;padding:6px 7px;font-size:13px;background:var(--surface);font-family:var(--mono)}
+#cofrin .itemKg{font-size:11px;color:var(--muted);margin-top:5px;min-height:14px}
+#cofrin .notaTot{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--surface-2);border-radius:12px;padding:10px 14px;margin-bottom:10px;font-size:14px}
+#cofrin .notaTot b{font-family:var(--mono);font-size:17px}
+#cofrin .notaTot .dif{color:var(--warn);font-size:12px;font-weight:600}
+
+@media(min-width:760px){#cofrin .tabsToggle{display:none}#cofrin nav.tabs{display:flex;flex-direction:row;flex-wrap:wrap;padding-top:0}}
+#cofrin .cfTitle{font-family:var(--display);font-size:clamp(1.6rem,2.4vw,2rem);line-height:1.1}
+#cofrin .cfTitle small{display:block;font-family:var(--body);font-size:13px;font-weight:600;color:var(--muted);margin-top:2px}
+#cofrin .monthBar button,#cofrin .diaBar button.nav{color:var(--ink)}
+#cofrin input,#cofrin select,#cofrin textarea{color:inherit}
+
+@keyframes bauFloat{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-6px) rotate(4deg)}}
+@keyframes bauShake{0%,100%{transform:rotate(-8deg) scale(1)}50%{transform:rotate(8deg) scale(1.1)}}

@@ -18,6 +18,42 @@ do Firebase (via gstatic), todos por `<script src>`/`<link>` direto no HTML.
 Por ser um arquivo único, publicar uma atualização é literalmente substituir
 esse arquivo na hospedagem estática (Cloudflare Pages, no caso).
 
+**Exceção: a seção Meu Cofrin** (menu → Casa → Meu Cofrin). Ela traz arquivos
+próprios, que precisam subir junto com o `index.html`: `cofrin.css`,
+`cofrin.js`, `cofrin-sw.js`, `cofrin-icon.png` e a pasta `pets/`.
+
+## Seção Meu Cofrin
+
+É o app de finanças da casa (repo `echang12c/meucofrin`, no ar sozinho em
+seucofrin.pages.dev) fundido aqui dentro com a paleta do LifePlan.
+
+- **Os dados continuam no Firebase `moneyericana`**, não no `ericzinlifeplan`. O
+  cofrin roda como um segundo app Firebase com nome próprio (`'cofrin'`), então
+  tem login próprio (e-mail/senha do cofrin) e as mesmas regras, push e worker de
+  sempre. Os dois apps não compartilham sessão nem dados.
+- **Não edite `cofrin.css`, `cofrin.js` nem a marcação entre
+  `<!-- COFRIN:INICIO -->` e `<!-- COFRIN:FIM -->`**: são gerados. Para trazer
+  mudanças do cofrin original:
+
+  ```bash
+  node ericzin-life-plan/tools/sincronizar-cofrin.mjs <caminho>/moneyericana/index.html
+  ```
+
+  O script isola o CSS (todo seletor prefixado com `#cofrin`), troca a paleta
+  verde/creme pelos tokens do LifePlan (então o modo escuro funciona), roda o JS
+  dentro de uma função e pluga o Firebase no app nomeado. Se o cofrin mudar um
+  trecho que ele substitui, o script para com `não achei: ...` em vez de gerar
+  algo quebrado. Aí é ajustar a regra no script.
+- **Chart.js:** o LifePlan usa a versão 3.9 e o cofrin a 4. A 4 carrega antes e é
+  guardada como `window.CofrinChart`. Não remova nenhuma das duas.
+- **Container:** o cofrin mora em `#cofrin`, irmão do `#main`, porque o render das
+  outras páginas reescreve o `#main` inteiro. `showCofrin()` só alterna qual dos
+  dois aparece.
+- **Push das metas:** `cofrin-sw.js` só trata push (sem cache, de propósito).
+- **Domínio novo:** ao publicar em outra URL, autorize-a no Firebase
+  **moneyericana** (Authentication → Settings → Authorized domains) e na chave
+  reCAPTCHA do App Check dele. Sem isso a seção Meu Cofrin não consegue ler os dados.
+
 ## Dados e login
 
 - Login com Google via Firebase Authentication.

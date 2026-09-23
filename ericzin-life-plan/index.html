@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ericzin's Life Plan</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="cofrin.css">
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
 <style>
   :root{
     --sidebar-w:232px;
@@ -360,6 +362,8 @@
     <nav class="nav" id="navOverview"></nav>
     <div class="nav-label">Pilares</div>
     <nav class="nav" id="navPillars"></nav>
+    <div class="nav-label">Casa</div>
+    <nav class="nav" id="navApps"></nav>
 
     <div class="sidebar-bottom">
       <div class="account-row" id="accountRow" hidden>
@@ -379,6 +383,595 @@
   </aside>
 
   <main class="main" id="main"></main>
+
+  <!-- A seção Meu Cofrin é gerada a partir do moneyericana/index.html (veja README). Não edite entre os marcadores. -->
+  <!-- COFRIN:INICIO -->
+<!-- ================= MEU COFRIN (gerado a partir do moneyericana) ================= -->
+<div id="cofrin" class="main" hidden>
+<!-- ================= LOGIN ================= -->
+<div id="loginView">
+  <div class="loginCard">
+    <div class="brand">Meu Cofrin<small>organizador financeiro da casa</small></div>
+    <form id="loginForm">
+      <div class="field"><label>E-mail</label><input type="email" id="loginEmail" autocomplete="email" required></div>
+      <div class="field"><label>Senha</label><input type="password" id="loginPass" autocomplete="current-password" required></div>
+      <button class="btnPrimary" type="submit">Entrar</button>
+      <div class="loginErr" id="loginErr"></div>
+      <button type="button" class="loginSwap" id="btnEsqueci" style="margin-top:0">Esqueci minha senha</button>
+    </form>
+    <form id="cadForm" class="hidden">
+      <div class="field"><label>Seu nome</label><input id="cadNome" maxlength="40" autocomplete="name" required></div>
+      <div class="field"><label>E-mail</label><input type="email" id="cadEmail" autocomplete="email" required></div>
+      <div class="field"><label>Senha (mín. 6 caracteres)</label><input type="password" id="cadPass" minlength="6" autocomplete="new-password" required></div>
+      <div class="field"><label>Repita a senha</label><input type="password" id="cadPass2" minlength="6" autocomplete="new-password" required></div>
+      <label class="aceiteRow"><input type="checkbox" id="cadAceite" required>
+        <span>Li e aceito a <a href="https://seucofrin.pages.dev/privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a></span></label>
+      <button class="btnPrimary" type="submit">Criar conta</button>
+      <div class="loginErr" id="cadErr"></div>
+    </form>
+    <button type="button" class="loginSwap" id="loginSwap">Não tem conta? <b>Criar cadastro</b></button>
+    <div class="loginFooter"><a href="https://seucofrin.pages.dev/privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a></div>
+  </div>
+</div>
+
+<!-- ================= VERIFICAÇÃO DE E-MAIL ================= -->
+<div id="verifyView" class="hidden">
+  <div class="loginCard">
+    <div class="brand">Meu Cofrin<small>confirme seu e-mail</small></div>
+    <div class="verifyBody">
+      <p>📬 Enviamos um link de confirmação para<br><b id="verifyEmail"></b></p>
+      <p class="verifyHint">Abra o e-mail e toque no link — esta tela avança sozinha em alguns segundos. Não achou? Confira a caixa de spam.</p>
+      <div class="verifyOk" id="verifyMsg"></div>
+      <button class="btnPrimary" id="btnVerifyCheck" type="button">Já confirmei</button>
+      <button class="btnGhost" id="btnVerifyResend" type="button">Reenviar e-mail</button>
+      <button type="button" class="loginSwap" id="btnVerifyLogout">Sair e usar outra conta</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="appView" class="hidden">
+  <header class="cfHeader">
+    <div class="headerRow">
+      <h1 class="cfTitle">Meu Cofrin<small>finanças da casa</small></h1>
+      <div class="userChip">
+        <button type="button" class="ajudaBtn" id="btnGuia" title="Guia do app" aria-label="Abrir guia do app">?</button>
+        <button type="button" class="perfilBtn" id="btnPerfil" title="Meu perfil"><span class="avatar" id="userAvatar">👤</span><b id="userName"></b></button>
+        <button id="btnLogout">sair</button>
+      </div>
+    </div>
+    <div class="monthBar">
+      <button id="prevMonth" aria-label="Mês anterior">‹</button>
+      <div class="monthLabel mono" id="monthLabel"></div>
+      <button id="nextMonth" aria-label="Próximo mês">›</button>
+    </div>
+    <div class="tabsMenu" id="tabsMenu">
+      <button type="button" class="tabsToggle" id="tabsToggle" aria-expanded="false" aria-controls="tabsList">
+        <span id="tabsToggleLabel">📊 Dashboard</span><span class="chev">▼</span>
+      </button>
+      <nav class="tabs" id="tabsList">
+        <button data-tab="dash" class="active">📊 Dashboard</button>
+        <button data-tab="tx">💸 Lançamentos</button>
+        <button data-tab="relat">📈 Relatórios</button>
+        <button data-tab="mercado">🛒 Mercado</button>
+        <button data-tab="contas">🏠 Contas da casa</button>
+        <button data-tab="metas">✅ Metas do dia</button>
+        <button data-tab="pets">🐾 Coleção</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- ===== Dashboard ===== -->
+    <section id="tab-dash">
+      <div class="card kpi saldoHero" id="cardSaldo">
+        <div class="lbl">Saldo do mês</div>
+        <div class="val" id="kSaldo">R$ 0,00</div>
+        <div class="sub" id="kSaldoSub"></div>
+      </div>
+      <div class="grid2" style="margin-top:14px">
+        <div class="card kpi"><div class="lbl">Receitas</div><div class="val pos" id="kReceitas">R$ 0,00</div></div>
+        <div class="card kpi"><div class="lbl">Despesas</div><div class="val neg" id="kDespesas">R$ 0,00</div></div>
+      </div>
+      <h2 class="section">Gastos por categoria</h2>
+      <div class="card chartBox"><canvas id="chartCat"></canvas></div>
+      <h2 class="section">Últimos 6 meses</h2>
+      <div class="card chartBox"><canvas id="chartTrend"></canvas></div>
+      <h2 class="section">Maiores gastos do mês</h2>
+      <div class="card txList" id="topGastos"><div class="empty">Sem lançamentos ainda.</div></div>
+    </section>
+
+    <!-- ===== Lançamentos ===== -->
+    <section id="tab-tx" class="hidden">
+      <div class="toolRow">
+        <button class="btnGhost" id="btnImportCSV">📥 Importar CSV/PDF</button>
+        <button class="btnGhost" id="btnCats">🏷️ Categorias</button>
+        <button class="btnGhost" id="btnCampos">⚙️ Campos personalizados</button>
+        <button class="btnGhost" id="btnTxSel">🗑️ Excluir vários</button>
+      </div>
+      <div class="chipRow" id="txFilter"></div>
+      <div class="txSelBar hidden" id="txSelBar">
+        <label class="chkLine" style="padding:0"><input type="checkbox" id="txSelAll" class="txSelChk"> Marcar todos</label>
+        <span class="selCount" id="txSelCount">0 selecionados</span>
+        <button type="button" class="btnDanger" id="btnTxDelSel" disabled>Excluir selecionados</button>
+        <button type="button" class="btnDanger ghost" id="btnTxDelAll">Apagar todos do mês</button>
+        <button type="button" class="btnGhost" id="btnTxSelCancel">Cancelar</button>
+      </div>
+      <div class="card txList" id="txList"><div class="empty">Nenhum lançamento neste mês. Toque em + para adicionar.</div></div>
+    </section>
+
+    <!-- ===== Relatórios ===== -->
+    <section id="tab-relat" class="hidden">
+      <div class="card relCtrls">
+        <div class="relRow">
+          <div class="field"><label>Período</label>
+            <div class="segment" id="relModo">
+              <button type="button" data-m="mensal" class="selInc">Mensal</button>
+              <button type="button" data-m="diario">Diário</button>
+            </div>
+          </div>
+          <div class="field"><label>Categoria</label><select id="relCatSel"></select></div>
+        </div>
+        <div class="relRow" id="relPeriodoMensal">
+          <div class="field"><label>De (mês)</label><input type="month" id="relDe"></div>
+          <div class="field"><label>Até (mês)</label><input type="month" id="relAte"></div>
+        </div>
+        <div class="relRow hidden" id="relPeriodoDiario">
+          <div class="field"><label>Mês do relatório</label><input type="month" id="relMes"></div>
+        </div>
+      </div>
+      <div class="grid3" style="margin-top:14px">
+        <div class="card kpi"><div class="lbl">Receitas</div><div class="val pos" id="relRec">R$ 0,00</div></div>
+        <div class="card kpi"><div class="lbl">Despesas</div><div class="val neg" id="relDesp">R$ 0,00</div></div>
+        <div class="card kpi"><div class="lbl">Saldo</div><div class="val" id="relSaldo">R$ 0,00</div></div>
+      </div>
+      <h2 class="section" id="relChartTitle">Evolução</h2>
+      <div class="card chartBox"><canvas id="chartRel"></canvas></div>
+      <div id="relDonutBox">
+        <h2 class="section" id="relDonutTitle">Distribuição por categoria</h2>
+        <div class="card chartBox"><canvas id="chartRelDonut"></canvas></div>
+      </div>
+      <div id="relLinhaBox">
+        <h2 class="section" id="relLinhaTitle">Categorias ao longo do tempo</h2>
+        <div class="card chartBox"><canvas id="chartRelLinha"></canvas></div>
+      </div>
+      <h2 class="section">Detalhes</h2>
+      <div class="card" id="relTabela"><div class="empty">Escolha o período para montar o relatório.</div></div>
+    </section>
+
+    <!-- ===== Mercado ===== -->
+    <section id="tab-mercado" class="hidden">
+      <div class="card mkHero">
+        <div class="emoji">🛒</div>
+        <div class="info">
+          <div class="t">Notas do mercado</div>
+          <div class="s">Fotografe a nota fiscal e o app monta o histórico de preço de cada produto.</div>
+        </div>
+        <div class="btns">
+          <button type="button" id="btnNotaFoto">📷 Escanear nota</button>
+          <button type="button" id="btnNotaManual" style="background:rgba(255,255,255,.18);color:#fff;box-shadow:none">✏️ Digitar nota</button>
+        </div>
+      </div>
+
+      <div class="card relCtrls" style="margin-top:14px">
+        <div class="relRow">
+          <div class="field"><label>De (mês)</label><input type="month" id="mkDe"></div>
+          <div class="field"><label>Até (mês)</label><input type="month" id="mkAte"></div>
+        </div>
+        <div class="relRow">
+          <div class="field"><label>Mercado</label><select id="mkMercadoSel"></select></div>
+          <div class="field"><label>Buscar produto</label><input id="mkBusca" placeholder="Ex.: arroz, leite…" autocomplete="off"></div>
+        </div>
+      </div>
+
+      <div class="grid3" style="margin-top:14px">
+        <div class="card kpi"><div class="lbl">Gasto no período</div><div class="val neg" id="mkKTotal">R$ 0,00</div></div>
+        <div class="card kpi"><div class="lbl">Notas · itens</div><div class="val" id="mkKNotas">0</div></div>
+        <div class="card kpi"><div class="lbl">Descontos</div><div class="val pos" id="mkKDesc">R$ 0,00</div></div>
+      </div>
+
+      <h2 class="section">Preço de um produto ao longo do tempo</h2>
+      <div class="card relCtrls">
+        <div class="relRow">
+          <div class="field"><label>Produto</label><select id="mkProdSel"></select></div>
+          <div class="field"><label>Comparar por</label>
+            <div class="segment" id="mkMetrica">
+              <button type="button" data-m="un" class="selInc">Preço unitário</button>
+              <button type="button" data-m="kg">Preço por kg</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card mkResumo" id="mkProdResumo" style="margin-top:12px"></div>
+      <div class="card chartBox" style="margin-top:12px"><canvas id="chartMkProd"></canvas></div>
+
+      <div id="mkCompBox">
+        <h2 class="section" id="mkCompTitle">Onde está mais barato</h2>
+        <div class="card chartBox"><canvas id="chartMkComp"></canvas></div>
+      </div>
+
+      <h2 class="section">Histórico de compras do produto</h2>
+      <div class="card" id="mkTabProd"><div class="empty">Escolha um produto acima.</div></div>
+
+      <div id="mkMercadoBox">
+        <h2 class="section">Gasto por mercado</h2>
+        <div class="card chartBox"><canvas id="chartMkMercado"></canvas></div>
+      </div>
+
+      <h2 class="section">Produtos que mais pesam no carrinho</h2>
+      <div class="card chartBox"><canvas id="chartMkTop"></canvas></div>
+
+      <h2 class="section">Meus produtos</h2>
+      <div class="card" id="mkTabProdutos"><div class="empty">Nenhuma nota no período.</div></div>
+
+      <h2 class="section">Minhas notas</h2>
+      <div class="card" id="mkTabNotas"><div class="empty">Nenhuma nota no período.</div></div>
+    </section>
+
+    <!-- ===== Contas da casa ===== -->
+    <section id="tab-contas" class="hidden">
+      <div class="grid3">
+        <div class="card kpi"><div class="lbl">Pago em <span id="ctMesLbl"></span></div><div class="val pos" id="kContasPago">R$ 0,00</div></div>
+        <div class="card kpi"><div class="lbl">Em aberto</div><div class="val neg" id="kContasAberto">R$ 0,00</div></div>
+        <div class="card kpi"><div class="lbl">Contas pagas</div><div class="val" id="kContasQtd">0 de 0</div></div>
+      </div>
+      <h2 class="section">Suas contas</h2>
+      <div class="card" id="contasList"><div class="empty">Nenhuma conta cadastrada. Toque em "+ Nova conta" para começar.</div></div>
+      <div style="margin-top:14px"><button class="btnGhost" id="btnAddConta">+ Nova conta</button></div>
+
+      <h2 class="section" id="ctChartTitle">Gasto mês a mês — todas as contas juntas</h2>
+      <div class="card relCtrls">
+        <div class="relRow">
+          <div class="field"><label>De (mês)</label><input type="month" id="ctDe"></div>
+          <div class="field"><label>Até (mês)</label><input type="month" id="ctAte"></div>
+        </div>
+        <div class="relRow">
+          <div class="field"><label>Conta</label><select id="ctContaSel"><option value="">— todas juntas —</option></select></div>
+        </div>
+      </div>
+      <div class="card chartBox" style="margin-top:14px"><canvas id="chartContas"></canvas></div>
+    </section>
+
+    <!-- ===== Metas do dia ===== -->
+    <section id="tab-metas" class="hidden">
+      <div class="diaBar">
+        <button class="nav" id="prevDia" aria-label="Dia anterior">‹</button>
+        <div class="diaLabel" id="diaLabel"></div>
+        <button class="nav" id="nextDia" aria-label="Próximo dia">›</button>
+        <button class="btnHoje" id="btnHojeDia">Hoje</button>
+      </div>
+      <div class="card metaHero">
+        <div class="emoji" id="metaEmoji">📝</div>
+        <div class="info">
+          <div class="count" id="metaCount">Nenhuma meta ainda</div>
+          <div class="msg" id="metaMsg">Adicione o que você precisa fazer hoje!</div>
+          <div class="bar"><span id="metaBar" style="width:0%"></span></div>
+        </div>
+      </div>
+      <div id="bauBox"></div>
+      <h2 class="section">Suas metas</h2>
+      <div class="card" id="metaList"><div class="empty">Nenhuma meta programada para este dia. Crie uma abaixo! ✨</div></div>
+      <h2 class="section">Programar nova meta</h2>
+      <form class="card metaForm" id="metaForm">
+        <input id="metaInput" placeholder="Ex.: passear com o cachorro, ler 20 páginas…" maxlength="120" autocomplete="off">
+        <div class="field"><label>Repetir em quais dias?</label>
+          <div class="diasRow" id="diasRow">
+            <button type="button" class="diaChip" id="chipTodos">✨ Todos os dias</button>
+            <button type="button" class="diaChip" data-d="1">Seg</button>
+            <button type="button" class="diaChip" data-d="2">Ter</button>
+            <button type="button" class="diaChip" data-d="3">Qua</button>
+            <button type="button" class="diaChip" data-d="4">Qui</button>
+            <button type="button" class="diaChip" data-d="5">Sex</button>
+            <button type="button" class="diaChip" data-d="6">Sáb</button>
+            <button type="button" class="diaChip" data-d="0">Dom</button>
+          </div>
+        </div>
+        <div class="metaFormRow">
+          <div class="field"><label>Horário (opcional) 🔔 avisa na hora</label><input type="time" id="metaHora"></div>
+          <button type="submit" class="btnAddMeta">+ Programar</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ===== Coleção de pets ===== -->
+    <section id="tab-pets" class="hidden">
+      <div class="card metaHero">
+        <div class="emoji">🐾</div>
+        <div class="info">
+          <div class="count" id="petCount">0 de 39 descobertos</div>
+          <div class="msg">Complete todas as metas do dia para ganhar um baú com um pet surpresa!</div>
+          <div class="bar"><span id="petBar" style="width:0%"></span></div>
+        </div>
+      </div>
+      <h2 class="section">Seus pets</h2>
+      <div class="petGrid" id="petGrid"></div>
+    </section>
+  </main>
+
+  <footer class="appFooter"><a href="https://seucofrin.pages.dev/privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a></footer>
+
+  <button class="fab" id="fabAdd" aria-label="Novo lançamento">+</button>
+</div>
+
+<!-- ===== Modal lançamento ===== -->
+<div class="modalWrap hidden" id="txModal">
+  <div class="modal">
+    <h3 id="txModalTitle">Novo lançamento</h3>
+    <form id="txForm">
+      <div class="segment" id="txTypeSeg">
+        <button type="button" data-t="despesa" class="selExp">Despesa</button>
+        <button type="button" data-t="receita">Receita</button>
+      </div>
+      <div class="field"><label>Valor (R$)</label><input inputmode="decimal" id="txValor" placeholder="0,00" required></div>
+      <div class="field"><label>Descrição</label><input id="txDesc" placeholder="Ex.: mercado da semana" required></div>
+      <div class="field"><label>Categoria</label><select id="txCat"></select></div>
+      <div class="field"><label>Data</label><input type="date" id="txData" required></div>
+      <div class="field"><label>Forma de pagamento</label><select id="txPag">
+        <option value="">—</option>
+        <option value="credito">Cartão de crédito</option>
+        <option value="debito">Cartão de débito</option>
+        <option value="pix">PIX</option>
+      </select></div>
+      <div id="txCustomFields" style="display:contents"></div>
+      <div class="modalActions">
+        <button type="button" class="btnGhost" data-close>Cancelar</button>
+        <button type="submit" class="btnPrimary">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Modal conta da casa ===== -->
+<div class="modalWrap hidden" id="contaModal">
+  <div class="modal">
+    <h3 id="contaModalTitle">Nova conta</h3>
+    <form id="contaForm">
+      <div class="field"><label>Nome</label><input id="contaNome" placeholder="Ex.: Aluguel, Luz, Água, Internet…" maxlength="60" required></div>
+      <div class="field"><label>Valor esperado (R$)</label><input inputmode="decimal" id="contaValor" placeholder="0,00" required></div>
+      <div class="field"><label>Dia do vencimento (opcional)</label><input type="number" id="contaDia" min="1" max="31" placeholder="Ex.: 10"></div>
+      <div class="modalActions">
+        <button type="button" class="btnGhost" data-close>Cancelar</button>
+        <button type="submit" class="btnPrimary">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Modal categorias ===== -->
+<div class="modalWrap hidden" id="catModal">
+  <div class="modal">
+    <h3>🏷️ Minhas categorias</h3>
+    <p class="impHint">Toque em ✎ para renomear (os lançamentos existentes são atualizados juntos) ou em ✕ para excluir. A categoria "Outros" é fixa.</p>
+    <h4 class="perfilSub" style="margin-top:0;padding-top:0;border-top:none">Despesas</h4>
+    <div id="catListDesp"></div>
+    <h4 class="perfilSub">Receitas</h4>
+    <div id="catListRec"></div>
+    <form id="catForm">
+      <div class="field"><label>Nova categoria</label><input id="catNome" maxlength="40" placeholder="Ex.: Doações" required></div>
+      <div class="field"><label>Tipo</label><select id="catTipo">
+        <option value="despesa">Despesa</option>
+        <option value="receita">Receita</option>
+      </select></div>
+      <div class="modalActions">
+        <button type="button" class="btnGhost" data-close>Fechar</button>
+        <button type="submit" class="btnPrimary">+ Adicionar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Modal abrir baú ===== -->
+<div class="modalWrap hidden" id="bauModal">
+  <div class="modal bauReveal" id="bauModalBody"></div>
+</div>
+
+<!-- ===== Modal ver pet ===== -->
+<div class="modalWrap hidden" id="petModal">
+  <div class="modal bauReveal" id="petModalBody"></div>
+</div>
+
+<!-- ===== Modal importar CSV ===== -->
+<div class="modalWrap hidden" id="impModal">
+  <div class="modal wide">
+    <h3>Importar gastos (CSV ou PDF)</h3>
+    <div id="impStep1">
+      <p class="impHint">Exporte o extrato ou a fatura em CSV ou PDF no app do banco e escolha o arquivo aqui. Antes de importar você revisa cada linha e define o tipo, a categoria e a forma de pagamento.</p>
+      <input type="file" id="impFile" accept=".csv,.pdf,text/csv,text/plain,application/pdf">
+      <div class="modalActions"><button type="button" class="btnGhost" data-close style="flex:1">Cancelar</button></div>
+    </div>
+    <div id="impStep2" class="hidden">
+      <div class="impMap">
+        <div class="field"><label>Coluna da data</label><select id="impColData"></select></div>
+        <div class="field"><label>Coluna da descrição</label><select id="impColDesc"></select></div>
+        <div class="field"><label>Coluna do valor</label><select id="impColValor"></select></div>
+      </div>
+      <div class="impMap two">
+        <label class="chkLine"><input type="checkbox" id="impHeader"> Primeira linha é cabeçalho</label>
+        <div class="field"><label>Despesa × receita</label><select id="impSinal">
+          <option value="neg">Valor negativo = despesa (extrato)</option>
+          <option value="pos">Valor positivo = despesa (fatura)</option>
+          <option value="todos">Importar tudo como despesa</option>
+        </select></div>
+      </div>
+      <div class="impBulk">
+        <div class="field"><label>Categoria p/ todas as linhas</label><select id="impBulkCat"></select></div>
+        <div class="field"><label>Pagamento p/ todas as linhas</label><select id="impBulkPag">
+          <option value="">— aplicar a todas —</option>
+          <option value="credito">Cartão de crédito</option>
+          <option value="debito">Cartão de débito</option>
+          <option value="pix">PIX</option>
+        </select></div>
+      </div>
+      <div class="impHint" id="impCount"></div>
+      <div class="impList" id="impList"></div>
+      <div class="modalActions">
+        <button type="button" class="btnGhost" data-close>Cancelar</button>
+        <button type="button" class="btnPrimary" id="btnImpConfirm">Importar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal pergunta de categoria (Pix p/ pessoa) ===== -->
+<div class="modalWrap hidden" id="catAskModal">
+  <div class="modal">
+    <h3>🧠 Ajude o app a aprender</h3>
+    <p class="impHint" id="catAskMsg" style="font-size:14.5px"></p>
+    <div class="catChips" id="catAskChips"></div>
+    <div class="modalActions">
+      <button type="button" class="btnGhost" id="catAskSkip" style="flex:1">Deixar como "Outros"</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal campos personalizados ===== -->
+<div class="modalWrap hidden" id="camposModal">
+  <div class="modal">
+    <h3>Campos personalizados</h3>
+    <p class="impHint">Crie campos extras que aparecem em todo lançamento. Ex.: "Parcelas", "Quem gastou", "Vencimento"…</p>
+    <div id="camposList"></div>
+    <form id="campoForm">
+      <div class="field"><label>Nome do campo</label><input id="campoNome" maxlength="40" placeholder="Ex.: Quem gastou" required></div>
+      <div class="field"><label>Tipo de resposta</label><select id="campoTipo">
+        <option value="texto">Texto simples</option>
+        <option value="monetario">Monetário (R$)</option>
+        <option value="numero">Numérico</option>
+        <option value="data">Data</option>
+        <option value="opcoes">Opções pré-cadastradas</option>
+      </select></div>
+      <div class="field hidden" id="campoOpcoesBox"><label>Opções (separadas por vírgula)</label><input id="campoOpcoes" placeholder="Ex.: Eric, Ana, Casa"></div>
+      <div class="modalActions">
+        <button type="button" class="btnGhost" data-close>Fechar</button>
+        <button type="submit" class="btnPrimary">+ Criar campo</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Modal nota do mercado ===== -->
+<div class="modalWrap hidden" id="notaModal">
+  <div class="modal wide">
+    <h3 id="notaTitle">Nota do mercado</h3>
+
+    <div id="notaStep1">
+      <p class="impHint">Tire a foto da nota <b>inteira</b>, bem iluminada e sem dobras — ou anexe o PDF/imagem da nota eletrônica. O app lê os itens e <b>você confere tudo</b> antes de salvar.</p>
+      <div class="notaBtns">
+        <button type="button" class="btnPrimary" id="btnNotaCam">📷 Tirar foto agora</button>
+        <button type="button" class="btnGhost" id="btnNotaArq">📎 Escolher arquivo</button>
+      </div>
+      <input type="file" id="notaCam" accept="image/*" capture="environment" class="hidden">
+      <input type="file" id="notaArq" accept="image/*,.pdf,application/pdf" class="hidden">
+      <div class="ocrProg hidden" id="notaProg">
+        <div class="bar"><span id="notaBar" style="width:0%"></span></div>
+        <div class="notifSub" id="notaProgTxt">Preparando…</div>
+      </div>
+      <p class="impHint" style="margin-bottom:0">A foto <b>não</b> sai do seu aparelho. Se a nota tiver QR code (NFC-e de SP), buscamos os itens oficiais na Sefaz — só a chave da nota é usada pra isso; senão, a leitura acontece por OCR aqui mesmo. Só os itens conferidos são salvos.</p>
+      <button type="button" class="linkBtn" id="btnNotaColar" style="margin-top:10px">📋 Colar ou anexar lista de itens</button>
+      <div class="hidden" id="notaColarBox" style="margin-top:8px">
+        <textarea id="notaColarTexto" rows="6" style="width:100%;font-family:monospace;font-size:12px" placeholder="Um item por linha: Nome | Qtd | Un | Valor unit. | Valor total&#10;Ex.: Arroz Tipo 1 5kg | 1 | UN | 24,90 | 24,90"></textarea>
+        <input type="file" id="notaColarArq" accept=".txt,.csv,text/plain,text/csv" class="hidden">
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <button type="button" class="btnGhost" id="btnNotaColarArq" style="flex:1">📎 Anexar arquivo</button>
+          <button type="button" class="btnPrimary" id="btnNotaColarIr" style="flex:1">Processar lista</button>
+        </div>
+      </div>
+      <div class="modalActions"><button type="button" class="btnGhost" data-close style="flex:1">Cancelar</button></div>
+    </div>
+
+    <div id="notaStep2" class="hidden">
+      <div class="impMap">
+        <div class="field"><label>Mercado</label><input id="notaMercado" list="mkMercadosDL" maxlength="80" placeholder="Ex.: Assaí Vila A"></div>
+        <div class="field"><label>Data da compra</label><input type="date" id="notaData"></div>
+        <div class="field"><label>Desconto da nota (R$)</label><input inputmode="decimal" id="notaDescTotal" placeholder="0,00"></div>
+      </div>
+      <datalist id="mkMercadosDL"></datalist>
+      <div class="notaTot">
+        <span>Total dos itens − desconto</span>
+        <span style="text-align:right"><b id="notaTotCalc">R$ 0,00</b><span class="dif" id="notaTotDif"></span></span>
+      </div>
+      <div class="itensBox" id="notaItens"></div>
+      <button type="button" class="btnGhost" id="btnNotaAddItem" style="width:100%">+ Adicionar item</button>
+      <label class="chkLine"><input type="checkbox" id="notaLancar" checked> Lançar o total como despesa em "Mercado"</label>
+      <div class="modalActions">
+        <button type="button" class="btnGhost" data-close>Cancelar</button>
+        <button type="button" class="btnPrimary" id="btnNotaSalvar">Salvar nota</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal perfil ===== -->
+<div class="modalWrap hidden" id="perfilModal">
+  <div class="modal">
+    <h3>Meu perfil</h3>
+    <div class="perfilFotoBox">
+      <div class="avatar big" id="perfilAvatar">👤</div>
+      <div class="btns">
+        <button type="button" class="btnGhost" id="btnTrocarFoto">📷 Alterar foto</button>
+        <button type="button" class="btnGhost hidden" id="btnRemoverFoto">Remover foto</button>
+        <input type="file" id="fotoInput" accept="image/*" class="hidden">
+      </div>
+    </div>
+    <form id="perfilForm">
+      <div class="field"><label>Nome</label><input id="perfilNome" maxlength="40" required></div>
+      <button class="btnPrimary" type="submit">Salvar nome e foto</button>
+    </form>
+    <h4 class="perfilSub">Notificações</h4>
+    <div class="notifRow">
+      <div class="notifTxt"><b>Avisos de metas neste aparelho</b>
+        <div class="notifSub">Receba uma notificação na hora das metas que têm horário.</div>
+      </div>
+      <button type="button" class="switch" id="notifSwitch" role="switch" aria-checked="false" aria-label="Ativar notificações"><span class="knob"></span></button>
+    </div>
+    <div class="notifHint" id="notifHint"></div>
+    <button type="button" class="btnGhost hidden" id="btnTestNotif">🔔 Enviar notificação de teste</button>
+    <h4 class="perfilSub">Alterar e-mail de login</h4>
+    <form id="emailForm">
+      <div class="field"><label>E-mail atual</label><input id="emailAtual" disabled></div>
+      <div class="field"><label>Novo e-mail</label><input type="email" id="novoEmail" autocomplete="email" required></div>
+      <div class="field"><label>Senha atual (para confirmar)</label><input type="password" id="emailSenha" autocomplete="current-password" required></div>
+      <button class="btnGhost" type="submit">Atualizar e-mail</button>
+    </form>
+    <h4 class="perfilSub">Alterar senha</h4>
+    <form id="senhaForm">
+      <div class="field"><label>Senha atual</label><input type="password" id="senhaAtual" autocomplete="current-password" required></div>
+      <div class="field"><label>Nova senha (mín. 6 caracteres)</label><input type="password" id="senhaNova" minlength="6" autocomplete="new-password" required></div>
+      <button class="btnGhost" type="submit">Atualizar senha</button>
+    </form>
+    <h4 class="perfilSub">Meus dados</h4>
+    <div class="notifSub" style="margin-bottom:8px">Baixe uma cópia de tudo que você guardou no Meu Cofrin (arquivo JSON) — seu direito de portabilidade pela LGPD.</div>
+    <button type="button" class="btnGhost" id="btnExportar">⬇️ Exportar meus dados</button>
+    <button type="button" class="btnDanger" id="btnExcluirConta" style="margin-top:8px">🗑️ Excluir minha conta e todos os dados</button>
+    <div class="modalActions"><button type="button" class="btnGhost" data-close style="flex:1">Fechar</button></div>
+  </div>
+</div>
+
+<!-- ===== Modal excluir conta ===== -->
+<div class="modalWrap hidden" id="delModal">
+  <div class="modal">
+    <h3>Excluir minha conta</h3>
+    <p class="impHint" style="color:var(--danger)"><b>Esta ação é definitiva.</b> Serão apagados: seus lançamentos, categorias, metas, coleção de pets, perfil e sua conta de login. Não há como recuperar depois.</p>
+    <p class="impHint">Dica: exporte seus dados antes, se quiser guardar uma cópia.</p>
+    <form id="delForm">
+      <div class="field"><label>Sua senha (para confirmar que é você)</label><input type="password" id="delSenha" autocomplete="current-password" required></div>
+      <div class="field"><label>Digite <b>EXCLUIR</b> para confirmar</label><input id="delConfirma" autocomplete="off" required></div>
+      <div class="loginErr" id="delErr"></div>
+      <div class="modalActions">
+        <button type="button" class="btnGhost" data-close>Cancelar</button>
+        <button type="submit" class="btnDanger" id="btnDelFinal">Excluir tudo</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Modal guia de boas-vindas ===== -->
+<div class="modalWrap hidden" id="guiaModal">
+  <div class="modal guia" id="guiaBody"></div>
+</div>
+
+<div id="toast"></div>
+</div>
+<!-- COFRIN:FIM -->
 </div>
 
 <div class="auth-overlay" id="authOverlay" hidden>
@@ -404,10 +997,14 @@
   </div>
 </div>
 
+<!-- O Meu Cofrin usa Chart.js 4; guardamos com outro nome antes do 3.9 do LifePlan ocupar window.Chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>window.CofrinChart = window.Chart;</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-check-compat.js"></script>
 <script>
 (function(){
   "use strict";
@@ -419,7 +1016,8 @@
     mente:   '<svg viewBox="0 0 24 24"><path d="M12 3c1 3 3 5 6 6-3 1-5 3-6 6-1-3-3-5-6-6 3-1 5-3 6-6Z"/></svg>',
     leitura: '<svg viewBox="0 0 24 24"><path d="M4 5.7C4 5 4.6 4.5 5.5 4.5H11V19H5.5C4.6 19 4 18.5 4 17.8Z"/><path d="M20 5.7c0-.7-.6-1.2-1.5-1.2H13V19h5.5c.9 0 1.5-.5 1.5-1.2Z"/></svg>',
     financas:'<svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="12" rx="2.2"/><path d="M3 10.2h18"/><circle cx="16.4" cy="14.4" r="1.3"/></svg>',
-    carreira:'<svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="11" rx="2"/><path d="M8.3 8V6.3A1.8 1.8 0 0 1 10.1 4.5h3.8a1.8 1.8 0 0 1 1.8 1.8V8"/><path d="M3 13.3h18"/></svg>'
+    carreira:'<svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="11" rx="2"/><path d="M8.3 8V6.3A1.8 1.8 0 0 1 10.1 4.5h3.8a1.8 1.8 0 0 1 1.8 1.8V8"/><path d="M3 13.3h18"/></svg>',
+    cofrin:  '<svg viewBox="0 0 24 24"><path d="M19 10.5c0-3.6-3.1-6-7-6s-7.5 2.4-7.5 6.5c0 2 1 3.6 2.5 4.7V19h3v-2h3v2h3v-3.3c1.2-.8 2-1.8 2.4-3.2H21v-3h-2.1Z"/><path d="M10 7.5h4"/><circle cx="15.5" cy="10" r=".4"/></svg>'
   };
 
   /* color = brand purple used in the sidebar/overview. accent = the pillar's own color, used only inside its detail page. */
@@ -1434,6 +2032,25 @@
       btn.onclick = function(){ navigate(p.id); };
       navPillars.appendChild(btn);
     });
+
+    var navApps = document.getElementById('navApps');
+    navApps.innerHTML = '';
+    var cfBtn = document.createElement('button');
+    var cfActive = state.page === 'cofrin';
+    cfBtn.className = 'nav-item' + (cfActive ? ' active' : '');
+    cfBtn.title = 'Meu Cofrin';
+    cfBtn.innerHTML = '<span class="ico"' + (cfActive ? '' : ' style="color:#8570fd"') + '>' + ICONS.cofrin + '</span><span class="nav-text">Meu Cofrin</span>';
+    cfBtn.onclick = function(){ navigate('cofrin'); };
+    navApps.appendChild(cfBtn);
+  }
+
+  /* Meu Cofrin mora num contêiner próprio (#cofrin), fora do #main: o render das
+     outras páginas reescreve o #main inteiro e apagaria o app. Aqui só alternamos qual aparece. */
+  function showCofrin(on){
+    document.getElementById('main').hidden = on;
+    var cf = document.getElementById('cofrin');
+    if(cf) cf.hidden = !on;
+    if(on && window.cofrinOnShow) window.cofrinOnShow();
   }
 
   function renderPillarOrOverview(){
@@ -1451,6 +2068,8 @@
   function render(){
     buildSidebar();
     updateAccountRow();
+    showCofrin(state.page === 'cofrin');
+    if(state.page === 'cofrin'){ updateSidebarFooter(); return; }
     try{
       renderPillarOrOverview();
     }catch(err){
@@ -1464,5 +2083,6 @@
   if(cloudConfigured()){ bootCloud(); } else { render(); }
 })();
 </script>
+<script src="cofrin.js"></script>
 </body>
 </html>
