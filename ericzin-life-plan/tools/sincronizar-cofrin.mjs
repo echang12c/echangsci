@@ -1,14 +1,13 @@
-// Sincroniza a seção Meu Cofrin com o app original (repo echang12c/meucofrin, pasta moneyericana).
-// Uso: node ericzin-life-plan/tools/sincronizar-cofrin.mjs <caminho do moneyericana/index.html>
+// Sincroniza a seção Meu Cofrin com o app original (pasta meucofrin/ deste repo).
+// Uso: node ericzin-life-plan/tools/sincronizar-cofrin.mjs [caminho do index.html do cofrin; padrão meucofrin/index.html]
 // Gera cofrin.css e cofrin.js e reescreve a marcação entre <!-- COFRIN:INICIO --> e <!-- COFRIN:FIM --> no index.html.
 // Se o cofrin mudar um trecho que este script substitui, ele para com 'não achei: ...' em vez de gerar algo quebrado.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const SRC = process.argv[2];
-if (!SRC) { console.error('uso: node sincronizar-cofrin.mjs <caminho do moneyericana/index.html>'); process.exit(1); }
 const OUT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const SRC = process.argv[2] || path.resolve(OUT, '..', 'meucofrin', 'index.html');
 const src = fs.readFileSync(SRC, 'utf8');
 
 const between = (s, a, b) => { const i = s.indexOf(a); const j = s.indexOf(b, i + a.length); if (i < 0 || j < 0) throw new Error('marcador: ' + a); return s.slice(i + a.length, j); };
