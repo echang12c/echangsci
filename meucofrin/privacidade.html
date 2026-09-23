@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Política de Privacidade — SeuCofrin</title>
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FDF3E3; --surface:#FFFFFF; --ink:#27203F; --muted:#837A99;
+  --line:#F0E1C8; --primary:#00A86B;
+  --display:'Bricolage Grotesque',sans-serif;
+  --body:'Schibsted Grotesk',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.65;padding:24px 16px 48px}
+.page{background:var(--surface);border:1px solid var(--line);border-radius:20px;max-width:720px;margin:0 auto;padding:36px 28px;box-shadow:0 10px 40px rgba(21,32,25,.08)}
+h1{font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:-.02em;margin-bottom:4px}
+.sub{color:var(--muted);font-size:13px;margin-bottom:24px}
+h2{font-family:var(--display);font-weight:700;font-size:18px;margin:26px 0 8px}
+p,li{margin-bottom:8px}
+ul{padding-left:22px;margin-bottom:8px}
+a{color:var(--primary);font-weight:600}
+.voltar{display:inline-block;margin-bottom:18px;color:var(--primary);font-weight:700;text-decoration:none}
+.aviso{background:#FFF2D3;border:1px solid #F59E0B;border-radius:12px;padding:12px 14px;font-size:13px;margin-top:26px}
+</style>
+</head>
+<body>
+<div class="page">
+  <a class="voltar" href="./">‹ Voltar ao SeuCofrin</a>
+  <h1>Política de Privacidade</h1>
+  <div class="sub">SeuCofrin — organizador financeiro da casa · Última atualização: 17 de julho de 2026</div>
+
+  <p>Esta política explica, em linguagem simples, quais dados o SeuCofrin coleta, para que servem, onde ficam guardados e quais são os seus direitos de acordo com a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018).</p>
+
+  <h2>1. Quem somos e como falar conosco</h2>
+  <p>O SeuCofrin é um aplicativo independente de organização financeira pessoal, operado por seu desenvolvedor, que atua como controlador dos dados. Para qualquer assunto de privacidade, escreva para <a href="mailto:ericchang12c@gmail.com">ericchang12c@gmail.com</a>.</p>
+
+  <h2>2. Quais dados coletamos</h2>
+  <ul>
+    <li><b>Dados de conta:</b> seu e-mail e a senha de acesso (a senha é guardada de forma criptografada pelo Firebase Authentication — nós nunca temos acesso a ela) e o nome que você escolher exibir.</li>
+    <li><b>Dados que você mesmo insere no app:</b> lançamentos financeiros (valores, descrições, categorias, datas, formas de pagamento), orçamentos, assinaturas, metas diárias, campos personalizados e, se você quiser, uma foto de perfil.</li>
+    <li><b>Notificações (opcional):</b> se você ativar os avisos de metas, guardamos o endereço técnico de notificação do seu aparelho, o seu fuso horário e a lista de metas com horário, apenas para conseguir enviar os avisos.</li>
+  </ul>
+  <p>Não coletamos dados de navegação para publicidade, não usamos cookies de rastreamento e não pedimos dados bancários reais (o app não se conecta ao seu banco — você digita ou importa os lançamentos que quiser).</p>
+
+  <h2>3. Para que usamos os dados</h2>
+  <ul>
+    <li>Fazer o app funcionar: mostrar seus lançamentos, gráficos, orçamentos e metas em qualquer aparelho em que você entrar.</li>
+    <li>Enviar as notificações de metas que você mesmo programar (somente se ativar).</li>
+    <li>Segurança: confirmar que a conta é sua (verificação de e-mail) e proteger o banco de dados contra acessos indevidos.</li>
+  </ul>
+  <p>Não usamos seus dados para nenhuma outra finalidade.</p>
+
+  <h2>4. Onde os dados ficam guardados</h2>
+  <p>Seus dados ficam nos serviços <b>Firebase (Google Cloud)</b> — autenticação e banco de dados — e o serviço de notificações roda na <b>Cloudflare</b>. Esses provedores podem armazenar os dados em servidores fora do Brasil; nesses casos, a transferência internacional se apoia nas garantias contratuais e de segurança oferecidas por Google e Cloudflare, em linha com a LGPD.</p>
+
+  <h2>5. Com quem compartilhamos</h2>
+  <p><b>Não vendemos nem compartilhamos seus dados com terceiros</b> para nenhuma finalidade comercial. Os únicos "terceiros" envolvidos são os provedores de infraestrutura citados acima (Google e Cloudflare), que processam os dados exclusivamente para o app funcionar.</p>
+
+  <h2>6. Quem tem acesso</h2>
+  <p>Somente você acessa os seus dados dentro do app: cada conta enxerga apenas o próprio espaço, e isso é imposto por regras de segurança no banco de dados. Por transparência: o desenvolvedor do SeuCofrin, como administrador da infraestrutura, tem acesso técnico ao banco de dados — esse acesso é usado apenas para manutenção e suporte, nunca para consultar seus lançamentos por curiosidade nem para qualquer outro fim.</p>
+
+  <h2>7. Seus direitos (LGPD)</h2>
+  <ul>
+    <li><b>Exportar (portabilidade):</b> no app, abra <b>Meu perfil → Exportar meus dados</b> para baixar um arquivo JSON com tudo o que você guardou.</li>
+    <li><b>Corrigir:</b> você mesmo edita ou apaga qualquer lançamento, meta ou dado de perfil dentro do app.</li>
+    <li><b>Excluir tudo:</b> em <b>Meu perfil → Excluir minha conta e todos os dados</b>, sua conta e todos os seus dados são apagados de forma definitiva, sem precisar falar com ninguém.</li>
+    <li><b>Demais direitos</b> (confirmação de tratamento, informação, revogação de consentimento etc.): escreva para o e-mail da seção 1 — respondemos o quanto antes.</li>
+  </ul>
+
+  <h2>8. Por quanto tempo guardamos</h2>
+  <p>Enquanto sua conta existir. Se você excluir a conta, os dados são apagados imediatamente do banco de dados e do serviço de notificações. Cópias de segurança automáticas da infraestrutura, quando existirem, expiram nos prazos padrão dos provedores.</p>
+
+  <h2>9. Segurança</h2>
+  <p>Todo o tráfego é criptografado (HTTPS), o acesso ao banco exige login com e-mail verificado e as regras de segurança validam cada gravação. Nenhum sistema é 100% infalível, mas seguimos as boas práticas recomendadas pelos provedores.</p>
+
+  <h2>10. Crianças e adolescentes</h2>
+  <p>O SeuCofrin não é direcionado a menores de 13 anos e não coleta intencionalmente dados de crianças.</p>
+
+  <h2>11. Mudanças nesta política</h2>
+  <p>Se esta política mudar, atualizaremos a data no topo e avisaremos dentro do app quando a mudança for relevante.</p>
+
+  <div class="aviso">⚠️ <b>Nota do desenvolvedor:</b> esta política foi elaborada de boa-fé para um app pessoal em fase de abertura a mais usuários e ainda <b>não foi revisada por advogado(a)</b>. Antes de escalar o app para um público amplo ou comercializá-lo, este texto deve passar por revisão jurídica especializada em LGPD.</div>
+</div>
+</body>
+</html>

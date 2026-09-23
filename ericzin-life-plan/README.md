@@ -27,7 +27,7 @@ próprios, que precisam subir junto com o `index.html`: `cofrin.css`,
 
 ## Seção Meu Cofrin
 
-É o app de finanças da casa (repo `echang12c/meucofrin`, no ar sozinho em
+É o app de finanças da casa (pasta `meucofrin/` deste repo, no ar sozinho em
 seucofrin.pages.dev) fundido aqui dentro com a paleta do LifePlan.
 
 - **Os dados continuam no Firebase `moneyericana`**, não no `ericzinlifeplan`. O
@@ -36,10 +36,10 @@ seucofrin.pages.dev) fundido aqui dentro com a paleta do LifePlan.
   sempre. Os dois apps não compartilham sessão nem dados.
 - **Não edite `cofrin.css`, `cofrin.js` nem a marcação entre
   `<!-- COFRIN:INICIO -->` e `<!-- COFRIN:FIM -->`**: são gerados. Para trazer
-  mudanças do cofrin original:
+  mudanças do cofrin original (`meucofrin/index.html`):
 
   ```bash
-  node ericzin-life-plan/tools/sincronizar-cofrin.mjs <caminho>/moneyericana/index.html
+  node ericzin-life-plan/tools/sincronizar-cofrin.mjs
   ```
 
   O script isola o CSS (todo seletor prefixado com `#cofrin`), troca a paleta
