@@ -38,9 +38,16 @@ npx serve meucofrin           # Cofrin
 
 ## Publicar
 
-Automático: todo push no `Main` roda `.github/workflows/publicar.yml`, que publica
-o seucofrin e o LifePlan no Cloudflare Pages (dá pra rodar à mão na aba Actions →
-Publicar no Cloudflare → Run workflow). Usa os secrets `CLOUDFLARE_API_TOKEN`
+Automático, pelo `.github/workflows/publicar.yml` (dá pra rodar à mão na aba Actions →
+Publicar no Cloudflare → Run workflow):
+
+- push em qualquer branch que não seja `Main` → **site de teste**:
+  https://teste.seucofrin.pages.dev e https://teste.ericzin.pages.dev
+- push/merge no `Main` → **site principal**: https://seucofrin.pages.dev e https://ericzin.pages.dev
+
+Toda novidade vai primeiro para o site de teste; só entra no `Main` depois do ok do Eric.
+O site de teste usa o mesmo Firebase do principal (mesmos dados).
+ Usa os secrets `CLOUDFLARE_API_TOKEN`
 (token com permissão *Cloudflare Pages: Edit*) e `CLOUDFLARE_ACCOUNT_ID`.
 O worker de push (`notifier`) continua manual.
 
